@@ -126,7 +126,7 @@ Unlocked ──(SDI ≥ threshold, no cooldown)──► Locked ──(valid ref
 | Database | PostgreSQL via Spring Data JPA | In repo |
 | DB migrations | Flyway (portable SQL so tests can run on H2) | In repo |
 | Test tooling | Backend: H2 in PostgreSQL mode. Frontend: `@testing-library/react` + `jsdom` | Backend: in repo. Frontend: decided, not yet added |
-| CI | GitHub Actions | Decided, not yet added |
+| CI | GitHub Actions | In repo |
 | Hosting, frontend router/state/UI libraries, AI provider | — | **Not decided** |
 
 Do not add a library or framework outside this table without a team decision recorded here.
@@ -159,7 +159,7 @@ frontend/   React + TypeScript (Vite) — still the starter page
 backend/    Spring Boot — package com.episteme.epistemictrace (GET /api/health only)
 docs/       project documentation
 tests/      cross-cutting tests (empty)
-.github/    CI and PR config (empty)
+.github/    CI: workflows/ci.yml (frontend and backend checks on PRs to main)
 ```
 
 Prerequisites: Node.js 20+ and JDK 21. Copy `.env.example` to `.env` (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`).

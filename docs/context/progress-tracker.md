@@ -30,7 +30,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- None.
+- 03 CI checks on pull requests (IMP-03) — Part 1 (add `.github/workflows/ci.yml`; test PR with both jobs green) in progress on `feature/imp-03-ci-checks`. Gate Q9 (CI → GitHub Actions) was already accepted. Dependency 04 is not done: the frontend has no test file yet, so `npm test` (`vitest run`) exits 1 without a test; a temporary smoke test, `frontend/src/smoke.test.ts`, was added so the `frontend` check can pass until spec 04 adds real tests (remove it then). Q19 accepted: CI uses Node 22. Workflow and smoke test pass locally; PR open, GitHub Actions result not yet confirmed.
 
 ## Next Up
 
@@ -111,6 +111,7 @@ Accepted from Open Questions (2026-10-29):
 - **Q12** (PLN-08): Frontend component tests use `@testing-library/react` + `jsdom` as dev dependencies. Backend tests use H2 in PostgreSQL mode (no Docker needed); migrations are kept to portable SQL.
 - **Q13** (PLN-04): JWT is HS256 via Spring Security's OAuth2 resource server support (no third-party JWT library); claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`; logout clears it.
 - **Q17** (PLN-02): Schema additions to `PROJECT.md` §7 as proposed: `telemetry_events.client_event_id` (UUID, unique per session); breaker columns `runner_locked`, `sdi_at_lock`, `cooldown_ends_at` on `coding_sessions`; `users.email` unique and stored lower-case; `created_at` on users and activities; `test_cases.position`. See `architecture-context.md` → Schema. Accepted on Adrian's instruction when starting spec 02.
+- **Q19** (IMP-03): Adopt Node 22 LTS for CI and local frontend runtime. `vitest@5.0.5` requires Node `^22.12.0 || ^24.0.0 || >=26.0.0`, and Node 20 is EOL. Decision authorized by author. Spec 03 R2 ("Node 20") is superseded: `ci.yml` uses `node-version: 22`.
 
 ## Session Notes
 
