@@ -79,6 +79,14 @@ Prerequisites: Node.js 20+, JDK 21.
    curl http://localhost:8080/api/health
    ```
 
+## Documentation
+
+- [`AGENTS.md`](AGENTS.md): rules and context for AI agents and contributors (read before changing code)
+- [`docs/PROJECT.md`](docs/PROJECT.md): requirements, architecture, data model, decisions and open questions
+- [`docs/TRELLO.md`](docs/TRELLO.md): board workflow, cards, acceptance criteria and progress
+
+> Some details in this README differ from the finalized requirements (for example, the MoSCoW priorities and the user roles). See [`docs/PROJECT.md` §16](docs/PROJECT.md#16-reconciliation-with-existing-documentation).
+
 ## Project Management
 
-Trello board: <link>
+Trello board: https://trello.com/b/nwPfFX7D/episteme-labs-epistemictrace
