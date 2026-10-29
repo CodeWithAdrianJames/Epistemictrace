@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Spec 01 is done. Spec 02 is in progress (Q17 accepted). Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 and 02 are done. Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted, and `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -22,14 +22,15 @@ Update this file whenever the current phase, active feature, open questions or i
   - Part 2 (Security): merged as `84077f7` (PR #3, squash). Starters: `spring-boot-starter-security`, `spring-boot-starter-security-oauth2-resource-server` (the Boot 4 name; the old `spring-boot-starter-oauth2-resource-server` is still in the BOM but deprecated); `spring-boot-starter-validation` was already in the scaffold; test: `spring-boot-starter-security-test`, `spring-boot-starter-security-oauth2-resource-server-test`. Added `config/JwtProperties`, `config/JwtConfig`, `config/SecurityConfig`, `common/GlobalExceptionHandler`; `CorsConfig` moved from the root package to `config/` and now publishes a `corsConfigurationSource` bean (same rule: `/api/**`, origin `http://localhost:5173`, same methods, all headers, max age 1800 s) so Spring Security applies CORS before authentication. Start-up with a short or missing `JWT_SECRET` fails with "epistemictrace.jwt.secret (JWT_SECRET) must be at least 32 bytes when UTF-8 encoded" and does not print the value. Review caveat: see the manual review override in Session Notes.
   - All versions come from the Boot 4.1.2 parent (Spring Security 7.1.2, Nimbus JOSE 10.9.1). `./mvnw test` passes with no database, no `.env` and no `DB_*`/`JWT_SECRET` variables (16 tests, 0 failures, re-run on merged `main` at `84077f7`).
   - Still open from this spec: Q18 (`.env` loading).
+- 02 Database tables (IMP-02) — completed 2026-10-29, all three parts on `main`
+  - Part 1 (`V1__users.sql` + `user.User` + `UserRepository`): merged as `c77317e` (PR #4, squash). `./mvnw test` passed on H2 (18 tests, 0 failures); start-up against PostgreSQL 18.6 verified (see Session Notes).
+  - Part 2 (`V2__activities.sql` + `activity.Activity`, `activity.TestCase`, `activity.SdiConfig` + repositories): merged as `b4fbbee` (PR #5, squash). `./mvnw test` passed on H2 (21 tests, 0 failures); start-up against PostgreSQL 18.6 verified (see Session Notes).
+  - Part 3 (`V3__sessions_and_telemetry.sql` + `session.CodingSession`, `telemetry.TelemetryEvent`, `reflection.Reflection` + repositories): merged as `858b2a3` (PR #6, squash). `./mvnw test` passed on H2 (24 tests, 0 failures; Flyway applies V1–V3); start-up against PostgreSQL 18.6 verified (see Session Notes).
+  - All three migrations run against H2 (tests) and PostgreSQL (manual start-up); Hibernate `validate` passes; no table outside R2–R4 exists.
 
 ## In Progress
 
-- 02 Database tables (IMP-02)
-  - Part 1 (`V1__users.sql` + `user.User` + `UserRepository`): merged as `c77317e` (PR #4, squash). `./mvnw test` passed on H2 (18 tests, 0 failures); start-up against PostgreSQL 18.6 verified (see Session Notes).
-  - Part 2 (`V2__activities.sql` + `activity.Activity`, `activity.TestCase`, `activity.SdiConfig` + repositories): merged as `b4fbbee` (PR #5, squash). `./mvnw test` passed on H2 (21 tests, 0 failures); start-up against PostgreSQL 18.6 verified (see Session Notes).
-  - Part 3 (`V3__sessions_and_telemetry.sql` + `session.CodingSession`, `telemetry.TelemetryEvent`, `reflection.Reflection` + repositories): in progress on branch `feature/imp-02-part-3`. Code, `EventType`, `CodingSessionRepository`/`TelemetryEventRepository`/`ReflectionRepository` and `TelemetryEventRepositoryTests` written; `./mvnw test` passes locally on H2 (24 tests, 0 failures; Flyway applies V1–V3). Start-up against PostgreSQL 18.6 verified (see Session Notes). PR #6 opened; no review yet.
-- Spec 04 (gate Q11) is the other unblocked-by-dependency spec, but Q11 is still **Proposed**.
+- None.
 
 ## Next Up
 
@@ -129,7 +130,7 @@ Accepted from Open Questions (2026-10-29):
   - `epistemictrace.jwt.ttl` (default `PT8H`) is bound but not used until spec 05.
 - Spec 02 Part 1 notes for later parts: repository tests use `@DataJpaTest` (`org.springframework.boot.data.jpa.test.autoconfigure`) + `@AutoConfigureTestDatabase(replace = NONE)` (`org.springframework.boot.jdbc.test.autoconfigure`) + `@ActiveProfiles("test")`. Without `replace = NONE` the slice swaps in a plain embedded H2 that is not in PostgreSQL mode. Flyway runs in the slice (Boot 4 registers it under `AutoConfigureDataSourceInitialization`). `TestEntityManager` is in `org.springframework.boot.jpa.test.autoconfigure`. Constraint violations surface as `DataIntegrityViolationException`.
 - Spec 02 Part 2 notes: `text` columns are mapped with `@Column(columnDefinition = "text")`, which passes Hibernate `validate` on H2. `Activity` → `TestCase` is the only bidirectional mapping (`cascade = ALL`, `orphanRemoval`, `@OrderBy("position")`); `instructor_id` and `sdi_configs.activity_id` are plain `Long` columns. Deleting an activity through JPA deletes its test cases via the JPA cascade and its `sdi_configs` row via the database `on delete cascade`.
-- Spec 02 Part 3 notes: `coding_sessions`, `telemetry_events` and `reflections` reference their parents as plain `Long` id columns (no `@ManyToOne`, no cascades; spec R4 names none, so deleting a user or activity that has sessions fails on the foreign key). `client_event_id` is a native `uuid` column mapped to `java.util.UUID`, which passes Hibernate `validate` on H2. `TelemetryEvent` has setters only for the per-type measurements and `sdi_value` (set after scoring); `CodingSession` has no breaker setters yet (spec 22 adds behavior). `PROJECT.md` §7 already lists the Q17 columns, but its TELEMETRY_EVENT row says `timestamp` where R4 says `occurred_at`, and its ACTIVITY row omits `updated_at`; fix the wording when spec 02 is closed.
+- Spec 02 Part 3 notes: `coding_sessions`, `telemetry_events` and `reflections` reference their parents as plain `Long` id columns (no `@ManyToOne`, no cascades; spec R4 names none, so deleting a user or activity that has sessions fails on the foreign key). `client_event_id` is a native `uuid` column mapped to `java.util.UUID`, which passes Hibernate `validate` on H2. `TelemetryEvent` has setters only for the per-type measurements and `sdi_value` (set after scoring); `CodingSession` has no breaker setters yet (spec 22 adds behavior). `PROJECT.md` §7's TELEMETRY_EVENT row said `timestamp` where R4 says `occurred_at`, and its ACTIVITY row omitted `updated_at`; both corrected when spec 02 was closed.
 - 2026-10-29: PostgreSQL start-up check for spec 02 Part 3 **passed**. Ran `postgres:latest` in a container, then `./mvnw spring-boot:run` with `SERVER_PORT=8081` and `DB_URL`/`DB_USERNAME`/`DB_PASSWORD`/`JWT_SECRET` set in the shell, against an empty database.
   - Flyway: `Successfully validated 3 migrations`, then migrated `1 - users`, `2 - activities`, `3 - sessions and telemetry` in order, `Successfully applied 3 migrations … now at version v3` (49 ms). App started (`Started EpistemictraceApplication`) with no ERROR/FAILED lines in the log.
   - `\dt` lists exactly `users`, `activities`, `test_cases`, `sdi_configs`, `coding_sessions`, `telemetry_events`, `reflections` and `flyway_schema_history`.
