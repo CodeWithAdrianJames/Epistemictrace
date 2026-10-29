@@ -16,7 +16,7 @@ Items marked **(Proposed — Qn)** are not decided yet. They are written down so
 | Backend tests  | JUnit 5 + MockMvc; H2 in PostgreSQL mode as the test database    | Unit, web-layer and persistence tests                       | In repo |
 | Migrations     | Flyway                                                           | Versioned schema changes                                    | In repo |
 | Routing        | React Router **(Proposed — Q11)**                                | Client-side routes and role guards                          | Not decided |
-| CI             | GitHub Actions                                                   | Lint, build and tests on every PR                           | Decided, not added |
+| CI             | GitHub Actions                                                   | Lint, build and tests on every PR                           | In repo |
 | Hosting        | —                                                                | —                                                           | Not decided (Q9) |
 
 No library or framework outside this table may be added without a team decision recorded in `PROJECT.md` §6.
