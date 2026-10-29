@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Spec 01 is done. Start `feature-specs/02-database-tables.md` once Q17 is accepted, and `feature-specs/04-frontend-app-shell.md` once Q11 is accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Spec 01 is done. Spec 02 is in progress (Q17 accepted). Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -25,7 +25,10 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- None. Spec 02 (gate Q17) and spec 04 (gate Q11) are the next unblocked-by-dependency specs, but both gates are still **Proposed**.
+- 02 Database tables (IMP-02), branch `feature/imp-02-database-tables`
+  - Part 1 (`V1__users.sql` + `user.User` + `UserRepository`): in progress. Code and `UserRepositoryTests` written; `./mvnw test` passes locally on H2 (18 tests, 0 failures). Start-up against PostgreSQL 18.6 verified (see Session Notes). No PR or review yet.
+  - Parts 2 and 3: not started.
+- Spec 04 (gate Q11) is the other unblocked-by-dependency spec, but Q11 is still **Proposed**.
 
 ## Next Up
 
@@ -84,7 +87,6 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Proposed |
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
-| Q17 | Schema additions to `PROJECT.md` §7 | `telemetry_events.client_event_id`; breaker columns on `coding_sessions`; unique lower-case email; `created_at`; `test_cases.position`. See `architecture-context.md` → Schema. | PLN-02 (Noel) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
 
 ## Architecture Decisions
@@ -106,6 +108,7 @@ Accepted from Open Questions (2026-10-29):
 - **Q9** (CLR-08): Flyway for database migrations; GitHub Actions for CI. Hosting is still open (Q9 row above).
 - **Q12** (PLN-08): Frontend component tests use `@testing-library/react` + `jsdom` as dev dependencies. Backend tests use H2 in PostgreSQL mode (no Docker needed); migrations are kept to portable SQL.
 - **Q13** (PLN-04): JWT is HS256 via Spring Security's OAuth2 resource server support (no third-party JWT library); claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`; logout clears it.
+- **Q17** (PLN-02): Schema additions to `PROJECT.md` §7 as proposed: `telemetry_events.client_event_id` (UUID, unique per session); breaker columns `runner_locked`, `sdi_at_lock`, `cooldown_ends_at` on `coding_sessions`; `users.email` unique and stored lower-case; `created_at` on users and activities; `test_cases.position`. See `architecture-context.md` → Schema. Accepted on Adrian's instruction when starting spec 02.
 
 ## Session Notes
 
@@ -123,4 +126,10 @@ Accepted from Open Questions (2026-10-29):
   - The catch-all `Exception` handler would also turn `AccessDeniedException` thrown from method security into `500`. Spec 06 uses path rules, but if it adds `@PreAuthorize`, it must let security exceptions through.
   - `NimbusJwtEncoder.withSecretKey(...).algorithm(HS256)` signs HS256 without an explicit `JwsHeader`, so spec 05 can call `JwtEncoderParameters.from(claims)`.
   - `epistemictrace.jwt.ttl` (default `PT8H`) is bound but not used until spec 05.
+- Spec 02 Part 1 notes for later parts: repository tests use `@DataJpaTest` (`org.springframework.boot.data.jpa.test.autoconfigure`) + `@AutoConfigureTestDatabase(replace = NONE)` (`org.springframework.boot.jdbc.test.autoconfigure`) + `@ActiveProfiles("test")`. Without `replace = NONE` the slice swaps in a plain embedded H2 that is not in PostgreSQL mode. Flyway runs in the slice (Boot 4 registers it under `AutoConfigureDataSourceInitialization`). `TestEntityManager` is in `org.springframework.boot.jpa.test.autoconfigure`. Constraint violations surface as `DataIntegrityViolationException`.
+- 2026-10-29: PostgreSQL start-up check for spec 02 Part 1 **passed**. Ran `postgres:latest` (PostgreSQL 18.6) in a container, then `./mvnw spring-boot:run` with `DB_URL`/`DB_USERNAME`/`DB_PASSWORD`/`JWT_SECRET` set in the shell.
+  - Flyway: `Migrating schema "public" to version "1 - users"`, then `Successfully applied 1 migration … now at version v1` (26 ms). `flyway_schema_history` has one row: version 1, `users`, success `t`.
+  - `\d users` matches R2: `id bigint generated by default as identity`; `name varchar(100)`, `email varchar(254)`, `password_hash varchar(100)`, `role varchar(16)` all not null; `consent_accepted_at timestamptz` null; `created_at timestamptz` not null; unique constraint `uk_users_email`; check constraint `ck_users_role`.
+  - The first run applied V1 but then failed with "Port 8080 was already in use" (another process on Adrian's machine). That happens after Flyway and Hibernate `validate`. A second run with `SERVER_PORT=8081` against the same database re-validated V1, started in 6.0 s with `PostgreSQLDialect`, 0 ERROR/Exception lines, and `GET /api/health` returned `{"status":"ok"}`.
+  - Cleanup: `TaskStop` ended only the `mvnw` wrapper and left the child `java.exe` running on 8081. It was stopped by PID after confirming it was `EpistemictraceApplication`. The `pg-test` container was removed. Port 8080 was not touched.
 - 2026-10-29: **Manual review override for PR #3 (spec 01 Part 2).** `ai-workflow-rules.md` requires approval by someone other than the author. The PR was opened from the `CodeWithAdrianJames` account, which is also Adrian's account, so no independent approval exists (`reviewDecision` was empty) and no approving comment was posted. The agent's attempt to comment and squash-merge was blocked by the permission system as a merge without review, so Adrian merged PR #3 by hand on GitHub. Treat spec 01 as merged by its author's own account; a second team member (Noel or Jacob) should still read PRs #2 and #3. The remote branch `feature/imp-01-security` was not deleted by the merge and is still on origin.

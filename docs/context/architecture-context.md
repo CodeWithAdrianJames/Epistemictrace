@@ -63,7 +63,7 @@ Dependencies point inward: controller → service → repository. `sdi` and `bre
 - Nothing else is stored in the browser. Telemetry is never written to browser storage; unsent events live in memory only.
 - Schema changes are made only through new migration files; an applied migration is never edited.
 
-### Schema (Proposed — Q17)
+### Schema
 
 The data model from `PROJECT.md` §7, with these additions:
 
