@@ -5,12 +5,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
+/** Runs through the full security filter chain: health must stay public. */
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
 class HealthControllerTests {
 
-	private final MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new HealthController()).build();
+	@Autowired
+	private MockMvc mockMvc;
 
 	@Test
 	void healthReturnsOk() throws Exception {
