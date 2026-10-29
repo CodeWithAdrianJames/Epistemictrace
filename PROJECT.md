@@ -135,12 +135,12 @@ Do not add a library or framework outside this table without a team decision rec
 
 | Entity | Key fields |
 |---|---|
-| USER | id, name, email, password_hash, role (STUDENT / INSTRUCTOR), consent_accepted_at |
-| ACTIVITY | id, instructor_id, title, problem_statement, starter_code, status (DRAFT / PUBLISHED / ARCHIVED) |
-| TEST_CASE | id, activity_id, input, expected_output, is_hidden |
+| USER | id, name, email (unique, stored lower-case), password_hash, role (STUDENT / INSTRUCTOR), consent_accepted_at, created_at |
+| ACTIVITY | id, instructor_id, title, problem_statement, starter_code, status (DRAFT / PUBLISHED / ARCHIVED), created_at |
+| TEST_CASE | id, activity_id, position, input, expected_output, is_hidden |
 | SDI_CONFIG | id, activity_id, threshold (default 70), cooldown_seconds, window_minutes |
-| CODING_SESSION | id, student_id, activity_id, started_at, ended_at, peak_sdi |
-| TELEMETRY_EVENT | id, session_id, type (EDIT / RUN / ERROR), timestamp, chars_added/removed, passed/total_count, error_signature, sdi_value |
+| CODING_SESSION | id, student_id, activity_id, started_at, ended_at, peak_sdi, runner_locked, sdi_at_lock, cooldown_ends_at |
+| TELEMETRY_EVENT | id, session_id, client_event_id (UUID, unique per session), type (EDIT / RUN / ERROR), timestamp, chars_added/removed, passed/total_count, error_signature, sdi_value |
 | REFLECTION | id, session_id, hypothesis, planned_fix, sdi_at_trigger, submitted_at |
 | ALERT | id, student_id, activity_id, trigger_count, dismissed |
 | DEBUGGING_PROMPT | id, activity_id, prompt_text |
