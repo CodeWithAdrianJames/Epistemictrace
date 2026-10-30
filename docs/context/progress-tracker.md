@@ -90,7 +90,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- None.
+- 07 Login, register and logout pages (IMP-07) — Part 1 (`tokenStore`, `authApi`, `AuthProvider` with unit tests; R1, R2, R3) in progress on branch `feature/imp-07-auth-pages`, started 2026-10-30. Gates Q11 and Q13 accepted. Parts 2 (login and register pages) and 3 (`RequireRole`, redirects, top bar, logout; R4–R9) not started.
 
 ## Next Up
 
