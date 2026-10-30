@@ -80,6 +80,16 @@ EpistemicTrace is a web-based **Python coding platform** that tracks *how* stude
 
 ## 5. How it works
 
+**Activities**
+
+```
+DRAFT ──(publish, needs ≥ 1 test case)──► PUBLISHED
+DRAFT or PUBLISHED ──(archive)──► ARCHIVED (read-only, no un-archive in the MVP)
+```
+
+- **Limits:** title 1–120 characters (trimmed), problem statement 1–20 000, starter code 0–20 000, test input 0–10 000, expected output 1–10 000, at most 50 test cases per activity.
+- Students see only published activities.
+
 **Session and telemetry**
 
 1. Opening an activity starts a session.

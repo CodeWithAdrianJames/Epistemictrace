@@ -124,7 +124,7 @@ The data model from `PROJECT.md` §7, with these additions:
 
 - **Score:** `round(100 × Σ wᵢ·nᵢ)`, clamped to `[0, 100]`.
 - **Proposed defaults:** `w = (0.20, 0.20, 0.25, 0.35)`, `runCap = 10`, `gapCap = 60 s`, `repeatCap = 5`, window 5 minutes, cooldown 120 seconds, threshold 70.
-- Weights and caps are application configuration (`epistemictrace.sdi.*`). Threshold, cooldown and window are per-activity rows in `sdi_configs`, created from configured defaults.
+- Weights and caps are application configuration (`epistemictrace.sdi.*`). Threshold, cooldown and window are per-activity rows in `sdi_configs`, created with the activity from `epistemictrace.sdi.defaults.*` (`threshold`, `cooldown-seconds`, `window-minutes`; spec 08).
 - **Recording:** `sdi_value` is saved on the RUN event; `coding_sessions.peak_sdi` = max of its RUN values.
 - **Struggle level** shown to students (never the number): `LOW` if SDI < 40, `MEDIUM` if 40 ≤ SDI < threshold, `HIGH` if SDI ≥ threshold. The 40 boundary is configuration.
 

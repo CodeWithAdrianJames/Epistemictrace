@@ -76,6 +76,17 @@ public class Activity {
 		this.updatedAt = Instant.now();
 	}
 
+	/**
+	 * Replaces the editable fields and sets {@code updated_at}, even when every value is unchanged: each edit
+	 * request counts as a change (spec 08 R3).
+	 */
+	public void edit(String title, String problemStatement, String starterCode) {
+		this.title = title;
+		this.problemStatement = problemStatement;
+		this.starterCode = starterCode;
+		this.updatedAt = Instant.now();
+	}
+
 	public void addTestCase(TestCase testCase) {
 		testCase.setActivity(this);
 		this.testCases.add(testCase);
