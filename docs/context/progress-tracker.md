@@ -55,14 +55,15 @@ Update this file whenever the current phase, active feature, open questions or i
 ## In Progress
 
 - 05 Register and login API (IMP-05)
-  - Part 1 (register endpoint with service and tests): in progress on branch `feature/imp-05-register-login-api`; code and tests committed, no PR yet.
+  - Part 1 (register endpoint with service and tests): merged as `724b92c` (PR #12, squash, branch `feature/imp-05-register-login-api`, 2026-10-30).
     - `config/SecurityConfig` publishes the `PasswordEncoder` bean: `BCryptPasswordEncoder(10)` (Q3 note). Stored hashes start with `$2a$10$`.
     - `auth/AuthController` (`POST /api/auth/register`, `201`), `auth/AuthService.register`, `auth/RegisterRequest`, `auth/RegisterResponse` (`id`, `name`, `email`, `role`), `auth/EmailAlreadyUsedException` (an `ErrorResponseException`, so `GlobalExceptionHandler` renders it as a `409` `ProblemDetail` with no handler change).
     - `RegisterRequest` strips `name` and `email` in its compact constructor, so the 1–100 / ≤ 254 limits apply to the trimmed values. `AuthService` lower-cases the email with `Locale.ROOT` before the duplicate check and the insert. The request record has no `role` field, so a `"role"` in the body is ignored and the user is always `STUDENT`.
     - Duplicate email: `existsByEmail` is checked first (no hash is computed for a known email). If two requests race past that check, `uk_users_email` rejects the second insert; `AuthService` catches the `DataIntegrityViolationException` from `saveAndFlush`, re-checks `existsByEmail` and throws `EmailAlreadyUsedException` (`409`), and rethrows any other integrity violation. `register` is deliberately not `@Transactional`, so the failed insert does not leave an outer transaction marked rollback-only.
     - Choice not spelled out in R1: `common/MaxUtf8Bytes` (constraint + validator) limits `password` to 72 **bytes** in UTF-8 as well as 8–72 characters. Spring Security 7.1.2's `BCrypt` throws `IllegalArgumentException("password cannot be more than 72 bytes")`, so a 72-character password with non-ASCII characters would otherwise be a `500`; it is now a `400` with `errors.password` "must be at most 72 bytes when UTF-8 encoded".
     - Tests: `AuthControllerTests` (12, `@SpringBootTest` + MockMvc, users deleted after each test) and `AuthServiceTests` (4, Mockito, covers the race path). Local: `./mvnw -B test` 40 tests, 0 failures, BUILD SUCCESS (JDK 21.0.11, 2026-10-30).
-  - Part 2 (login + `TokenService` + `/api/auth/me`) and Part 3 (`InstructorSeeder` + `.env.example` keys): not started.
+  - Part 2 (login + `TokenService` + `/api/auth/me` with tests): in progress on branch `feature/imp-05-part-2`.
+  - Part 3 (`InstructorSeeder` + `.env.example` keys): not started.
 
 ## Next Up
 
