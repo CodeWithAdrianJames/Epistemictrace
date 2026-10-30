@@ -78,9 +78,10 @@ class SecurityConfigTests {
 
 	@Test
 	void instructorTokenSignedByTestEncoderPassesAuthentication() throws Exception {
+		// Spec 08 added the list endpoint: an instructor with no activities gets an empty list.
 		mockMvc.perform(get("/api/instructor/activities")
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "INSTRUCTOR")))
-				.andExpect(status().isNotFound());
+				.andExpect(status().isOk());
 	}
 
 	@Test
