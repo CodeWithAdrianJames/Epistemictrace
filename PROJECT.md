@@ -156,7 +156,7 @@ Do not add a library or framework outside this table without a team decision rec
 ## 8. Repository and commands
 
 ```text
-frontend/   React + TypeScript (Vite) — app shell in progress (spec 04); starter page removed
+frontend/   React + TypeScript (Vite) — app shell done (spec 04): Router, AppLayout, apiFetch client
 backend/    Spring Boot — package com.episteme.epistemictrace (GET /api/health only)
 docs/       project documentation
 tests/      cross-cutting tests (empty)

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01, 02 and 03 are done. Spec 04 (`feature-specs/04-frontend-app-shell.md`) is in progress; its gates Q11 and Q12 are accepted, and Q20 (lint gating) was settled with it. Start `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02, 03 and 04 are done. Next: spec 05, Register and login API (`feature-specs/05-register-and-login-api.md`). It is blocked until its remaining gates, Q3 and Q5, are accepted (Q13 is already accepted). Decide Q21 (where the frontend reads `VITE_API_URL`) before spec 07 makes the first real API call. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -16,7 +16,6 @@ Update this file whenever the current phase, active feature, open questions or i
   - `frontend/`: React 19 + TypeScript + Vite 8 starter page, Monaco package, Vitest, oxlint
   - `backend/`: Spring Boot 4.1, Java 21, package `com.episteme.epistemictrace`, `GET /api/health` → `{"status":"ok"}`, CORS for `http://localhost:5173`
   - `.env.example` with `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`
-  - `npm test` fails because no test exists yet (fixed by spec 04)
 - 01 Backend database and security setup (IMP-01) — completed 2026-10-29, both parts on `main`
   - Part 1 (Persistence): merged as `d6f25c8` (PR #2, squash). Starters: `spring-boot-starter-data-jpa`, `spring-boot-starter-flyway`; plus `org.flywaydb:flyway-database-postgresql`, `org.postgresql:postgresql` (runtime); test: `spring-boot-starter-data-jpa-test`, `spring-boot-starter-flyway-test`, `com.h2database:h2`. Test config is `src/test/resources/application-test.properties`, activated with `@ActiveProfiles("test")`. Start-up against PostgreSQL verified (see Session Notes). Review caveat: merged by its author after a self-verified check, not approved by a second reviewer.
   - Part 2 (Security): merged as `84077f7` (PR #3, squash). Starters: `spring-boot-starter-security`, `spring-boot-starter-security-oauth2-resource-server` (the Boot 4 name; the old `spring-boot-starter-oauth2-resource-server` is still in the BOM but deprecated); `spring-boot-starter-validation` was already in the scaffold; test: `spring-boot-starter-security-test`, `spring-boot-starter-security-oauth2-resource-server-test`. Added `config/JwtProperties`, `config/JwtConfig`, `config/SecurityConfig`, `common/GlobalExceptionHandler`; `CorsConfig` moved from the root package to `config/` and now publishes a `corsConfigurationSource` bean (same rule: `/api/**`, origin `http://localhost:5173`, same methods, all headers, max age 1800 s) so Spring Security applies CORS before authentication. Start-up with a short or missing `JWT_SECRET` fails with "epistemictrace.jwt.secret (JWT_SECRET) must be at least 32 bytes when UTF-8 encoded" and does not print the value. Review caveat: see the manual review override in Session Notes.
@@ -28,13 +27,10 @@ Update this file whenever the current phase, active feature, open questions or i
   - Part 3 (`V3__sessions_and_telemetry.sql` + `session.CodingSession`, `telemetry.TelemetryEvent`, `reflection.Reflection` + repositories): merged as `858b2a3` (PR #6, squash). `./mvnw test` passed on H2 (24 tests, 0 failures; Flyway applies V1–V3); start-up against PostgreSQL 18.6 verified (see Session Notes).
   - All three migrations run against H2 (tests) and PostgreSQL (manual start-up); Hibernate `validate` passes; no table outside R2–R4 exists.
 - 03 CI checks on pull requests (IMP-03) — completed 2026-10-30, Part 1 on `main`; Part 2 is a verification with no merged code
-  - Part 1 (`.github/workflows/ci.yml`): merged as `7fecf4b` (PR #7, squash). `frontend` and `backend` both passed on GitHub Actions, runs 40906656197 (`9596f67`) and 40907080682 (`e930c2b`). Q19 accepted: CI uses Node 22. A temporary smoke test, `frontend/src/smoke.test.ts`, keeps `npm test` from exiting 1 on "no test files"; spec 04 removes it when it adds real tests. Review caveat: PR opened from the author's own account, no second reviewer.
+  - Part 1 (`.github/workflows/ci.yml`): merged as `7fecf4b` (PR #7, squash). `frontend` and `backend` both passed on GitHub Actions, runs 40906656197 (`9596f67`) and 40907080682 (`e930c2b`). Q19 accepted: CI uses Node 22. A temporary smoke test, `frontend/src/smoke.test.ts`, kept `npm test` from exiting 1 on "no test files"; spec 04 Part 1 removed it. Review caveat: PR opened from the author's own account, no second reviewer.
   - Part 2 (throwaway PR #8, closed unmerged, branch deleted): both checks went red (run 40985194285). See Session Notes for what failed and where.
   - Not met: acceptance criterion "a lint error makes the `frontend` check fail". `oxlint` reports its default rules as warnings and exits 0, so no lint violation can fail the check. Raised as Q20 (accepted 2026-10-30 with spec 04: `lint` is now `oxlint --deny-warnings`; see Architecture Decisions).
-
-## In Progress
-
-- 04 Frontend app shell (IMP-04)
+- 04 Frontend app shell (IMP-04) — completed 2026-10-30, all three parts on `main`
   - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): merged as `e5271fb` (PR #9, squash, branch `feature/imp-04-frontend-shell`, 2026-10-30). Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no second reviewer.
     - Added `react-router` 8.5.1; dev: `@testing-library/react` 16.3.3, `@testing-library/jest-dom` 7.0.1, `jsdom` 30.1.3. `@testing-library/dom` 10.4.2 is installed by npm as their required peer and appears only in `package-lock.json`.
     - `vite.config.ts` uses `defineConfig` from `vitest/config` with `environment: 'jsdom'` and `setupFiles: ['./src/test/setup.ts']`.
@@ -47,12 +43,18 @@ Update this file whenever the current phase, active feature, open questions or i
     - `src/app/AppLayout.tsx` + `AppLayout.module.css`: top bar with "EpistemicTrace" (link to `/`) and static `NavLink`s Activities, History, My activities (`aria-current="page"` on the active one); `<main>` is limited to 1200px unless a matched route has `handle: { fullWidth: true }` (only `student/activities/:activityId`). Log out and user name wait for spec 07.
     - Placeholder `App.tsx` / `App.test.tsx` deleted; `src/app/router.test.tsx` uses `createMemoryRouter` (19 tests).
     - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 19 passed. No hex colors in `src/**/*.css` outside `tokens.css`.
-  - Part 3 (`apiFetch`, `ApiError`): in progress on branch `feature/imp-04-part-3`, not yet merged.
+  - Part 3 (`apiFetch`, `ApiError`): merged as `e86d44a` (PR #11, squash, branch `feature/imp-04-part-3`, 2026-10-30). `frontend` and `backend` both passed on GitHub Actions, run 40991417101. Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no reviews, no second reviewer.
     - `src/api/ApiError.ts`: `ApiError extends Error` with readonly `status`, `title`, `detail`, `fieldErrors`; `message` is `detail`. Fields are assigned in the constructor (no parameter properties, because `erasableSyntaxOnly` is on).
     - `src/api/apiFetch.ts`: `apiFetch<T>(path, { method, body, token, signal, keepalive })`. Throws a plain `Error` (no request) when `path` does not start with `/api/`. Base URL is `import.meta.env.VITE_API_URL` read on every call, trailing `/` stripped, `''` when unset. Always sends `Accept: application/json, application/problem+json`; `Content-Type: application/json` and a `JSON.stringify` body only when `body` is given; `Authorization: Bearer <token>` only for a non-empty token. `204` → `undefined`.
     - Errors: non-2xx → `ApiError` with `status` from the response; `title`/`detail` from the `ProblemDetail` body, falling back to the status text (or `HTTP <status>`) and "Something went wrong. Please try again." when the body is empty, not JSON, not an object or the fields are blank; `fieldErrors` keeps only string values of `errors`. Network failure → `status: 0`, detail "Can't reach the server. Check your connection." Two choices not spelled out in R6: an abort from the caller's `signal` is rethrown unchanged (not turned into `status: 0`), and a 2xx body that is not JSON throws `ApiError` with that status and detail "The server sent a response the app can't read.", so callers only ever see `ApiError` or an abort.
     - `src/api/apiFetch.test.ts` (15 tests) mocks `fetch` with `vi.stubGlobal` and sets the base URL with `vi.stubEnv`.
     - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 34 passed (19 router + 15 apiFetch). `fetch(` appears only in `src/api/apiFetch.ts`.
+  - Result on `main` at `e86d44a`: `npm test` runs 34 tests in 2 files (19 router, 15 apiFetch) and passes, so `npm test` no longer fails; `npm run lint` and `npm run build` pass. The `frontend` check on PR #11 was green.
+  - Not yet done: the acceptance criterion "`npm run dev` shows the login placeholder at `/` with the top bar" has only been covered by the router tests, not checked by hand in a browser, and no screenshot is on the Trello card. Q21 is open because a root `.env` may not reach the Vite dev server.
+
+## In Progress
+
+None.
 
 ## Next Up
 
