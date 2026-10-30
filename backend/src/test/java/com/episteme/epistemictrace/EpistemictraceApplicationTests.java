@@ -10,6 +10,7 @@ class EpistemictraceApplicationTests {
 
 	@Test
 	void contextLoads() {
+		org.junit.jupiter.api.Assertions.fail("Deliberate failure for CI verification");
 	}
 
 }
