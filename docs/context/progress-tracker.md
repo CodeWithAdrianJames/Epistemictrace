@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01, 02, 03, 04 and 05 are done. Now: spec 06, Role-based access control (`feature-specs/06-role-based-access-control.md`); its gate Q5 is accepted. Decide Q21 (where the frontend reads `VITE_API_URL`) before spec 07 makes the first real API call. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02, 03, 04 and 05 are done. Now: spec 06, Role-based access control (`feature-specs/06-role-based-access-control.md`); its gate Q5 is accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -50,7 +50,7 @@ Update this file whenever the current phase, active feature, open questions or i
     - `src/api/apiFetch.test.ts` (15 tests) mocks `fetch` with `vi.stubGlobal` and sets the base URL with `vi.stubEnv`.
     - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 34 passed (19 router + 15 apiFetch). `fetch(` appears only in `src/api/apiFetch.ts`.
   - Result on `main` at `e86d44a`: `npm test` runs 34 tests in 2 files (19 router, 15 apiFetch) and passes, so `npm test` no longer fails; `npm run lint` and `npm run build` pass. The `frontend` check on PR #11 was green.
-  - Not yet done: the acceptance criterion "`npm run dev` shows the login placeholder at `/` with the top bar" has only been covered by the router tests, not checked by hand in a browser, and no screenshot is on the Trello card. Q21 is open because a root `.env` may not reach the Vite dev server.
+  - Not yet done: the acceptance criterion "`npm run dev` shows the login placeholder at `/` with the top bar" has only been covered by the router tests, not checked by hand in a browser, and no screenshot is on the Trello card. Q21 was open because a root `.env` did not reach the Vite dev server; it is now accepted (`envDir: '../'`, see Architecture Decisions).
 - 05 Register and login API (IMP-05) — completed 2026-10-30, all three parts on `main`
   - Part 1 (register endpoint with service and tests): merged as `724b92c` (PR #12, squash, branch `feature/imp-05-register-login-api`, 2026-10-30).
     - `config/SecurityConfig` publishes the `PasswordEncoder` bean: `BCryptPasswordEncoder(10)` (Q3 note). Stored hashes start with `$2a$10$`.
@@ -133,7 +133,6 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
-| Q21 | Where does the frontend read `VITE_API_URL` from? Vite loads `.env` files from `envDir`, which defaults to the Vite root (`frontend/`), but `PROJECT.md` §8 says to copy `.env.example` to `.env` at the repository root. With only a root `.env`, `npm run dev` leaves `VITE_API_URL` unset, so `apiFetch` calls relative `/api/...` URLs on the Vite dev server (port 5173) instead of the backend. | Either set `envDir: '..'` in `frontend/vite.config.ts`, or document "copy `VITE_API_URL` into `frontend/.env`" in `PROJECT.md` §8. Decide before spec 07 makes the first real API call. | Spec 04 owner (Jacob) | Open |
 
 ## Architecture Decisions
 
@@ -164,6 +163,7 @@ Accepted from Open Questions (2026-10-30):
 - **Q20** (IMP-03 / IMP-04): the frontend `lint` script is `oxlint --deny-warnings`, so any oxlint warning makes `npm run lint` and the CI `frontend` check exit non-zero. Accepted on Adrian's instruction when starting spec 04. Verified locally: the current code lints clean (exit 0), and a probe file with an unused variable and `debugger` made `npm run lint` exit 1. `.oxlintrc.json` is unchanged. The spec 03 criterion "a lint error makes the `frontend` check fail" should now hold, but has not been re-run on GitHub Actions.
 - **Q3** (CLR-03): accepted as proposed when starting spec 05. MVP has no courses: all students see all published activities, and the activity's owner is the instructor for its sessions. Self-registration creates students only; instructors are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME`. Author's note recorded with this acceptance: "Adopt BCrypt cost factor 10. Authorized by author." (the `PasswordEncoder` bean is `BCryptPasswordEncoder` with strength 10; the BCrypt cost is not part of Q3's question, but was given as Q3's acceptance note).
 - **Q5** (PLN-03): accepted as proposed when starting spec 05. REST paths are `architecture-context.md` → API Surface, payloads are those in each feature spec, and errors are `ProblemDetail` bodies (`application/problem+json`) with an `errors` map for validation errors. Authorized by author.
+- **Q21** (spec 04 / IMP-04): Vite configured with `envDir: '../'` to load root .env file. `frontend/vite.config.ts` sets `envDir: '../'`, so `npm run dev` and `npm run build` read the repository-root `.env` that `PROJECT.md` §8 tells developers to create, and `VITE_API_URL` reaches `apiFetch`. Vite exposes only variables starting with `VITE_` to client code (default `envPrefix`), so `DB_PASSWORD`, `JWT_SECRET` and the other keys in the same file stay out of the bundle. `envDir` resolves relative to the Vite root (`frontend/`); checked with Vite's `resolveConfig`, which returns the repository root. Not checked in a browser against a real root `.env`. Accepted on Adrian's instruction.
 
 ## Session Notes
 
