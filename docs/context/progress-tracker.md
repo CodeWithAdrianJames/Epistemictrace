@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 07 are done. Next: spec 08, Activities API (`feature-specs/08-activities-api.md`, card IMP-08, owner Noel, reviewer Jacob). Depends on 06 (done). Gates: Q5 (accepted: paths, payloads) and **Q16** (status rules and field limits; still **Proposed** — accept it with its deciding card SPC-02 (Jacob) or on Adrian's instruction before Part 1). Four parts: (1) activity CRUD (create with `sdi_configs` row, list, get, update) + `SdiDefaultsProperties` bound to `epistemictrace.sdi.defaults`; (2) publish and archive; (3) test-case endpoints; (4) student read endpoints. Spec 09 (instructor editor) and spec 10 (student list) wait on this spec. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 to 07 are done. Now: spec 08, Activities API (`feature-specs/08-activities-api.md`, card IMP-08, owner Noel, reviewer Jacob). Depends on 06 (done). Gates: Q5 (accepted: paths, payloads) and Q16 (accepted 2026-10-31 on Adrian's instruction: status rules and field limits). Four parts: (1) activity CRUD (create with `sdi_configs` row, list, get, update) + `SdiDefaultsProperties` bound to `epistemictrace.sdi.defaults`; (2) publish and archive; (3) test-case endpoints; (4) student read endpoints. Spec 09 (instructor editor) and spec 10 (student list) wait on this spec. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -118,7 +118,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-None.
+- 08 Activities API (IMP-08), Part 1 (activity CRUD: create with `sdi_configs` row, list, get, update; `SdiDefaultsProperties` bound to `epistemictrace.sdi.defaults`) — started 2026-10-31 on branch `feature/imp-08-part-1`. Gate Q16 accepted.
 
 ## Next Up
 
@@ -173,7 +173,6 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q10 | Term dates, MVP demo date, pilot plan (`PROJECT.md` Q9) | — | CLR-09 (Jacob) | Open |
 | Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Proposed |
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
-| Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
 
 ## Architecture Decisions
@@ -206,6 +205,10 @@ Accepted from Open Questions (2026-10-30):
 - **Q3** (CLR-03): accepted as proposed when starting spec 05. MVP has no courses: all students see all published activities, and the activity's owner is the instructor for its sessions. Self-registration creates students only; instructors are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME`. Author's note recorded with this acceptance: "Adopt BCrypt cost factor 10. Authorized by author." (the `PasswordEncoder` bean is `BCryptPasswordEncoder` with strength 10; the BCrypt cost is not part of Q3's question, but was given as Q3's acceptance note).
 - **Q5** (PLN-03): accepted as proposed when starting spec 05. REST paths are `architecture-context.md` → API Surface, payloads are those in each feature spec, and errors are `ProblemDetail` bodies (`application/problem+json`) with an `errors` map for validation errors. Authorized by author.
 - **Q21** (spec 04 / IMP-04): Vite configured with `envDir: '../'` to load root .env file. `frontend/vite.config.ts` sets `envDir: '../'`, so `npm run dev` and `npm run build` read the repository-root `.env` that `PROJECT.md` §8 tells developers to create, and `VITE_API_URL` reaches `apiFetch`. Vite exposes only variables starting with `VITE_` to client code (default `envPrefix`), so `DB_PASSWORD`, `JWT_SECRET` and the other keys in the same file stay out of the bundle. `envDir` resolves relative to the Vite root (`frontend/`); checked with Vite's `resolveConfig`, which returns the repository root. Not checked in a browser against a real root `.env`. Accepted on Adrian's instruction. Merged as `957735e` (PR #15, squash, branch `chore/q21-vite-envdir`, 2026-10-30); `frontend` and `backend` passed on GitHub Actions, run 41007244242.
+
+Accepted from Open Questions (2026-10-31):
+
+- **Q16** (SPC-02): accepted as proposed on Adrian's instruction when starting spec 08 Part 1. Status rules: DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in the MVP. Limits: title 1–120 characters after trimming, problem statement 1–20 000, starter code 0–20 000, test input 0–10 000, expected output 1–10 000, at most 50 test cases per activity; violations are `400` with an `errors` map. The answer matches spec 08 R2/R3, so the spec is unchanged; the rules are recorded in `PROJECT.md` §5 → Activities.
 
 ## Session Notes
 
