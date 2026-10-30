@@ -4,55 +4,6 @@
   min-height: 100vh;
 }
 
-.topBar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-3) var(--space-5);
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-default);
-}
-
-.productName {
-  color: var(--text-primary);
-  font-size: 1.125rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.navList {
-  display: flex;
-  gap: var(--space-2);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.navLink {
-  display: block;
-  padding: var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  text-decoration: none;
-}
-
-.navLink:hover {
-  background: var(--bg-subtle);
-  color: var(--text-primary);
-}
-
-.productName:focus-visible,
-.navLink:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.navLinkActive,
-.navLinkActive:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
-}
-
 .contentContained,
 .contentFull {
   flex: 1;
