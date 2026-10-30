@@ -1,18 +1,26 @@
 package com.episteme.epistemictrace.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Duration;
+import java.time.Instant;
+
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
@@ -35,6 +43,9 @@ class AuthControllerTests {
 
 	@Autowired
 	private PasswordEncoder passwordEncoder;
+
+	@Autowired
+	private JwtDecoder jwtDecoder;
 
 	@AfterEach
 	void deleteUsers() {
@@ -172,6 +183,148 @@ class AuthControllerTests {
 				.andExpect(jsonPath("$.errors.name").isNotEmpty())
 				.andExpect(jsonPath("$.errors.email").isNotEmpty())
 				.andExpect(jsonPath("$.errors.password").isNotEmpty());
+	}
+
+	@Test
+	void loginWithCorrectCredentialsReturnsTokenAndUser() throws Exception {
+		Long id = registerStudent("Student One", "student1@example.test");
+		Instant before = Instant.now();
+
+		String json = login("""
+				{"email": "  STUDENT1@Example.Test ", "password": "%s"}
+				""".formatted(PASSWORD))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.token").isString())
+				.andExpect(jsonPath("$.expiresAt").isString())
+				.andExpect(jsonPath("$.user.id").value(id))
+				.andExpect(jsonPath("$.user.name").value("Student One"))
+				.andExpect(jsonPath("$.user.email").value("student1@example.test"))
+				.andExpect(jsonPath("$.user.role").value("STUDENT"))
+				.andExpect(jsonPath("$.user.consentAccepted").value(false))
+				.andExpect(jsonPath("$.user.password").doesNotExist())
+				.andExpect(jsonPath("$.user.passwordHash").doesNotExist())
+				.andReturn().getResponse().getContentAsString();
+
+		Instant expiresAt = Instant.parse(JsonPath.read(json, "$.expiresAt"));
+		assertThat(expiresAt).isBetween(before.plus(Duration.ofHours(8)).minusSeconds(1),
+				Instant.now().plus(Duration.ofHours(8)));
+		Jwt decoded = this.jwtDecoder.decode(JsonPath.read(json, "$.token"));
+		assertThat(decoded.getSubject()).isEqualTo(String.valueOf(id));
+		assertThat(decoded.getClaimAsString("role")).isEqualTo("STUDENT");
+		assertThat(decoded.getClaimAsString("email")).isEqualTo("student1@example.test");
+		assertThat(decoded.getExpiresAt()).isEqualTo(expiresAt);
+	}
+
+	@Test
+	void loginWithWrongPasswordReturns401() throws Exception {
+		registerStudent("Student One", "student1@example.test");
+
+		login("""
+				{"email": "student1@example.test", "password": "wrong-password"}
+				""")
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(jsonPath("$.status").value(401))
+				.andExpect(jsonPath("$.detail").value("Email or password is incorrect."))
+				.andExpect(jsonPath("$.token").doesNotExist());
+	}
+
+	@Test
+	void loginWithUnknownEmailReturns401WithSameDetail() throws Exception {
+		registerStudent("Student One", "student1@example.test");
+
+		login("""
+				{"email": "nobody@example.test", "password": "%s"}
+				""".formatted(PASSWORD))
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(jsonPath("$.status").value(401))
+				.andExpect(jsonPath("$.detail").value("Email or password is incorrect."))
+				.andExpect(jsonPath("$.token").doesNotExist());
+	}
+
+	@Test
+	void loginWithPasswordOver72BytesReturns401() throws Exception {
+		registerStudent("Student One", "student1@example.test");
+
+		login("""
+				{"email": "student1@example.test", "password": "%s"}
+				""".formatted("é".repeat(72)))
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.detail").value("Email or password is incorrect."));
+	}
+
+	@Test
+	void loginWithMissingFieldsReturns400() throws Exception {
+		login("{}")
+				.andExpect(status().isBadRequest())
+				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(jsonPath("$.errors.email").isNotEmpty())
+				.andExpect(jsonPath("$.errors.password").isNotEmpty());
+	}
+
+	@Test
+	void meWithLoginTokenReturnsUserFromDatabase() throws Exception {
+		Long id = registerStudent("Student One", "student1@example.test");
+		String token = loginToken("student1@example.test");
+
+		this.mockMvc.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+				.andExpect(status().isOk())
+				.andExpect(content().contentType(MediaType.APPLICATION_JSON))
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.name").value("Student One"))
+				.andExpect(jsonPath("$.email").value("student1@example.test"))
+				.andExpect(jsonPath("$.role").value("STUDENT"))
+				.andExpect(jsonPath("$.consentAccepted").value(false))
+				.andExpect(jsonPath("$.passwordHash").doesNotExist());
+	}
+
+	@Test
+	void meWithoutTokenReturns401() throws Exception {
+		this.mockMvc.perform(get("/api/auth/me"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void meWithMalformedTokenReturns401() throws Exception {
+		this.mockMvc.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer not-a-jwt"))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void meWithTokenOfDeletedUserReturns401() throws Exception {
+		registerStudent("Student One", "student1@example.test");
+		String token = loginToken("student1@example.test");
+		this.userRepository.deleteAll();
+
+		this.mockMvc.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+				.andExpect(status().isUnauthorized())
+				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(jsonPath("$.status").value(401))
+				.andExpect(jsonPath("$.detail").value("The account for this token no longer exists. Please log in again."));
+	}
+
+	private Long registerStudent(String name, String email) throws Exception {
+		String json = register(body(name, email, PASSWORD))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+		return ((Number) JsonPath.read(json, "$.id")).longValue();
+	}
+
+	private String loginToken(String email) throws Exception {
+		String json = login("""
+				{"email": "%s", "password": "%s"}
+				""".formatted(email, PASSWORD))
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+		return JsonPath.read(json, "$.token");
+	}
+
+	private ResultActions login(String json) throws Exception {
+		return this.mockMvc.perform(post("/api/auth/login")
+				.contentType(MediaType.APPLICATION_JSON)
+				.content(json));
 	}
 
 	private ResultActions register(String json) throws Exception {

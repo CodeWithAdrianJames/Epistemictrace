@@ -5,8 +5,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -23,7 +26,10 @@ class AuthServiceTests {
 
 	private final PasswordEncoder passwordEncoder = mock(PasswordEncoder.class);
 
-	private final AuthService authService = new AuthService(this.userRepository, this.passwordEncoder);
+	private final TokenService tokenService = mock(TokenService.class);
+
+	private final AuthService authService = new AuthService(this.userRepository, this.passwordEncoder,
+			this.tokenService);
 
 	@Test
 	void registerSavesNormalizedStudentWithHash() {
@@ -72,6 +78,42 @@ class AuthServiceTests {
 
 		assertThatThrownBy(() -> this.authService.register("Student One", "student1@example.test", "plain-password"))
 				.isSameAs(failure);
+	}
+
+	@Test
+	void loginWithUnknownEmailStillRunsOnePasswordCheck() {
+		when(this.userRepository.findByEmail("nobody@example.test")).thenReturn(Optional.empty());
+		when(this.passwordEncoder.encode(any())).thenReturn("placeholder-hash");
+
+		assertThatThrownBy(() -> this.authService.login(" Nobody@Example.TEST ", "plain-password"))
+				.isInstanceOf(InvalidCredentialsException.class);
+		assertThatThrownBy(() -> this.authService.login("nobody@example.test", "plain-password"))
+				.isInstanceOf(InvalidCredentialsException.class);
+
+		verify(this.passwordEncoder, times(2)).matches("plain-password", "placeholder-hash");
+		// The placeholder hash is computed once and reused.
+		verify(this.passwordEncoder, times(1)).encode(any());
+		verify(this.tokenService, never()).issue(any());
+	}
+
+	@Test
+	void loginWithWrongPasswordThrowsWithoutIssuingToken() {
+		User user = new User("Student One", "student1@example.test", "stored-hash", Role.STUDENT);
+		when(this.userRepository.findByEmail("student1@example.test")).thenReturn(Optional.of(user));
+		when(this.passwordEncoder.matches("wrong-password", "stored-hash")).thenReturn(false);
+
+		assertThatThrownBy(() -> this.authService.login("student1@example.test", "wrong-password"))
+				.isInstanceOf(InvalidCredentialsException.class);
+		verify(this.tokenService, never()).issue(any());
+	}
+
+	@Test
+	void currentUserWithNonNumericSubjectThrowsUnknownTokenUser() {
+		assertThatThrownBy(() -> this.authService.currentUser("not-a-number"))
+				.isInstanceOf(UnknownTokenUserException.class);
+		assertThatThrownBy(() -> this.authService.currentUser(null))
+				.isInstanceOf(UnknownTokenUserException.class);
+		verify(this.userRepository, never()).findById(any());
 	}
 
 }
