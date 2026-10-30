@@ -163,7 +163,7 @@ tests/      cross-cutting tests (empty)
 .github/    CI: workflows/ci.yml (frontend and backend checks on PRs to main)
 ```
 
-Prerequisites: Node.js 22.22+ (needed by `react-router` and `jsdom`; CI uses Node 22) and JDK 21. Copy `.env.example` to `.env` (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`).
+Prerequisites: Node.js 22.22+ (needed by `react-router` and `jsdom`; CI uses Node 22) and JDK 21. Copy `.env.example` to `.env` (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`, `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME`). The three `INSTRUCTOR_SEED_*` keys are optional: when email and password are both set, the backend creates that instructor account at start-up if no user has the email yet.
 
 ```bash
 # frontend/
