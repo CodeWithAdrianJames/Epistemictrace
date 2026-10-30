@@ -2,7 +2,7 @@
 
 > **Read this first.** This is the single source of project context for team members and AI agents. Keep it accurate: when a decision, requirement or convention changes, update this file in the same pull request.
 
-**Last updated:** 2026-10-29 · **Team:** Episteme Labs (CIT-U, CSIT321) · **Board:** https://trello.com/b/nwPfFX7D/episteme-labs-epistemictrace
+**Last updated:** 2026-10-30 · **Team:** Episteme Labs (CIT-U, CSIT321) · **Board:** https://trello.com/b/nwPfFX7D/episteme-labs-epistemictrace
 
 ---
 
@@ -157,7 +157,7 @@ Do not add a library or framework outside this table without a team decision rec
 
 ```text
 frontend/   React + TypeScript (Vite) — app shell done (spec 04): Router, AppLayout, apiFetch client
-backend/    Spring Boot — package com.episteme.epistemictrace (GET /api/health only)
+backend/    Spring Boot — package com.episteme.epistemictrace: schema, JWT security, auth API done (spec 05: register, login, GET /api/auth/me, instructor seeder)
 docs/       project documentation
 tests/      cross-cutting tests (empty)
 .github/    CI: workflows/ci.yml (frontend and backend checks on PRs to main)
@@ -201,11 +201,11 @@ npm test                  # Vitest run (jsdom + Testing Library)
   - evidence attached to the card;
   - this file updated if anything here changed.
 
-## 10. Current status (2026-10-29)
+## 10. Current status (2026-10-30)
 
-- **Repo:** scaffold only. Security, JPA, PostgreSQL and Pyodide are not added yet. No GitHub issues exist.
-- **Board:** no feature work has started.
-  - **To Do:** PLT-01, CW-01, TEL-01, TEL-03 and the process tasks SP-01, SP-04, SP-05, SP-07.
+- **Repo:** specs 01 to 05 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, and the register, login and `GET /api/auth/me` API with the instructor seeder. Pyodide is not added yet. Role-based path rules are next (spec 06). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
+- **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
+  - **Next:** IMP-06 (role-based access control); IMP-07 (login, register and logout pages) can run in parallel. See Next Up in the tracker.
 - **Dates:** no due dates are set except CW-01's, which has passed.
 
 ## 11. Open questions
