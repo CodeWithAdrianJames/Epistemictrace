@@ -83,7 +83,11 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- 06 Role-based access control (IMP-06), Part 2 (R2 path rules in `SecurityConfig`, with `RoleAccessTests`), target branch `feature/imp-06-part-2` (cut from `main`). Not started. Part 1 is merged (see Completed). Gate Q5 accepted.
+- 06 Role-based access control (IMP-06), Part 2 (R2 path rules in `SecurityConfig`, with `RoleAccessTests`), branch `feature/imp-06-part-2` (cut from `main` at `293c8ba`). In Progress: implemented, PR open, not merged. Part 1 is merged (see Completed). Gate Q5 accepted.
+  - `SecurityConfig` rules, first match wins: `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, `OPTIONS /**` → `permitAll`; `/api/auth/me` → `authenticated`; `/api/instructor/**` → `hasRole('INSTRUCTOR')`; `/api/activities/**`, `/api/sessions/**`, `/api/me/**` → `hasRole('STUDENT')`; `/api/**` → `denyAll`; `anyRequest()` → `authenticated`.
+  - Choices not spelled out in R2: (1) `/api/health` stays `GET` only, as in `architecture-context.md` (R2 names the path without a method). (2) Register and login are public for `POST` only; `GET /api/auth/login` falls through to `denyAll`. (3) Paths outside `/api` keep `authenticated` instead of `denyAll`: there are no endpoints there, and Spring Security also authorizes the `/error` dispatch, which `denyAll` would break. (4) `denyAll` without a token answers `401` (empty body, bearer entry point), not `403`, matching the acceptance criterion for `/api/admin`.
+  - `/x/**` patterns match `/x` itself (`/api/activities`, `/api/instructor`) but not near-miss prefixes (`/api/activitiesx`, `/api/instructors` → `denyAll`); both are covered by tests.
+  - Tests: `RoleAccessTests` 44 (parameterized, `@SpringBootTest` + MockMvc, tokens from the test `JwtEncoder` for a real student and instructor so `/api/auth/me` answers `200`; every R2 rule with no token, student and instructor; asserts `401` with empty body, `403` with the `ProblemDetail` detail "You don't have access to this.", or "not 401/403"). `SecurityConfigTests`: the two "token passes authentication" tests moved from `/api/anything-else` (now `denyAll`) to `/api/activities` (student) and `/api/instructor/activities` (instructor). All five spec 06 acceptance criteria are covered. Local: `./mvnw -B test` 136 tests, 0 failures, BUILD SUCCESS (JDK 21.0.11, 2026-10-30).
 
 ## Next Up
 

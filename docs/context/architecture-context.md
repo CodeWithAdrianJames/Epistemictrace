@@ -79,9 +79,9 @@ The data model from `PROJECT.md` §7, with these additions:
 - Stateless JWT bearer tokens, signed HS256 with `JWT_SECRET` (at least 32 bytes).
 - Token claims: `sub` = user id, `role`, `email`; lifetime 8 hours; no refresh token. Logout clears the token in the browser.
 - Passwords are hashed with BCrypt, cost factor 10.
-- Public endpoints: `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`. Everything else under `/api` requires a valid token.
+- Public endpoints: `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`, and any `OPTIONS` request. Everything else under `/api` requires a valid token.
 - The `role` claim maps to exactly one authority, `ROLE_STUDENT` or `ROLE_INSTRUCTOR`; a token without a valid `role` claim is rejected with `401`. A wrong role gets `403` with a `ProblemDetail` body, detail "You don't have access to this."; no or invalid token stays `401`. Controllers read the caller with `config/CurrentUser` (`id()`, `role()`) and pass the id to services.
-- `/api/instructor/**` requires role `INSTRUCTOR`. `/api/activities/**`, `/api/sessions/**` and `/api/me/**` require role `STUDENT`. `/api/auth/me` requires any authenticated user.
+- Path rules in `SecurityConfig`, first match wins: the public endpoints above; `/api/auth/me` requires any authenticated user; `/api/instructor/**` requires role `INSTRUCTOR`; `/api/activities/**`, `/api/sessions/**` and `/api/me/**` require role `STUDENT`; any other `/api/**` path is denied (`403` with a token, `401` without). Each `/x/**` pattern also matches `/x` itself but not `/xy`. Outside `/api` there are no endpoints; those paths only require authentication, so error dispatches to `/error` keep working.
 - Self-registration creates `STUDENT` accounts only. Instructor accounts are created by a seed runner from environment variables (Q3).
 - An instructor can read and change only activities they created.
 - A student can read and write only their own sessions, events and reflections. Not found → `404`; exists but not owned → `403`.
