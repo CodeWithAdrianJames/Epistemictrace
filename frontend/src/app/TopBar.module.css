@@ -1,0 +1,75 @@
+.topBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.productName {
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.navList {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.navLink {
+  display: block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.navLink:hover {
+  background: var(--bg-subtle);
+  color: var(--text-primary);
+}
+
+.navLinkActive,
+.navLinkActive:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+/* User name and Log out sit at the right end of the bar. */
+.account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-left: auto;
+}
+
+.userName {
+  color: var(--text-secondary);
+}
+
+.logout {
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.logout:hover {
+  background: var(--bg-subtle);
+}
+
+.productName:focus-visible,
+.navLink:focus-visible,
+.logout:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

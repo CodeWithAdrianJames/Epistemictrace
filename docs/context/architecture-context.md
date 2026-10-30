@@ -28,7 +28,7 @@ No library or framework outside this table may be added without a team decision 
 
 - `app/` — router, route guards, top-level layout. No business logic.
 - `api/` — the one HTTP client (`apiFetch`) and one module per resource (`authApi`, `activitiesApi`, `sessionsApi`, …). The only place that calls `fetch`.
-- `auth/` — auth state (current user, token storage) and the login/register/logout pages.
+- `auth/` — auth state (current user, token storage) and the login/register/logout pages. Protected API calls go through `useProtectedRequest()`, which passes the provider's token to the `api/` function and on `401` logs out and redirects to `/login` (spec 07 R4).
 - `features/activities/` — student activity list; instructor activity list and editor.
 - `features/workspace/` — the activity page: layout, problem statement, editor, results panel.
 - `features/runner/` — Pyodide worker, main-thread runner wrapper, test checker. No React.
