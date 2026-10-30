@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 and 02 are done. Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted, and `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02 and 03 are done. Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted, and `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Spec 04 should also remove `frontend/src/smoke.test.ts` and settle Q20 (lint gating). Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -27,10 +27,14 @@ Update this file whenever the current phase, active feature, open questions or i
   - Part 2 (`V2__activities.sql` + `activity.Activity`, `activity.TestCase`, `activity.SdiConfig` + repositories): merged as `b4fbbee` (PR #5, squash). `./mvnw test` passed on H2 (21 tests, 0 failures); start-up against PostgreSQL 18.6 verified (see Session Notes).
   - Part 3 (`V3__sessions_and_telemetry.sql` + `session.CodingSession`, `telemetry.TelemetryEvent`, `reflection.Reflection` + repositories): merged as `858b2a3` (PR #6, squash). `./mvnw test` passed on H2 (24 tests, 0 failures; Flyway applies V1–V3); start-up against PostgreSQL 18.6 verified (see Session Notes).
   - All three migrations run against H2 (tests) and PostgreSQL (manual start-up); Hibernate `validate` passes; no table outside R2–R4 exists.
+- 03 CI checks on pull requests (IMP-03) — completed 2026-10-30, Part 1 on `main`; Part 2 is a verification with no merged code
+  - Part 1 (`.github/workflows/ci.yml`): merged as `7fecf4b` (PR #7, squash). `frontend` and `backend` both passed on GitHub Actions, runs 40906656197 (`9596f67`) and 40907080682 (`e930c2b`). Q19 accepted: CI uses Node 22. A temporary smoke test, `frontend/src/smoke.test.ts`, keeps `npm test` from exiting 1 on "no test files"; spec 04 removes it when it adds real tests. Review caveat: PR opened from the author's own account, no second reviewer.
+  - Part 2 (throwaway PR #8, closed unmerged, branch deleted): both checks went red (run 40985194285). See Session Notes for what failed and where.
+  - Not met: acceptance criterion "a lint error makes the `frontend` check fail". `oxlint` reports its default rules as warnings and exits 0, so no lint violation can fail the check. Raised as Q20.
 
 ## In Progress
 
-- 03 CI checks on pull requests (IMP-03) — Part 1 (add `.github/workflows/ci.yml`; test PR with both jobs green) in progress on `feature/imp-03-ci-checks`. Gate Q9 (CI → GitHub Actions) was already accepted. Dependency 04 is not done: the frontend has no test file yet, so `npm test` (`vitest run`) exits 1 without a test; a temporary smoke test, `frontend/src/smoke.test.ts`, was added so the `frontend` check can pass until spec 04 adds real tests (remove it then). Q19 accepted: CI uses Node 22. Workflow and smoke test pass locally; PR open, GitHub Actions result not yet confirmed.
+- None.
 
 ## Next Up
 
@@ -90,6 +94,7 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
+| Q20 | Spec 03 acceptance criterion "a lint error makes the `frontend` check fail" cannot hold today: `npm run lint` is plain `oxlint`, which reports every default rule (including `no-unused-vars`, `no-debugger`, `use-isnan`, `no-dupe-keys`) as a warning and exits 0. Only a parse error would fail it. | Change the `lint` script to `oxlint --deny-warnings` (or add an `.oxlintrc.json` that sets the wanted rules to `error`). That edits `frontend/package.json`, so it needs a decision; spec 03 forbids neither but names only `ci.yml`. Check the current code passes before enabling. | Spec 03 owner (Noel) / spec 04 | Open |
 
 ## Architecture Decisions
 
@@ -148,3 +153,7 @@ Accepted from Open Questions (2026-10-29):
   - The first run applied V1 but then failed with "Port 8080 was already in use" (another process on Adrian's machine). That happens after Flyway and Hibernate `validate`. A second run with `SERVER_PORT=8081` against the same database re-validated V1, started in 6.0 s with `PostgreSQLDialect`, 0 ERROR/Exception lines, and `GET /api/health` returned `{"status":"ok"}`.
   - Cleanup: `TaskStop` ended only the `mvnw` wrapper and left the child `java.exe` running on 8081. It was stopped by PID after confirming it was `EpistemictraceApplication`. The `pg-test` container was removed. Port 8080 was not touched.
 - 2026-10-29: **Manual review override for PR #3 (spec 01 Part 2).** `ai-workflow-rules.md` requires approval by someone other than the author. The PR was opened from the `CodeWithAdrianJames` account, which is also Adrian's account, so no independent approval exists (`reviewDecision` was empty) and no approving comment was posted. The agent's attempt to comment and squash-merge was blocked by the permission system as a merge without review, so Adrian merged PR #3 by hand on GitHub. Treat spec 01 as merged by its author's own account; a second team member (Noel or Jacob) should still read PRs #2 and #3. The remote branch `feature/imp-01-security` was not deleted by the merge and is still on origin.
+- 2026-10-30: **Spec 03 Part 2 failure verification** (throwaway PR #8, branch `test/imp-03-failure-verification`, closed unmerged and branch deleted). One commit broke `frontend/src/smoke.test.ts` (unused variable + `expect(true).toBe(false)`) and `EpistemictraceApplicationTests.contextLoads` (`Assertions.fail("Deliberate failure for CI verification")`). Run https://github.com/CodeWithAdrianJames/Epistemictrace/actions/runs/40985194285: `backend` **failed** (30 s, job 123834468757) at `./mvnw -B test` with `AssertionFailedError: Deliberate failure for CI verification`; `frontend` **failed** (15 s, job 123834468597) at `npm run build`, not at lint or test.
+  - Why the frontend failed at build: `tsc -b` rejects the unused variable (`error TS6133`, `noUnusedLocals`). `npm run lint` passed because `oxlint` only warns (see Q20), so the step order never reached `npm test`; the `expect(true).toBe(false)` assertion was not exercised in CI. What this proves: the `frontend` check goes red on a TypeScript error; it does not prove it goes red on a lint error or a failing Vitest test.
+  - Locally on Node 24, `npm run lint` printed warnings and exited 0 for an unused variable, `debugger`, `NaN === NaN` and a duplicate object key.
+  - The `backend` criterion (failing JUnit test fails the check) is met. Screenshots for the Trello card are still to be taken by hand from the run page above.

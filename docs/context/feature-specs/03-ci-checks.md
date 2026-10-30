@@ -22,7 +22,7 @@ Every pull request to `main` automatically runs the frontend lint, build and tes
 ## Requirements
 
 - **R1** Triggers: `pull_request` targeting `main`, and `push` to `main`.
-- **R2** Job `frontend` on `ubuntu-latest`, `working-directory: frontend`: set up Node 20 with npm cache keyed on `frontend/package-lock.json`; run `npm ci`, `npm run lint`, `npm run build`, `npm test`.
+- **R2** Job `frontend` on `ubuntu-latest`, `working-directory: frontend`: set up Node 22 with npm cache (was Node 20; superseded by accepted Q19: `vitest@5.0.5` needs Node ≥ 22.12 and Node 20 is end-of-life) keyed on `frontend/package-lock.json`; run `npm ci`, `npm run lint`, `npm run build`, `npm test`.
 - **R3** Job `backend` on `ubuntu-latest`, `working-directory: backend`: set up Temurin JDK 21 with Maven cache; run `./mvnw -B test`. Make `mvnw` executable in the step if needed (`chmod +x mvnw`), without changing the committed file.
 - **R4** Jobs run in parallel. Neither job needs secrets, a database service or a `.env` file.
 - **R5** Use only official `actions/*` actions (`actions/checkout`, `actions/setup-node`, `actions/setup-java`), pinned to a major version.
