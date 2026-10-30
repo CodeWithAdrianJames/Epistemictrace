@@ -48,10 +48,16 @@ public class SecurityConfig {
 				.httpBasic(AbstractHttpConfigurer::disable)
 				.formLogin(AbstractHttpConfigurer::disable)
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				// Spec 06 R2, first match wins. "/x/**" also matches "/x" itself, but not "/xy".
 				.authorizeHttpRequests(auth -> auth
-						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 						.requestMatchers(HttpMethod.GET, "/api/health").permitAll()
 						.requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+						.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+						.requestMatchers("/api/auth/me").authenticated()
+						.requestMatchers("/api/instructor/**").hasRole("INSTRUCTOR")
+						.requestMatchers("/api/activities/**", "/api/sessions/**", "/api/me/**").hasRole("STUDENT")
+						.requestMatchers("/api/**").denyAll()
+						// Outside /api there are no endpoints; kept as before so error dispatches (/error) still work.
 						.anyRequest().authenticated())
 				// Overrides the resource server's default handler, which answers 403 with an empty body.
 				.exceptionHandling(exceptions -> exceptions.accessDeniedHandler(accessDeniedHandler))

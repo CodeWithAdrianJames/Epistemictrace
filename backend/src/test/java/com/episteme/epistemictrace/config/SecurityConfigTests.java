@@ -71,14 +71,14 @@ class SecurityConfigTests {
 
 	@Test
 	void studentTokenSignedByTestEncoderPassesAuthentication() throws Exception {
-		mockMvc.perform(get("/api/anything-else")
+		mockMvc.perform(get("/api/activities")
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "STUDENT")))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	void instructorTokenSignedByTestEncoderPassesAuthentication() throws Exception {
-		mockMvc.perform(get("/api/anything-else")
+		mockMvc.perform(get("/api/instructor/activities")
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "INSTRUCTOR")))
 				.andExpect(status().isNotFound());
 	}
