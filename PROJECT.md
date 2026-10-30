@@ -123,7 +123,7 @@ Unlocked ──(SDI ≥ threshold, no cooldown)──► Locked ──(valid ref
 | Frontend state and styling | React state, custom hooks and one auth context (no state library); CSS Modules with tokens in `styles/tokens.css`; native `fetch`; no icon library | Decided |
 | Code execution | Pyodide (Python) in a Web Worker with a time limit | Decided, not yet added |
 | Backend | Java 21, Spring Boot 4.1, Maven wrapper, JUnit 5 + MockMvc | In repo |
-| Auth | Spring Security + JWT (HS256 via the OAuth2 resource server support, no third-party JWT library; claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`) | In repo |
+| Auth | Spring Security + JWT (HS256 via the OAuth2 resource server support, no third-party JWT library; claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`). Passwords hashed with BCrypt, cost factor 10. Students self-register; instructor accounts are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME` | In repo |
 | Database | PostgreSQL via Spring Data JPA | In repo |
 | DB migrations | Flyway (portable SQL so tests can run on H2) | In repo |
 | Test tooling | Backend: H2 in PostgreSQL mode. Frontend: `@testing-library/react` + `@testing-library/jest-dom` + `jsdom` | In repo |
@@ -151,7 +151,7 @@ Do not add a library or framework outside this table without a team decision rec
 - An activity has one or more test cases and one SDI config.
 - A session belongs to one student and one activity, and holds events and reflections.
 
-**Gap:** there is no course or enrollment link between students and instructors yet.
+**No courses in the MVP:** there is no course or enrollment link. All students see all published activities, and the instructor who owns an activity is the instructor for its sessions.
 
 ## 8. Repository and commands
 
@@ -190,6 +190,8 @@ npm test                  # Vitest run (jsdom + Testing Library)
   - 2-space indent, single quotes, no semicolons.
   - Lint and type checks must pass.
 - **API:** all endpoints under `/api`. CORS currently allows `http://localhost:5173` only.
+  - Paths are listed in `docs/context/architecture-context.md` → API Surface; payloads are in each feature spec.
+  - Errors are `ProblemDetail` bodies (`application/problem+json`); validation errors add an `errors` map of field → message.
 - **Tests:** the SDI and the circuit breaker need deterministic unit tests: a seeded wheel-spinning sequence scores **above** 70, and a steady-progress sequence scores **below** it.
 - **Board workflow:** Backlog → To Do → In Progress → For Review (PR open) → Testing (approved) → Done (criteria verified, evidence attached).
   - Maximum 2 cards In Progress per member.
@@ -212,9 +214,7 @@ npm test                  # Vitest run (jsdom + Testing Library)
 |---|---|---|
 | 1 | SDI weights, normalization, window length and default cooldown | TEL-03, MCB-01 |
 | 2 | Is the SDI computed in the browser or on the server, and which is authoritative? | TEL-03, MCB-01 |
-| 3 | How students are linked to instructors (course/enrollment); how instructor accounts are created | PLT-01, PLT-02, TEL-02 |
 | 4 | Telemetry batch format, when batches are sent, how error signatures are defined | TEL-01, TEL-02 |
-| 5 | REST API paths and payloads | All API work |
 | 6 | Consent notice text and what happens if a student declines; data retention | TEL-01 |
 | 7 | Execution time limit; reflection minimum length; how hidden tests are shown | CW-02, MCB-02 |
 | 8 | Hosting and deployment | Release |

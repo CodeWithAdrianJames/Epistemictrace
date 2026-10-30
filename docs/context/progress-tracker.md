@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01, 02, 03 and 04 are done. Next: spec 05, Register and login API (`feature-specs/05-register-and-login-api.md`). It is blocked until its remaining gates, Q3 and Q5, are accepted (Q13 is already accepted). Decide Q21 (where the frontend reads `VITE_API_URL`) before spec 07 makes the first real API call. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02, 03 and 04 are done. Now: spec 05, Register and login API (`feature-specs/05-register-and-login-api.md`); its gates Q3, Q5 and Q13 are all accepted. Decide Q21 (where the frontend reads `VITE_API_URL`) before spec 07 makes the first real API call. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -54,7 +54,9 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-None.
+- 05 Register and login API (IMP-05)
+  - Part 1 (register endpoint with service and tests): in progress on branch `feature/imp-05-register-login-api`.
+  - Part 2 (login + `TokenService` + `/api/auth/me`) and Part 3 (`InstructorSeeder` + `.env.example` keys): not started.
 
 ## Next Up
 
@@ -101,9 +103,7 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 |---|---|---|---|---|
 | Q1 | SDI weights, normalization, window, cooldown, level bands (`PROJECT.md` Q1) | Formula and defaults in `architecture-context.md` → SDI: `w = 0.20/0.20/0.25/0.35`, `runCap 10`, `gapCap 60 s`, `repeatCap 5`, window 5 min, cooldown 120 s, MEDIUM from 40, HIGH from threshold. Validate against seeded sequences in spec 20. | CLR-01 (Adrian) | Proposed |
 | Q2 | Is the SDI computed in the browser or on the server; which is authoritative? (`PROJECT.md` Q2) | Server only. RUN events are flushed immediately; the server scores them, updates the breaker and returns breaker state + struggle level. The browser never computes the SDI. Fail-open if the server does not answer within 5 s. | CLR-02 (Adrian) | Proposed |
-| Q3 | Student–instructor link; how instructor accounts are created (`PROJECT.md` Q3) | MVP: no courses. All students see all published activities. The activity's owner is the instructor for its sessions. Self-registration creates students only; instructors are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME`. | CLR-03 (Noel) | Proposed |
 | Q4 | Telemetry batch format, send timing, error signatures (`PROJECT.md` Q4) | As in `architecture-context.md` → Telemetry: `clientEventId` for idempotency, 2 s EDIT coalescing, batches ≤ 200 events, send every 10 s + after every RUN + on page leave (`keepalive`), signature `<Type>@<line>`. | CLR-04 (Noel) | Proposed |
-| Q5 | REST API paths and payloads (`PROJECT.md` Q5) | `architecture-context.md` → API Surface plus the payloads in each spec; errors as `ProblemDetail`. | PLN-03 (Noel) | Proposed |
 | Q6 | Consent text, what happens on decline, retention (`PROJECT.md` Q6) | Notice shown before the first session. Accept → `consent_accepted_at` set. Decline → student can still code and run tests, but no session, telemetry, SDI or breaker; a banner offers to accept later. Text and retention period: Jacob to write. | CLR-05 (Jacob) | Open (text, retention) / Proposed (behavior) |
 | Q7 | Execution time limit (`PROJECT.md` Q7) | 3 s per test case, excluding interpreter start-up; one named constant in the runner config. Confirm by measuring typical student programs. | CLR-06 (Adrian) | Proposed |
 | Q8 | Reflection minimum length; hidden-test display (`PROJECT.md` Q7) | Each field ≥ 20 characters after trimming, ≤ 2000 (server config `epistemictrace.reflection.*`). Hidden tests show name + status only; their data still reaches the browser, so they are not secret. | CLR-07 (Jacob) | Proposed |
@@ -142,6 +142,8 @@ Accepted from Open Questions (2026-10-30):
 - **Q11** (PLN-07): React Router (`react-router`); no state library (React state, custom hooks and one auth context); CSS Modules with tokens in `styles/tokens.css`; no icon library; native `fetch` (no HTTP library). Accepted as proposed on Adrian's instruction when starting spec 04.
 - **Q12** (PLN-08): already accepted 2026-10-29 (see above); re-confirmed as a spec 04 gate on Adrian's instruction when starting spec 04, with no change to the answer.
 - **Q20** (IMP-03 / IMP-04): the frontend `lint` script is `oxlint --deny-warnings`, so any oxlint warning makes `npm run lint` and the CI `frontend` check exit non-zero. Accepted on Adrian's instruction when starting spec 04. Verified locally: the current code lints clean (exit 0), and a probe file with an unused variable and `debugger` made `npm run lint` exit 1. `.oxlintrc.json` is unchanged. The spec 03 criterion "a lint error makes the `frontend` check fail" should now hold, but has not been re-run on GitHub Actions.
+- **Q3** (CLR-03): accepted as proposed when starting spec 05. MVP has no courses: all students see all published activities, and the activity's owner is the instructor for its sessions. Self-registration creates students only; instructors are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME`. Author's note recorded with this acceptance: "Adopt BCrypt cost factor 10. Authorized by author." (the `PasswordEncoder` bean is `BCryptPasswordEncoder` with strength 10; the BCrypt cost is not part of Q3's question, but was given as Q3's acceptance note).
+- **Q5** (PLN-03): accepted as proposed when starting spec 05. REST paths are `architecture-context.md` → API Surface, payloads are those in each feature spec, and errors are `ProblemDetail` bodies (`application/problem+json`) with an `errors` map for validation errors. Authorized by author.
 
 ## Session Notes
 
