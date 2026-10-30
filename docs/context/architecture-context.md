@@ -78,13 +78,13 @@ The data model from `PROJECT.md` §7, with these additions:
 
 - Stateless JWT bearer tokens, signed HS256 with `JWT_SECRET` (at least 32 bytes).
 - Token claims: `sub` = user id, `role`, `email`; lifetime 8 hours; no refresh token. Logout clears the token in the browser.
-- Passwords are hashed with BCrypt.
+- Passwords are hashed with BCrypt, cost factor 10.
 - Public endpoints: `GET /api/health`, `POST /api/auth/register`, `POST /api/auth/login`. Everything else under `/api` requires a valid token.
 - `/api/instructor/**` requires role `INSTRUCTOR`. `/api/activities/**`, `/api/sessions/**` and `/api/me/**` require role `STUDENT`. `/api/auth/me` requires any authenticated user.
-- Self-registration creates `STUDENT` accounts only. Instructor accounts are created by a seed runner from environment variables **(Proposed — Q3)**.
+- Self-registration creates `STUDENT` accounts only. Instructor accounts are created by a seed runner from environment variables (Q3).
 - An instructor can read and change only activities they created.
 - A student can read and write only their own sessions, events and reflections. Not found → `404`; exists but not owned → `403`.
-- MVP has no course or enrollment link. A session's instructor is the instructor who owns its activity **(Proposed — Q3)**.
+- MVP has no course or enrollment link. A session's instructor is the instructor who owns its activity (Q3).
 
 ## Code Execution Model
 
@@ -149,7 +149,7 @@ Cooldown ──(now ≥ cooldown_ends_at)──► Unlocked
 
 Not part of the MVP. If built: never returns a full solution, every response is logged, and it follows its own spec.
 
-## API Surface (Proposed — Q5)
+## API Surface (Q5)
 
 All endpoints are under `/api` and exchange JSON. Errors use Spring's `ProblemDetail` (`application/problem+json`) with `status`, `title`, `detail` and, for validation errors, an `errors` map of field → message.
 
