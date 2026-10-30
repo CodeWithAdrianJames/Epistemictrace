@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01, 02, 03, 04 and 05 are done. Now: spec 06, Role-based access control (`feature-specs/06-role-based-access-control.md`); its gate Q5 is accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02, 03, 04 and 05 are done. Now: spec 06, Role-based access control (`feature-specs/06-role-based-access-control.md`); its gate Q5 is accepted. Part 1 is merged (PR #16, `c6e82a3`); Part 2 (R2 path rules, branch `feature/imp-06-part-2`) is next. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -73,16 +73,17 @@ Update this file whenever the current phase, active feature, open questions or i
     - Tests: `InstructorSeederTests` 6 (`@SpringBootTest`, seeders built by hand against the real H2 repository: creates once across three runs, including a new seeder instance as a restart; default name; no-op when unset; no-op with only email or only password; does not modify an existing user matched case-insensitively; logs email but never password), `InstructorSeederStartupTests` 1 (context started with seed values creates exactly one instructor; running the seeder bean again keeps one), `InstructorSeedPropertiesTests` 9 (validation rules, trimming and default name, start-up failure does not print the password, `toString` masking, `application.properties` maps `INSTRUCTOR_SEED_*` and leaves values empty when unset). Local: `./mvnw -B test` 71 tests, 0 failures, BUILD SUCCESS (JDK 21.0.11, 2026-10-30).
   - Result on `main` at `6fe782f`: `./mvnw -B test` passes with 71 tests, 0 failures. All six acceptance criteria of spec 05 are covered by tests: register creates a `STUDENT` with a BCrypt hash and returns `201`; a duplicate email in any letter case returns `409`; a login token is accepted by `/api/auth/me`; wrong password and unknown email return the same `401` message; a `"role"` in the register body is ignored; with seed variables set, one instructor exists after start-up and running the seeder again does not create a second one.
   - Not yet done: the seeder has only been run on H2 (tests), not on a start-up against PostgreSQL with `INSTRUCTOR_SEED_*` set, and no evidence is attached to the IMP-05 Trello card. Review caveat for the whole spec: PRs #12, #13 and #14 were all merged from the author's own account, so a second team member should still read them.
-
-## In Progress
-
-- 06 Role-based access control (IMP-06), Part 1 (R1 role claim → authority, R3 JSON `403`, R4 `CurrentUser`, with tests), branch `feature/imp-06-rbac`, started 2026-10-30 from `main` at `957735e`. Gate Q5 accepted. Part 2 (R2 path rules) not started.
-  - Implemented, not yet committed or reviewed. `SecurityConfig` still ends with `anyRequest().authenticated()`; no path rule changed (that is Part 2).
+- 06 Role-based access control (IMP-06) — Part 1 merged 2026-10-30; spec not complete, Part 2 is under In Progress
+  - Part 1 (R1 role claim → authority, R3 JSON `403`, R4 `CurrentUser`, with tests): merged as `c6e82a3` (PR #16, squash, branch `feature/imp-06-rbac`, 2026-10-30). `frontend` and `backend` both passed on GitHub Actions. Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no reviews, no second reviewer. Gate Q5 accepted. `SecurityConfig` still ends with `anyRequest().authenticated()`; no path rule changed (that is Part 2).
   - R1: `config/JwtRoleConverter` (`Converter<Jwt, Collection<GrantedAuthority>>`) maps `role` to exactly one of `ROLE_STUDENT` / `ROLE_INSTRUCTOR`. Names are case-sensitive; a missing, blank, non-string or unknown role throws `InvalidBearerTokenException`, which the resource server filter answers with `401`. `SecurityConfig` publishes a `JwtAuthenticationConverter` bean using it and passes it to `oauth2ResourceServer().jwt()`.
   - Found in Spring Security 7.1.2 (checked with `javap` and tests): `JwtAuthenticationConverter` always adds a `FACTOR_BEARER` authority next to the converted ones, so an authentication holds exactly one `ROLE_*` authority plus `FACTOR_BEARER`. Its principal is `JwtAuthenticationConverter$JwtAuthenticatedPrincipal`, a subclass of `Jwt`, so `@AuthenticationPrincipal Jwt` in `AuthController.me` still resolves.
   - R3: `config/ProblemDetailAccessDeniedHandler` hands the `AccessDeniedException` to Spring MVC's `handlerExceptionResolver`; `GlobalExceptionHandler` has a new `AccessDeniedException` handler returning `403` `ProblemDetail` with detail "You don't have access to this." (this also covers method security, so `@PreAuthorize` denials are no longer a `500`). Set with `exceptionHandling().accessDeniedHandler(...)`, which replaces the resource server's default `BearerTokenAccessDeniedHandler` (empty body). Unauthenticated requests still go to the bearer entry point (`401`, empty body).
   - R4: `config/CurrentUser` (`@Component`) with `long id()` (`sub` parsed as a number) and `Role role()` (the `role` claim), read from the `JwtAuthenticationToken` in the security context. Choice not spelled out in R4: outside an authenticated JWT request, or with a non-numeric `sub`, both throw `IllegalStateException` (a programming error; `TokenService` only issues numeric subjects). No controller uses it yet; `AuthController.me` is unchanged.
   - Tests: `JwtRoleConverterTests` 10 (both roles, missing/unknown/lower-case/blank/non-string rejected, the `JwtAuthenticationConverter` bean), `CurrentUserTests` 5, `SecurityConfigTests` 12 (5 new: student and instructor tokens pass, no role → `401`, unknown role → `401`, filter chain uses the handler, handler renders the `403` `ProblemDetail`; existing test tokens now carry a role), `GlobalExceptionHandlerTests` 3 (1 new). End-to-end `403` through the filter chain is covered by Part 2's `RoleAccessTests`, since no path rule denies an authenticated user yet. Local: `./mvnw -B test` 92 tests, 0 failures, BUILD SUCCESS (JDK 21.0.11, 2026-10-30).
+
+## In Progress
+
+- 06 Role-based access control (IMP-06), Part 2 (R2 path rules in `SecurityConfig`, with `RoleAccessTests`), target branch `feature/imp-06-part-2` (cut from `main`). Not started. Part 1 is merged (see Completed). Gate Q5 accepted.
 
 ## Next Up
 
