@@ -34,14 +34,15 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- 04 Frontend app shell (IMP-04), branch `feature/imp-04-frontend-shell`
-  - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): in progress, not yet merged.
+- 04 Frontend app shell (IMP-04)
+  - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): merged as `e5271fb` (PR #9, squash, branch `feature/imp-04-frontend-shell`, 2026-10-30). Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no second reviewer.
     - Added `react-router` 8.5.1; dev: `@testing-library/react` 16.3.3, `@testing-library/jest-dom` 7.0.1, `jsdom` 30.1.3. `@testing-library/dom` 10.4.2 is installed by npm as their required peer and appears only in `package-lock.json`.
     - `vite.config.ts` uses `defineConfig` from `vitest/config` with `environment: 'jsdom'` and `setupFiles: ['./src/test/setup.ts']`.
     - `src/styles/tokens.css` and `src/styles/global.css` imported once in `main.tsx`; starter `App.css`, `index.css`, `src/assets/*` and `public/icons.svg` deleted; `App.tsx` is a one-heading placeholder with `App.test.tsx` until Part 2 adds the router.
     - `frontend/src/smoke.test.ts` removed after `App.test.tsx` passed under jsdom with a jest-dom matcher.
     - `lint` script is now `oxlint --deny-warnings` (Q20).
-  - Parts 2 (router, layout, placeholder pages) and 3 (`apiFetch`, `ApiError`) not started.
+  - Part 2 (router, layout, placeholder pages): in progress on branch `feature/imp-04-part-2`, not yet merged.
+  - Part 3 (`apiFetch`, `ApiError`) not started.
 
 ## Next Up
 
