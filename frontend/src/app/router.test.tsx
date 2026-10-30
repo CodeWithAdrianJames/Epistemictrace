@@ -1,14 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
+import { AuthProvider } from '../auth/AuthProvider.tsx'
 import styles from './AppLayout.module.css'
 import { routes } from './router.tsx'
 
 function renderAt(path: string) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
-  render(<RouterProvider router={router} />)
+  render(
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>,
+  )
   return router
 }
+
+// No stored token, so AuthProvider starts anonymous and never calls the API.
+afterEach(() => {
+  sessionStorage.clear()
+})
 
 describe('router', () => {
   it.each([

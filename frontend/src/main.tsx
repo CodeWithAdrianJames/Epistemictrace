@@ -5,11 +5,14 @@ import { RouterProvider } from 'react-router/dom'
 import './styles/tokens.css'
 import './styles/global.css'
 import { routes } from './app/router.tsx'
+import { AuthProvider } from './auth/AuthProvider.tsx'
 
 const router = createBrowserRouter(routes)
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <AuthProvider>
+      <RouterProvider router={router} />
+    </AuthProvider>
   </StrictMode>,
 )
