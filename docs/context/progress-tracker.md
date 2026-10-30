@@ -34,14 +34,20 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- 04 Frontend app shell (IMP-04), branch `feature/imp-04-frontend-shell`
-  - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): in progress, not yet merged.
+- 04 Frontend app shell (IMP-04)
+  - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): merged as `e5271fb` (PR #9, squash, branch `feature/imp-04-frontend-shell`, 2026-10-30). Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no second reviewer.
     - Added `react-router` 8.5.1; dev: `@testing-library/react` 16.3.3, `@testing-library/jest-dom` 7.0.1, `jsdom` 30.1.3. `@testing-library/dom` 10.4.2 is installed by npm as their required peer and appears only in `package-lock.json`.
     - `vite.config.ts` uses `defineConfig` from `vitest/config` with `environment: 'jsdom'` and `setupFiles: ['./src/test/setup.ts']`.
     - `src/styles/tokens.css` and `src/styles/global.css` imported once in `main.tsx`; starter `App.css`, `index.css`, `src/assets/*` and `public/icons.svg` deleted; `App.tsx` is a one-heading placeholder with `App.test.tsx` until Part 2 adds the router.
     - `frontend/src/smoke.test.ts` removed after `App.test.tsx` passed under jsdom with a jest-dom matcher.
     - `lint` script is now `oxlint --deny-warnings` (Q20).
-  - Parts 2 (router, layout, placeholder pages) and 3 (`apiFetch`, `ApiError`) not started.
+  - Part 2 (router, layout, placeholder pages): in progress on branch `feature/imp-04-part-2`, not yet merged.
+    - `src/app/router.tsx` exports `routes: RouteObject[]` (all R3 routes under one `AppLayout` parent; `/` is `<Navigate to="/login" replace />`; `*` is "Page not found"). `main.tsx` calls `createBrowserRouter(routes)` and renders `RouterProvider` from `react-router/dom`, so importing `routes` in tests creates no browser router.
+    - `src/app/PlaceholderPage.tsx` renders the title in an `<h1>`; one component for every placeholder.
+    - `src/app/AppLayout.tsx` + `AppLayout.module.css`: top bar with "EpistemicTrace" (link to `/`) and static `NavLink`s Activities, History, My activities (`aria-current="page"` on the active one); `<main>` is limited to 1200px unless a matched route has `handle: { fullWidth: true }` (only `student/activities/:activityId`). Log out and user name wait for spec 07.
+    - Placeholder `App.tsx` / `App.test.tsx` deleted; `src/app/router.test.tsx` uses `createMemoryRouter` (19 tests).
+    - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 19 passed. No hex colors in `src/**/*.css` outside `tokens.css`.
+  - Part 3 (`apiFetch`, `ApiError`) not started.
 
 ## Next Up
 
