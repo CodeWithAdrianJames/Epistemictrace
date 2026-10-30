@@ -12,7 +12,7 @@
 
 ## TypeScript
 
-- `strict` mode stays on. Lint (`npm run lint`) and type checks (`npm run build`) must pass.
+- `strict` mode stays on. Lint (`npm run lint`) and type checks (`npm run build`) must pass. `npm run lint` is `oxlint --deny-warnings`, so warnings fail it too (Q20).
 - Avoid `any`; use explicit interfaces or narrowly scoped types. Use `unknown` for untrusted input and narrow it.
 - Use `interface` for object contracts and `type` for unions.
 - Validate API responses at the `api/` boundary before the rest of the app trusts them.
@@ -23,7 +23,7 @@
 
 - Function components only.
 - Components render; hooks and plain modules hold logic. A component never calls `fetch` directly — it uses `api/`.
-- No global state library. Use component state, custom hooks and React context (auth only) **(Proposed — Q11)**.
+- No global state library. Use component state, custom hooks and React context (auth only) (Q11).
 - Effects that start timers, workers or listeners must clean them up on unmount.
 - Long-running work (Python execution) never runs on the main thread.
 
@@ -59,7 +59,7 @@
 - Every spec lists its tests. A unit is not done until they pass locally.
 - SDI engine and breaker transitions: deterministic JUnit tests with fixed timestamps. A seeded wheel-spinning sequence scores **above** 70; a steady-progress sequence scores **below** 70.
 - Backend web layer: MockMvc tests for success, validation failure, `401`, `403` and `404` where they apply. Test classes are named `<Subject>Tests`.
-- Frontend: Vitest unit tests for plain modules (runner wrapper, test checker, telemetry buffer, API client). Component tests only after Q12 is accepted.
+- Frontend: Vitest unit tests for plain modules (runner wrapper, test checker, telemetry buffer, API client). Component tests use `@testing-library/react` on `jsdom` with the `@testing-library/jest-dom` matchers (Q12); the setup file is `src/test/setup.ts`.
 - Code that cannot be tested automatically (the Pyodide worker in a real browser) is verified manually and the steps and result are attached to the Trello card as evidence.
 
 ## File Organization

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01, 02 and 03 are done. Start `feature-specs/04-frontend-app-shell.md` once Q11 is accepted, and `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Spec 04 should also remove `frontend/src/smoke.test.ts` and settle Q20 (lint gating). Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01, 02 and 03 are done. Spec 04 (`feature-specs/04-frontend-app-shell.md`) is in progress; its gates Q11 and Q12 are accepted, and Q20 (lint gating) was settled with it. Start `feature-specs/05-register-and-login-api.md` once its remaining gates (Q3, Q5) are accepted — Q13 is already accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -30,11 +30,18 @@ Update this file whenever the current phase, active feature, open questions or i
 - 03 CI checks on pull requests (IMP-03) — completed 2026-10-30, Part 1 on `main`; Part 2 is a verification with no merged code
   - Part 1 (`.github/workflows/ci.yml`): merged as `7fecf4b` (PR #7, squash). `frontend` and `backend` both passed on GitHub Actions, runs 40906656197 (`9596f67`) and 40907080682 (`e930c2b`). Q19 accepted: CI uses Node 22. A temporary smoke test, `frontend/src/smoke.test.ts`, keeps `npm test` from exiting 1 on "no test files"; spec 04 removes it when it adds real tests. Review caveat: PR opened from the author's own account, no second reviewer.
   - Part 2 (throwaway PR #8, closed unmerged, branch deleted): both checks went red (run 40985194285). See Session Notes for what failed and where.
-  - Not met: acceptance criterion "a lint error makes the `frontend` check fail". `oxlint` reports its default rules as warnings and exits 0, so no lint violation can fail the check. Raised as Q20.
+  - Not met: acceptance criterion "a lint error makes the `frontend` check fail". `oxlint` reports its default rules as warnings and exits 0, so no lint violation can fail the check. Raised as Q20 (accepted 2026-10-30 with spec 04: `lint` is now `oxlint --deny-warnings`; see Architecture Decisions).
 
 ## In Progress
 
-- None.
+- 04 Frontend app shell (IMP-04), branch `feature/imp-04-frontend-shell`
+  - Part 1 (dependencies, test setup, tokens/global CSS, delete starter content): in progress, not yet merged.
+    - Added `react-router` 8.5.1; dev: `@testing-library/react` 16.3.3, `@testing-library/jest-dom` 7.0.1, `jsdom` 30.1.3. `@testing-library/dom` 10.4.2 is installed by npm as their required peer and appears only in `package-lock.json`.
+    - `vite.config.ts` uses `defineConfig` from `vitest/config` with `environment: 'jsdom'` and `setupFiles: ['./src/test/setup.ts']`.
+    - `src/styles/tokens.css` and `src/styles/global.css` imported once in `main.tsx`; starter `App.css`, `index.css`, `src/assets/*` and `public/icons.svg` deleted; `App.tsx` is a one-heading placeholder with `App.test.tsx` until Part 2 adds the router.
+    - `frontend/src/smoke.test.ts` removed after `App.test.tsx` passed under jsdom with a jest-dom matcher.
+    - `lint` script is now `oxlint --deny-warnings` (Q20).
+  - Parts 2 (router, layout, placeholder pages) and 3 (`apiFetch`, `ApiError`) not started.
 
 ## Next Up
 
@@ -89,12 +96,10 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q8 | Reflection minimum length; hidden-test display (`PROJECT.md` Q7) | Each field ≥ 20 characters after trimming, ≤ 2000 (server config `epistemictrace.reflection.*`). Hidden tests show name + status only; their data still reaches the browser, so they are not secret. | CLR-07 (Jacob) | Proposed |
 | Q9 | Hosting and deployment (`PROJECT.md` Q8). Flyway and CI were accepted; see Architecture Decisions. | — | CLR-08 (Noel) | Open (hosting) |
 | Q10 | Term dates, MVP demo date, pilot plan (`PROJECT.md` Q9) | — | CLR-09 (Jacob) | Open |
-| Q11 | Frontend router, state management, styling, icons | React Router (`react-router`); no state library (React state + one auth context); CSS Modules with tokens in `styles/tokens.css`; no icon library; native `fetch` (no HTTP library). | PLN-07 (Jacob) | Proposed |
 | Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Proposed |
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
-| Q20 | Spec 03 acceptance criterion "a lint error makes the `frontend` check fail" cannot hold today: `npm run lint` is plain `oxlint`, which reports every default rule (including `no-unused-vars`, `no-debugger`, `use-isnan`, `no-dupe-keys`) as a warning and exits 0. Only a parse error would fail it. | Change the `lint` script to `oxlint --deny-warnings` (or add an `.oxlintrc.json` that sets the wanted rules to `error`). That edits `frontend/package.json`, so it needs a decision; spec 03 forbids neither but names only `ci.yml`. Check the current code passes before enabling. | Spec 03 owner (Noel) / spec 04 | Open |
 
 ## Architecture Decisions
 
@@ -117,6 +122,12 @@ Accepted from Open Questions (2026-10-29):
 - **Q13** (PLN-04): JWT is HS256 via Spring Security's OAuth2 resource server support (no third-party JWT library); claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`; logout clears it.
 - **Q17** (PLN-02): Schema additions to `PROJECT.md` §7 as proposed: `telemetry_events.client_event_id` (UUID, unique per session); breaker columns `runner_locked`, `sdi_at_lock`, `cooldown_ends_at` on `coding_sessions`; `users.email` unique and stored lower-case; `created_at` on users and activities; `test_cases.position`. See `architecture-context.md` → Schema. Accepted on Adrian's instruction when starting spec 02.
 - **Q19** (IMP-03): Adopt Node 22 LTS for CI and local frontend runtime. `vitest@5.0.5` requires Node `^22.12.0 || ^24.0.0 || >=26.0.0`, and Node 20 is EOL. Decision authorized by author. Spec 03 R2 ("Node 20") is superseded: `ci.yml` uses `node-version: 22`.
+
+Accepted from Open Questions (2026-10-30):
+
+- **Q11** (PLN-07): React Router (`react-router`); no state library (React state, custom hooks and one auth context); CSS Modules with tokens in `styles/tokens.css`; no icon library; native `fetch` (no HTTP library). Accepted as proposed on Adrian's instruction when starting spec 04.
+- **Q12** (PLN-08): already accepted 2026-10-29 (see above); re-confirmed as a spec 04 gate on Adrian's instruction when starting spec 04, with no change to the answer.
+- **Q20** (IMP-03 / IMP-04): the frontend `lint` script is `oxlint --deny-warnings`, so any oxlint warning makes `npm run lint` and the CI `frontend` check exit non-zero. Accepted on Adrian's instruction when starting spec 04. Verified locally: the current code lints clean (exit 0), and a probe file with an unused variable and `debugger` made `npm run lint` exit 1. `.oxlintrc.json` is unchanged. The spec 03 criterion "a lint error makes the `frontend` check fail" should now hold, but has not been re-run on GitHub Actions.
 
 ## Session Notes
 
@@ -153,6 +164,10 @@ Accepted from Open Questions (2026-10-29):
   - The first run applied V1 but then failed with "Port 8080 was already in use" (another process on Adrian's machine). That happens after Flyway and Hibernate `validate`. A second run with `SERVER_PORT=8081` against the same database re-validated V1, started in 6.0 s with `PostgreSQLDialect`, 0 ERROR/Exception lines, and `GET /api/health` returned `{"status":"ok"}`.
   - Cleanup: `TaskStop` ended only the `mvnw` wrapper and left the child `java.exe` running on 8081. It was stopped by PID after confirming it was `EpistemictraceApplication`. The `pg-test` container was removed. Port 8080 was not touched.
 - 2026-10-29: **Manual review override for PR #3 (spec 01 Part 2).** `ai-workflow-rules.md` requires approval by someone other than the author. The PR was opened from the `CodeWithAdrianJames` account, which is also Adrian's account, so no independent approval exists (`reviewDecision` was empty) and no approving comment was posted. The agent's attempt to comment and squash-merge was blocked by the permission system as a merge without review, so Adrian merged PR #3 by hand on GitHub. Treat spec 01 as merged by its author's own account; a second team member (Noel or Jacob) should still read PRs #2 and #3. The remote branch `feature/imp-01-security` was not deleted by the merge and is still on origin.
+- Spec 04 Part 1 notes for later parts:
+  - Vitest globals are off, so Testing Library cannot register its automatic `cleanup`; `src/test/setup.ts` calls `afterEach(cleanup)` itself. Tests import `describe`/`it`/`expect` from `vitest`.
+  - `react-router` 8.5.1 needs Node `>=22.22.0` and `jsdom` 30.1.3 needs `^22.22.2 || ^24.15.0 || >=26.0.0`. CI's `node-version: 22` resolves to the latest 22.x, so it is fine; local machines on an older Node 22 must update.
+  - `npm audit` reports 1 critical (`dompurify` <= 3.4.16, pulled in by `monaco-editor` from the scaffold) and 1 low advisory. Neither comes from the spec 04 packages. `npm audit fix` was not run because it changes the lockfile outside the spec; decide it in its own `chore` PR.
 - 2026-10-30: **Spec 03 Part 2 failure verification** (throwaway PR #8, branch `test/imp-03-failure-verification`, closed unmerged and branch deleted). One commit broke `frontend/src/smoke.test.ts` (unused variable + `expect(true).toBe(false)`) and `EpistemictraceApplicationTests.contextLoads` (`Assertions.fail("Deliberate failure for CI verification")`). Run https://github.com/CodeWithAdrianJames/Epistemictrace/actions/runs/40985194285: `backend` **failed** (30 s, job 123834468757) at `./mvnw -B test` with `AssertionFailedError: Deliberate failure for CI verification`; `frontend` **failed** (15 s, job 123834468597) at `npm run build`, not at lint or test.
   - Why the frontend failed at build: `tsc -b` rejects the unused variable (`error TS6133`, `noUnusedLocals`). `npm run lint` passed because `oxlint` only warns (see Q20), so the step order never reached `npm test`; the `expect(true).toBe(false)` assertion was not exercised in CI. What this proves: the `frontend` check goes red on a TypeScript error; it does not prove it goes red on a lint error or a failing Vitest test.
   - Locally on Node 24, `npm run lint` printed warnings and exited 0 for an unused variable, `debugger`, `NaN === NaN` and a duplicate object key.

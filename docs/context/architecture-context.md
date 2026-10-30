@@ -9,13 +9,14 @@ Items marked **(Proposed — Qn)** are not decided yet. They are written down so
 | Frontend       | React 19 + TypeScript + Vite 8                                   | Single-page app for students and instructors                | In repo |
 | Editor         | Monaco via `@monaco-editor/react`                                | Python editor on the activity page                          | In repo |
 | Code execution | Pyodide in a Web Worker                                          | Runs student Python in the browser with a time limit        | Decided, not added |
-| Frontend tests | Vitest; oxlint for linting                                       | Unit and component tests                                    | In repo |
+| Frontend tests | Vitest + Testing Library (`@testing-library/react`, `@testing-library/jest-dom`) on `jsdom`; oxlint (`--deny-warnings`) for linting | Unit and component tests; any lint warning fails | In repo |
 | Backend        | Java 21 + Spring Boot 4.1 (Maven wrapper)                        | REST API under `/api`                                       | In repo |
 | Auth           | Spring Security + JWT                                            | Stateless bearer-token auth and role checks                 | In repo |
 | Database       | PostgreSQL via Spring Data JPA                                   | All persistent data                                         | In repo |
 | Backend tests  | JUnit 5 + MockMvc; H2 in PostgreSQL mode as the test database    | Unit, web-layer and persistence tests                       | In repo |
 | Migrations     | Flyway                                                           | Versioned schema changes                                    | In repo |
-| Routing        | React Router **(Proposed — Q11)**                                | Client-side routes and role guards                          | Not decided |
+| Routing        | React Router (`react-router`)                                    | Client-side routes and role guards                          | In repo |
+| Frontend state and styling | React state, custom hooks and one auth context (no state library); CSS Modules with tokens in `styles/tokens.css`; native `fetch`; no icon library | Keeps the client small | Decided (Q11) |
 | CI             | GitHub Actions                                                   | Lint, build and tests on every PR                           | In repo |
 | Hosting        | —                                                                | —                                                           | Not decided (Q9) |
 

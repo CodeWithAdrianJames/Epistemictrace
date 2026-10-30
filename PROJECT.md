@@ -119,15 +119,16 @@ Unlocked ──(SDI ≥ threshold, no cooldown)──► Locked ──(valid ref
 
 | Layer | Technology | Status |
 |---|---|---|
-| Frontend | React 19, TypeScript, Vite 8, Monaco (`@monaco-editor/react`), Vitest, oxlint | In repo |
+| Frontend | React 19, TypeScript, Vite 8, React Router (`react-router`), Monaco (`@monaco-editor/react`), Vitest, oxlint (`--deny-warnings`) | In repo |
+| Frontend state and styling | React state, custom hooks and one auth context (no state library); CSS Modules with tokens in `styles/tokens.css`; native `fetch`; no icon library | Decided |
 | Code execution | Pyodide (Python) in a Web Worker with a time limit | Decided, not yet added |
 | Backend | Java 21, Spring Boot 4.1, Maven wrapper, JUnit 5 + MockMvc | In repo |
 | Auth | Spring Security + JWT (HS256 via the OAuth2 resource server support, no third-party JWT library; claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`) | In repo |
 | Database | PostgreSQL via Spring Data JPA | In repo |
 | DB migrations | Flyway (portable SQL so tests can run on H2) | In repo |
-| Test tooling | Backend: H2 in PostgreSQL mode. Frontend: `@testing-library/react` + `jsdom` | Backend: in repo. Frontend: decided, not yet added |
+| Test tooling | Backend: H2 in PostgreSQL mode. Frontend: `@testing-library/react` + `@testing-library/jest-dom` + `jsdom` | In repo |
 | CI | GitHub Actions | In repo |
-| Hosting, frontend router/state/UI libraries, AI provider | — | **Not decided** |
+| Hosting, AI provider | — | **Not decided** |
 
 Do not add a library or framework outside this table without a team decision recorded here.
 
@@ -155,20 +156,20 @@ Do not add a library or framework outside this table without a team decision rec
 ## 8. Repository and commands
 
 ```text
-frontend/   React + TypeScript (Vite) — still the starter page
+frontend/   React + TypeScript (Vite) — app shell in progress (spec 04); starter page removed
 backend/    Spring Boot — package com.episteme.epistemictrace (GET /api/health only)
 docs/       project documentation
 tests/      cross-cutting tests (empty)
 .github/    CI: workflows/ci.yml (frontend and backend checks on PRs to main)
 ```
 
-Prerequisites: Node.js 20+ and JDK 21. Copy `.env.example` to `.env` (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`).
+Prerequisites: Node.js 22.22+ (needed by `react-router` and `jsdom`; CI uses Node 22) and JDK 21. Copy `.env.example` to `.env` (`DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, `VITE_API_URL`).
 
 ```bash
 # frontend/
 npm ci && npm run dev     # http://localhost:5173
-npm run build && npm run lint
-npm test                  # fails until the first test exists
+npm run build && npm run lint   # lint fails on any warning
+npm test                  # Vitest run (jsdom + Testing Library)
 
 # backend/  (Windows: mvnw.cmd)
 ./mvnw test
