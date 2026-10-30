@@ -42,6 +42,11 @@ Update this file whenever the current phase, active feature, open questions or i
     - `frontend/src/smoke.test.ts` removed after `App.test.tsx` passed under jsdom with a jest-dom matcher.
     - `lint` script is now `oxlint --deny-warnings` (Q20).
   - Part 2 (router, layout, placeholder pages): in progress on branch `feature/imp-04-part-2`, not yet merged.
+    - `src/app/router.tsx` exports `routes: RouteObject[]` (all R3 routes under one `AppLayout` parent; `/` is `<Navigate to="/login" replace />`; `*` is "Page not found"). `main.tsx` calls `createBrowserRouter(routes)` and renders `RouterProvider` from `react-router/dom`, so importing `routes` in tests creates no browser router.
+    - `src/app/PlaceholderPage.tsx` renders the title in an `<h1>`; one component for every placeholder.
+    - `src/app/AppLayout.tsx` + `AppLayout.module.css`: top bar with "EpistemicTrace" (link to `/`) and static `NavLink`s Activities, History, My activities (`aria-current="page"` on the active one); `<main>` is limited to 1200px unless a matched route has `handle: { fullWidth: true }` (only `student/activities/:activityId`). Log out and user name wait for spec 07.
+    - Placeholder `App.tsx` / `App.test.tsx` deleted; `src/app/router.test.tsx` uses `createMemoryRouter` (19 tests).
+    - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 19 passed. No hex colors in `src/**/*.css` outside `tokens.css`.
   - Part 3 (`apiFetch`, `ApiError`) not started.
 
 ## Next Up
