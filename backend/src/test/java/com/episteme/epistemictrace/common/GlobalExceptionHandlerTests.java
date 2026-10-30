@@ -13,6 +13,7 @@ import jakarta.validation.constraints.NotBlank;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -48,6 +49,16 @@ class GlobalExceptionHandlerTests {
 				.andExpect(content().string(not(containsString("IllegalStateException"))));
 	}
 
+	@Test
+	void accessDeniedReturns403WithFixedDetail() throws Exception {
+		mockMvc.perform(get("/test/denied"))
+				.andExpect(status().isForbidden())
+				.andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+				.andExpect(jsonPath("$.status").value(403))
+				.andExpect(jsonPath("$.detail").value("You don't have access to this."))
+				.andExpect(content().string(not(containsString("internal detail"))));
+	}
+
 	record EchoRequest(@NotBlank String name) {
 	}
 
@@ -62,6 +73,11 @@ class GlobalExceptionHandlerTests {
 		@GetMapping("/test/boom")
 		void boom() {
 			throw new IllegalStateException("internal detail");
+		}
+
+		@GetMapping("/test/denied")
+		void denied() {
+			throw new AccessDeniedException("internal detail");
 		}
 
 	}

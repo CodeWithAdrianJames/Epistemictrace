@@ -1,5 +1,6 @@
 package com.episteme.epistemictrace.config;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -12,18 +13,29 @@ import java.time.temporal.ChronoUnit;
 
 import javax.crypto.spec.SecretKeySpec;
 
+import jakarta.servlet.Filter;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.ExceptionTranslationFilter;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
+
+import com.jayway.jsonpath.JsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -37,6 +49,12 @@ class SecurityConfigTests {
 
 	@Autowired
 	private JwtEncoder jwtEncoder;
+
+	@Autowired
+	private SecurityFilterChain securityFilterChain;
+
+	@Autowired
+	private ProblemDetailAccessDeniedHandler accessDeniedHandler;
 
 	@Test
 	void healthIsPublic() throws Exception {
@@ -52,10 +70,62 @@ class SecurityConfigTests {
 	}
 
 	@Test
-	void tokenSignedByTestEncoderPassesAuthentication() throws Exception {
+	void studentTokenSignedByTestEncoderPassesAuthentication() throws Exception {
 		mockMvc.perform(get("/api/anything-else")
-						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder)))
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "STUDENT")))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void instructorTokenSignedByTestEncoderPassesAuthentication() throws Exception {
+		mockMvc.perform(get("/api/anything-else")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "INSTRUCTOR")))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void tokenWithoutRoleClaimReturns401() throws Exception {
+		mockMvc.perform(get("/api/anything-else")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, null)))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void tokenWithUnknownRoleReturns401() throws Exception {
+		mockMvc.perform(get("/api/anything-else")
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "ADMIN")))
+				.andExpect(status().isUnauthorized());
+	}
+
+	@Test
+	void securityFilterChainUsesProblemDetailAccessDeniedHandler() {
+		ExceptionTranslationFilter exceptionTranslationFilter = null;
+		for (Filter filter : securityFilterChain.getFilters()) {
+			if (filter instanceof ExceptionTranslationFilter candidate) {
+				exceptionTranslationFilter = candidate;
+			}
+		}
+
+		assertThat(exceptionTranslationFilter).isNotNull();
+		assertThat(ReflectionTestUtils.getField(exceptionTranslationFilter, "accessDeniedHandler"))
+				.isSameAs(accessDeniedHandler);
+	}
+
+	@Test
+	void accessDeniedReturns403ProblemDetail() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/instructor/activities");
+		request.addHeader(HttpHeaders.ACCEPT, "application/json, application/problem+json");
+		MockHttpServletResponse response = new MockHttpServletResponse();
+
+		accessDeniedHandler.handle(request, response, new AccessDeniedException("internal detail"));
+
+		assertThat(response.getStatus()).isEqualTo(403);
+		assertThat(MediaType.parseMediaType(response.getContentType()))
+				.isEqualTo(MediaType.APPLICATION_PROBLEM_JSON);
+		String body = response.getContentAsString();
+		assertThat((Integer) JsonPath.read(body, "$.status")).isEqualTo(403);
+		assertThat((String) JsonPath.read(body, "$.detail")).isEqualTo("You don't have access to this.");
+		assertThat(body).doesNotContain("internal detail");
 	}
 
 	@Test
@@ -67,7 +137,7 @@ class SecurityConfigTests {
 				.build();
 
 		mockMvc.perform(get("/api/anything-else")
-						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(otherEncoder)))
+						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(otherEncoder, "STUDENT")))
 				.andExpect(status().isUnauthorized());
 	}
 
@@ -97,14 +167,17 @@ class SecurityConfigTests {
 				.andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, ALLOWED_ORIGIN));
 	}
 
-	private static String token(JwtEncoder encoder) {
+	/** A {@code null} role leaves the role claim out. */
+	private static String token(JwtEncoder encoder, String role) {
 		Instant now = Instant.now();
-		JwtClaimsSet claims = JwtClaimsSet.builder()
+		JwtClaimsSet.Builder claims = JwtClaimsSet.builder()
 				.subject("1")
 				.issuedAt(now)
-				.expiresAt(now.plus(5, ChronoUnit.MINUTES))
-				.build();
-		return encoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
+				.expiresAt(now.plus(5, ChronoUnit.MINUTES));
+		if (role != null) {
+			claims.claim("role", role);
+		}
+		return encoder.encode(JwtEncoderParameters.from(claims.build())).getTokenValue();
 	}
 
 }
