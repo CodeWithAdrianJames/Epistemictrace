@@ -41,13 +41,18 @@ Update this file whenever the current phase, active feature, open questions or i
     - `src/styles/tokens.css` and `src/styles/global.css` imported once in `main.tsx`; starter `App.css`, `index.css`, `src/assets/*` and `public/icons.svg` deleted; `App.tsx` is a one-heading placeholder with `App.test.tsx` until Part 2 adds the router.
     - `frontend/src/smoke.test.ts` removed after `App.test.tsx` passed under jsdom with a jest-dom matcher.
     - `lint` script is now `oxlint --deny-warnings` (Q20).
-  - Part 2 (router, layout, placeholder pages): in progress on branch `feature/imp-04-part-2`, not yet merged.
+  - Part 2 (router, layout, placeholder pages): merged as `7d36153` (PR #10, squash, branch `feature/imp-04-part-2`, 2026-10-30). Review caveat: opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no reviews, no second reviewer.
     - `src/app/router.tsx` exports `routes: RouteObject[]` (all R3 routes under one `AppLayout` parent; `/` is `<Navigate to="/login" replace />`; `*` is "Page not found"). `main.tsx` calls `createBrowserRouter(routes)` and renders `RouterProvider` from `react-router/dom`, so importing `routes` in tests creates no browser router.
     - `src/app/PlaceholderPage.tsx` renders the title in an `<h1>`; one component for every placeholder.
     - `src/app/AppLayout.tsx` + `AppLayout.module.css`: top bar with "EpistemicTrace" (link to `/`) and static `NavLink`s Activities, History, My activities (`aria-current="page"` on the active one); `<main>` is limited to 1200px unless a matched route has `handle: { fullWidth: true }` (only `student/activities/:activityId`). Log out and user name wait for spec 07.
     - Placeholder `App.tsx` / `App.test.tsx` deleted; `src/app/router.test.tsx` uses `createMemoryRouter` (19 tests).
     - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 19 passed. No hex colors in `src/**/*.css` outside `tokens.css`.
-  - Part 3 (`apiFetch`, `ApiError`) not started.
+  - Part 3 (`apiFetch`, `ApiError`): in progress on branch `feature/imp-04-part-3`, not yet merged.
+    - `src/api/ApiError.ts`: `ApiError extends Error` with readonly `status`, `title`, `detail`, `fieldErrors`; `message` is `detail`. Fields are assigned in the constructor (no parameter properties, because `erasableSyntaxOnly` is on).
+    - `src/api/apiFetch.ts`: `apiFetch<T>(path, { method, body, token, signal, keepalive })`. Throws a plain `Error` (no request) when `path` does not start with `/api/`. Base URL is `import.meta.env.VITE_API_URL` read on every call, trailing `/` stripped, `''` when unset. Always sends `Accept: application/json, application/problem+json`; `Content-Type: application/json` and a `JSON.stringify` body only when `body` is given; `Authorization: Bearer <token>` only for a non-empty token. `204` → `undefined`.
+    - Errors: non-2xx → `ApiError` with `status` from the response; `title`/`detail` from the `ProblemDetail` body, falling back to the status text (or `HTTP <status>`) and "Something went wrong. Please try again." when the body is empty, not JSON, not an object or the fields are blank; `fieldErrors` keeps only string values of `errors`. Network failure → `status: 0`, detail "Can't reach the server. Check your connection." Two choices not spelled out in R6: an abort from the caller's `signal` is rethrown unchanged (not turned into `status: 0`), and a 2xx body that is not JSON throws `ApiError` with that status and detail "The server sent a response the app can't read.", so callers only ever see `ApiError` or an abort.
+    - `src/api/apiFetch.test.ts` (15 tests) mocks `fetch` with `vi.stubGlobal` and sets the base URL with `vi.stubEnv`.
+    - Local on Node 24.18.0: `npm run lint` exit 0, `npm run build` exit 0, `npm test` 34 passed (19 router + 15 apiFetch). `fetch(` appears only in `src/api/apiFetch.ts`.
 
 ## Next Up
 
@@ -106,6 +111,7 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q16 | Activity editing and status rules; field limits | DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in MVP. Title 1–120 chars, statement 1–20 000, starter code ≤ 20 000, test input/expected ≤ 10 000 each, ≤ 50 tests per activity. | SPC-02 (Jacob) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
+| Q21 | Where does the frontend read `VITE_API_URL` from? Vite loads `.env` files from `envDir`, which defaults to the Vite root (`frontend/`), but `PROJECT.md` §8 says to copy `.env.example` to `.env` at the repository root. With only a root `.env`, `npm run dev` leaves `VITE_API_URL` unset, so `apiFetch` calls relative `/api/...` URLs on the Vite dev server (port 5173) instead of the backend. | Either set `envDir: '..'` in `frontend/vite.config.ts`, or document "copy `VITE_API_URL` into `frontend/.env`" in `PROJECT.md` §8. Decide before spec 07 makes the first real API call. | Spec 04 owner (Jacob) | Open |
 
 ## Architecture Decisions
 
