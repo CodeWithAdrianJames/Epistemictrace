@@ -99,6 +99,12 @@ HISTORY_LENGTH = 10
 STOP_COMPLETE = "STOP: COMPLETE"
 STOP_FAILED = "STOP: FAILED"
 
+# Appended in code to every executor prompt, so it never depends on what Gemini wrote.
+EXECUTION_CONTRACT = (
+    "\n\nRun non-interactively. Never merge pull requests. If blocked by missing context, fatal errors, "
+    "or failing tests, explain why and prefix your response with BLOCKED:"
+)
+
 SYSTEM_PROMPT = f"""\
 You are the planner and code reviewer of an autonomous delivery loop for the EpistemicTrace repository.
 A headless Claude Code agent executes your prompts; the orchestrator script runs the squash-merge itself.
@@ -133,7 +139,8 @@ Decide in this order:
    run the local checks, commit, push, open the pull request against main. If the last result shows those
    checks failing, use "hard" and have it fix them first.
 6. Otherwise start the next unit: the next part of the active spec, or else the first spec in the Next Up table
-   whose dependencies are all completed -> "execute" (hard). Its setup step branches from an up-to-date main.
+   whose dependencies are all completed -> "execute" (hard). A pull request in state MERGED or CLOSED means that
+   part is finished: the next unit gets a new branch cut fresh from main, never the old branch.
 7. "stop" with "{STOP_FAILED}" when: the next unit's gates (Qn) are not Accepted in progress-tracker.md; the last
    result shows the same failure twice; the executor replied BLOCKED; or the state is unrecoverable or
    ambiguous. Give the reason in summary.
@@ -145,15 +152,25 @@ Model tier, required on every action:
   updates, squash-merging, chore scripts. A "stop" action uses "simple".
 
 Execute prompt format: concise, exactly three numbered steps.
-1. Setup: the branch to check out or create (feature/imp-NN-<slug> for part 1, feature/imp-NN-part-N for later
-   parts); when starting a new unit, `git checkout main && git pull` first.
-2. Context/Tracking: the context files and the one spec part to read; the progress-tracker.md update to make
+1. Setup: new work always gets a branch cut fresh from an up-to-date main:
+   `git checkout main && git pull origin main && git checkout -b <branch>`.
+   Branch names, one spec part per branch:
+   - Part 1 of a spec: feature/imp-<spec-num>-<short-name>, for example feature/imp-06-rbac.
+   - Part 2 and later: feature/imp-<spec-num>-part-<part-num>, for example feature/imp-06-part-2.
+   <spec-num> is the two-digit spec number. Only when continuing unmerged work (fixing CI or review defects,
+   resolving conflicts, committing and pushing leftovers) check out the existing branch instead of creating one.
+2. Context/Tracking: always tell Claude to read and follow @CLAUDE.md, @docs/context/ai-workflow-rules.md,
+   @docs/context/code-standards.md and the active feature spec (give its path under
+   docs/context/feature-specs/), naming the one spec part to build; then the progress-tracker.md update to make
    (In Progress, Completed, Session Notes).
 3. Execute: the concrete work; the local checks (backend: `./mvnw test` in backend/; frontend: `npm run lint`,
    `npm run build`, `npm test` in frontend/); atomic conventional commits ending "(spec NN part N)"; push;
-   `gh pr create --base main` with a body naming the spec part.
-End every prompt with: "Run non-interactively. Never merge pull requests. If blocked (open gate, missing
-requirement, a failing check you cannot fix), stop and reply with a line starting BLOCKED: and the reason."
+   open a PR targeting main using `gh pr create --base main` with a body naming the spec part, and take its
+   number from the URL that command prints.
+Never invent, guess or predict a pull request number, and never write one in a prompt (do not say "open PR
+#17"). Refer to it as "the pull request" or "this branch's pull request" (`gh pr view` finds it).
+Do not add an execution contract or closing instructions (non-interactive, no merging, BLOCKED); the
+orchestrator appends them to every prompt itself.
 
 Audit log format, at most 20 lines: PR number, spec and part, CI result, each check performed with pass or
 fail, defects found (or "none"), verdict APPROVE or CHANGES REQUESTED.
@@ -451,6 +468,8 @@ class Planner:
                     raise ValueError(f"expected a JSON object, got {type(data).__name__}")
                 return data
             except Exception as exc:  # API, transport and JSON errors all get the same retry
+                if getattr(exc, "code", None) in (401, 403):
+                    raise ConfigError(f"Gemini rejected GEMINI_API_KEY ({exc}). Check or replace the key.") from exc
                 last_error = exc
                 log(f"Gemini attempt {attempt}/{GEMINI_ATTEMPTS} failed: {exc}")
                 if attempt < GEMINI_ATTEMPTS:
@@ -516,6 +535,10 @@ def write_audit(decision: Decision, ctx: Context) -> Path:
     return path
 
 
+def build_prompt(decision: Decision) -> str:
+    return decision.prompt.rstrip() + EXECUTION_CONTRACT
+
+
 def execute(decision: Decision) -> tuple[bool, str]:
     """Run Claude Code headless. The prompt goes through stdin so Windows argument quoting cannot mangle it."""
     flags = resolve_model(MODEL_TIERS[decision.tier])
@@ -537,7 +560,7 @@ def execute(decision: Decision) -> tuple[bool, str]:
     timer.start()
     try:
         assert proc.stdin is not None and proc.stdout is not None
-        proc.stdin.write(decision.prompt)
+        proc.stdin.write(build_prompt(decision))
         proc.stdin.close()
         for line in proc.stdout:
             print(line, end="", flush=True)
@@ -625,7 +648,7 @@ def loop(args: argparse.Namespace, planner: Planner) -> int:
         if args.dry_run:
             if decision.action == "execute":
                 print(f"\nWould run: claude -p {' '.join(resolve_model(MODEL_TIERS[decision.tier]))} "
-                      f"--dangerously-skip-permissions\nPrompt (stdin):\n{decision.prompt}\n")
+                      f"--dangerously-skip-permissions\nPrompt (stdin):\n{build_prompt(decision)}\n")
             else:
                 print(f"\nWould run: gh pr merge {decision.pr_number} --squash --body "
                       f"{json.dumps(decision.merge_body)}\nAudit log:\n{decision.audit_log}\n")
