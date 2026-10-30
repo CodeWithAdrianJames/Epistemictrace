@@ -1,0 +1,100 @@
+/* ui-context.md → Layout Patterns → Forms: one column, labels above fields, errors under the field, submit bottom-left. */
+.page {
+  max-width: 420px;
+  margin: var(--space-6) auto 0;
+}
+
+.panel {
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.heading {
+  margin: 0 0 var(--space-4);
+  font-size: 1.5rem;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--state-fail);
+}
+
+.fieldError,
+.formError {
+  margin: 0;
+  color: var(--state-fail);
+  font-size: 0.875rem;
+}
+
+/* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */
+.pageError {
+  margin: 0 0 var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--state-fail-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-fail);
+}
+
+.submit {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--bg-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input:focus-visible,
+.submit:focus-visible,
+.switchLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.switch {
+  margin: var(--space-4) 0 0;
+  color: var(--text-secondary);
+}
+
+.switchLink {
+  color: var(--accent);
+}
