@@ -1,7 +1,8 @@
-import { useId, type FormEvent, type ReactNode } from 'react'
+import type { FormEvent } from 'react'
 import type { FieldErrors } from '../../auth/authForms.ts'
 import styles from './ActivityForm.module.css'
 import type { ActivityField, ActivityFormValues } from './activityForm.ts'
+import Field from './Field.tsx'
 
 interface ActivityFormProps {
   values: ActivityFormValues
@@ -72,42 +73,6 @@ function ActivityForm({ values, fieldErrors, submitLabel, submitDisabled, onChan
         {submitLabel}
       </button>
     </form>
-  )
-}
-
-interface ControlProps {
-  id: string
-  'aria-invalid': true | undefined
-  'aria-describedby': string | undefined
-}
-
-interface FieldProps {
-  label: string
-  error: string | undefined
-  children: (props: ControlProps) => ReactNode
-}
-
-// One labelled control with its error underneath, linked through aria-describedby.
-function Field({ label, error, children }: FieldProps) {
-  const id = useId()
-  const errorId = `${id}-error`
-
-  return (
-    <div className={styles.field}>
-      <label htmlFor={id} className={styles.label}>
-        {label}
-      </label>
-      {children({
-        id,
-        'aria-invalid': error ? true : undefined,
-        'aria-describedby': error ? errorId : undefined,
-      })}
-      {error && (
-        <p id={errorId} className={styles.fieldError}>
-          {error}
-        </p>
-      )}
-    </div>
   )
 }
 

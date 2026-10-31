@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { useParams } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { getActivity, updateActivity, type ActivityDetail } from '../../api/instructorActivitiesApi.ts'
@@ -16,6 +16,7 @@ import {
   type ActivityFormValues,
 } from './activityForm.ts'
 import StatusLabel from './StatusLabel.tsx'
+import TestCaseEditor, { type TestCasesUpdate } from './TestCaseEditor.tsx'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
 // Same text the server sends for a missing activity, so a malformed URL reads like an unknown id.
@@ -32,7 +33,11 @@ function ActivityEditPage() {
   const id = parseActivityId(activityId)
 
   return id === null ? (
-    <EditLayout state={{ status: 'error', message: NOT_FOUND_DETAIL }} onSaved={() => {}} />
+    <EditLayout
+      state={{ status: 'error', message: NOT_FOUND_DETAIL }}
+      onSaved={() => {}}
+      onTestCasesChange={() => {}}
+    />
   ) : (
     <ActivityEditor key={id} activityId={id} />
   )
@@ -41,6 +46,15 @@ function ActivityEditPage() {
 function ActivityEditor({ activityId }: { activityId: number }) {
   const request = useProtectedRequest()
   const [state, setState] = useState<LoadState>({ status: 'loading' })
+
+  // Test case responses replace only the list, so unsaved edits in the Details section stay as typed.
+  const updateTestCases = useCallback((update: TestCasesUpdate) => {
+    setState((current) =>
+      current.status === 'loaded'
+        ? { status: 'loaded', activity: { ...current.activity, testCases: update(current.activity.testCases) } }
+        : current,
+    )
+  }, [])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -60,15 +74,22 @@ function ActivityEditor({ activityId }: { activityId: number }) {
   }, [request, activityId])
 
   // R7: the page shows what the server returned, never an optimistic copy.
-  return <EditLayout state={state} onSaved={(activity) => setState({ status: 'loaded', activity })} />
+  return (
+    <EditLayout
+      state={state}
+      onSaved={(activity) => setState({ status: 'loaded', activity })}
+      onTestCasesChange={updateTestCases}
+    />
+  )
 }
 
 interface EditLayoutProps {
   state: LoadState
   onSaved: (activity: ActivityDetail) => void
+  onTestCasesChange: (update: TestCasesUpdate) => void
 }
 
-function EditLayout({ state, onSaved }: EditLayoutProps) {
+function EditLayout({ state, onSaved, onTestCasesChange }: EditLayoutProps) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -81,7 +102,16 @@ function EditLayout({ state, onSaved }: EditLayoutProps) {
           {state.message}
         </p>
       )}
-      {state.status === 'loaded' && <DetailsSection activity={state.activity} onSaved={onSaved} />}
+      {state.status === 'loaded' && (
+        <>
+          <DetailsSection activity={state.activity} onSaved={onSaved} />
+          <TestCaseEditor
+            activityId={state.activity.id}
+            testCases={state.activity.testCases}
+            onTestCasesChange={onTestCasesChange}
+          />
+        </>
+      )}
     </div>
   )
 }
