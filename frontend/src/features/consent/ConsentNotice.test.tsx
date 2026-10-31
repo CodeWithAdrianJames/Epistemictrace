@@ -105,7 +105,8 @@ describe('ConsentNotice when the choice is pending', () => {
   it('moves focus into the dialog', async () => {
     await renderNotice()
 
-    expect(screen.getByRole('dialog')).toHaveFocus()
+    // findByText can resolve before the dialog's focus effect has run.
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
   })
 
   it('keeps Tab and Shift+Tab inside the dialog', async () => {
