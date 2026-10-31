@@ -3,7 +3,12 @@ import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../api/ApiError.ts'
 import { me, type User } from '../../api/authApi.ts'
-import { getActivity, updateActivity, type ActivityDetail } from '../../api/instructorActivitiesApi.ts'
+import {
+  addTestCase,
+  getActivity,
+  updateActivity,
+  type ActivityDetail,
+} from '../../api/instructorActivitiesApi.ts'
 import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { getToken, setToken } from '../../auth/tokenStore.ts'
@@ -19,11 +24,16 @@ vi.mock('../../api/authApi.ts', () => ({
 vi.mock('../../api/instructorActivitiesApi.ts', () => ({
   getActivity: vi.fn(),
   updateActivity: vi.fn(),
+  addTestCase: vi.fn(),
+  updateTestCase: vi.fn(),
+  deleteTestCase: vi.fn(),
+  listTestCases: vi.fn(),
 }))
 
 const meMock = vi.mocked(me)
 const getActivityMock = vi.mocked(getActivity)
 const updateActivityMock = vi.mocked(updateActivity)
+const addTestCaseMock = vi.mocked(addTestCase)
 
 const FUTURE = '2099-01-01T00:00:00Z'
 const TOKEN = 'token-1'
@@ -389,6 +399,58 @@ describe('ActivityEditPage', () => {
     unmount()
 
     expect(signal.aborted).toBe(true)
+  })
+
+  it('shows the test cases section with the loaded test cases below the details', async () => {
+    getActivityMock.mockResolvedValue(ACTIVITY)
+    renderPage()
+
+    const details = await findDetails()
+    const testCases = screen.getByRole('region', { name: 'Test cases' })
+    expect(details.compareDocumentPosition(testCases) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    const first = within(testCases).getByRole('form', { name: 'Test 1' })
+    expect(within(first).getByRole('textbox', { name: 'Input' })).toHaveValue('1 2\n')
+    expect(within(first).getByRole('textbox', { name: 'Expected output' })).toHaveValue('3\n')
+    expect(within(testCases).getByRole('form', { name: 'New test case' })).toBeInTheDocument()
+  })
+
+  it('keeps unsaved detail edits when a test case is added', async () => {
+    getActivityMock.mockResolvedValue(ACTIVITY)
+    addTestCaseMock.mockResolvedValue({ id: 12, position: 2, input: '', expectedOutput: '0\n', hidden: true })
+    renderPage()
+
+    await findDetails()
+    type(field('Title'), 'Unsaved title')
+    const testCases = screen.getByRole('region', { name: 'Test cases' })
+    const newForm = within(testCases).getByRole('form', { name: 'New test case' })
+    type(within(newForm).getByRole('textbox', { name: 'Expected output' }), '0\n')
+    fireEvent.click(within(newForm).getByRole('button', { name: 'Add test case' }))
+
+    expect(await within(testCases).findByRole('form', { name: 'Test 2' })).toBeInTheDocument()
+    expect(addTestCaseMock).toHaveBeenCalledExactlyOnceWith(TOKEN, 5, { input: '', expectedOutput: '0\n', hidden: false })
+    expect(field('Title')).toHaveValue('Unsaved title')
+    expect(saveButton()).toBeEnabled()
+  })
+
+  it('shows the test cases returned by a details save', async () => {
+    getActivityMock.mockResolvedValue(ACTIVITY)
+    updateActivityMock.mockResolvedValue({
+      ...ACTIVITY,
+      title: 'Sum three numbers',
+      testCases: [
+        { id: 11, position: 1, input: '1 2\n', expectedOutput: '3\n', hidden: false },
+        { id: 14, position: 2, input: '4 5\n', expectedOutput: '9\n', hidden: false },
+      ],
+    })
+    renderPage()
+
+    await findDetails()
+    type(field('Title'), 'Sum three numbers')
+    fireEvent.click(saveButton())
+
+    const testCases = screen.getByRole('region', { name: 'Test cases' })
+    const second = await within(testCases).findByRole('form', { name: 'Test 2' })
+    expect(within(second).getByRole('textbox', { name: 'Expected output' })).toHaveValue('9\n')
   })
 
   it('loads the new activity when the route id changes', async () => {
