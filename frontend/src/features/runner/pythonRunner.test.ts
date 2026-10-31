@@ -245,6 +245,38 @@ describe('run', () => {
   })
 })
 
+describe('a worker that cannot be created', () => {
+  it('rejects warmUp with the creation error, and tries again on the next call', async () => {
+    const workers: FakeWorker[] = []
+    let failing = true
+    const runner = createPythonRunner(() => {
+      if (failing) throw new Error('Workers are not supported')
+      const worker = new FakeWorker()
+      workers.push(worker)
+      return worker
+    })
+
+    await expect(runner.warmUp()).rejects.toThrow('Workers are not supported')
+
+    failing = false
+    const retry = runner.warmUp()
+    workers[0].emit({ type: 'ready' })
+    await expect(retry).resolves.toBeUndefined()
+  })
+
+  it('resolves run as unavailable and is not busy afterwards', async () => {
+    const runner = createPythonRunner(() => {
+      throw new Error('Workers are not supported')
+    })
+
+    await expect(runner.run('a', '')).resolves.toEqual({
+      status: 'unavailable',
+      message: 'Workers are not supported',
+    })
+    await expect(runner.run('b', '')).resolves.toMatchObject({ status: 'unavailable' })
+  })
+})
+
 describe('time limit', () => {
   it('does not start the timer before the worker is ready', async () => {
     const { runner, workers } = setup()

@@ -20,3 +20,33 @@
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
 }
+
+/* Temporary runner check (spec 12); spec 14 removes it. */
+.runnerCheck {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.runnerHeading {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.runnerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.runnerReport {
+  min-height: 1.5em;
+  margin: 0;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  color: var(--text-secondary);
+}

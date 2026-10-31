@@ -26,11 +26,16 @@ interface ActiveRun {
   timer: ReturnType<typeof setTimeout> | null
 }
 
+// The URL expression must stay inline: Vite only bundles the worker for this exact form (R5).
+function defaultWorkerFactory(): WorkerLike {
+  return new Worker(new URL('./python.worker.ts', import.meta.url), { type: 'module' })
+}
+
 function messageOf(error: unknown): string {
   return error instanceof Error && error.message ? error.message : 'The Python runner is not available.'
 }
 
-export function createPythonRunner(createWorker: () => WorkerLike): PythonRunner {
+export function createPythonRunner(createWorker: () => WorkerLike = defaultWorkerFactory): PythonRunner {
   let worker: WorkerLike | null = null
   let ready: Promise<void> | null = null
   let rejectReady: ((error: Error) => void) | null = null
@@ -63,7 +68,13 @@ export function createPythonRunner(createWorker: () => WorkerLike): PythonRunner
   function warmUp(): Promise<void> {
     if (ready) return ready
 
-    const created = createWorker()
+    let created: WorkerLike
+    try {
+      created = createWorker()
+    } catch (error) {
+      // For example a browser without module workers: nothing to clean up, a later call tries again.
+      return Promise.reject(error instanceof Error ? error : new Error(messageOf(error)))
+    }
     let resolveReady: () => void = () => {}
     const pending = new Promise<void>((resolve, reject) => {
       resolveReady = resolve
