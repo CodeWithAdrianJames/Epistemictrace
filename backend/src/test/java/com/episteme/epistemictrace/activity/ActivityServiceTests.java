@@ -33,7 +33,7 @@ import com.episteme.epistemictrace.user.User;
 import com.episteme.epistemictrace.user.UserRepository;
 
 /**
- * Spec 08 Parts 1–3 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
+ * Spec 08 Parts 1–4 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
  * to show that the new {@code sdi_configs} row comes from configuration.
  */
 @SpringBootTest(properties = { "epistemictrace.sdi.defaults.threshold=65",
@@ -436,6 +436,56 @@ class ActivityServiceTests {
 		assertThat(this.activityService.listTestCases(this.instructorId, activityId))
 			.extracting(TestCase::getExpectedOutput)
 			.containsExactly("first\n", "second\n");
+	}
+
+	@Test
+	void listPublishedReturnsOnlyPublishedOfEveryInstructorByTitleIgnoringCase() {
+		long loops = this.activityRepository
+			.save(new Activity(this.instructorId, "Loops", "Statement.", "", ActivityStatus.PUBLISHED))
+			.getId();
+		this.activityRepository
+			.save(new Activity(this.instructorId, "A draft", "Statement.", "", ActivityStatus.DRAFT));
+		this.activityRepository
+			.save(new Activity(this.instructorId, "An archived one", "Statement.", "", ActivityStatus.ARCHIVED));
+		long arrays = this.activityRepository
+			.save(new Activity(this.otherInstructorId, "arrays", "Statement.", "", ActivityStatus.PUBLISHED))
+			.getId();
+		long sum = saveActivity(ActivityStatus.PUBLISHED, 2).getId();
+
+		assertThat(this.activityService.listPublished()).extracting(ActivitySummary::id)
+			.containsExactly(sum, arrays, loops);
+		assertThat(this.activityService.listPublished()).first().satisfies(summary -> {
+			assertThat(summary.title()).isEqualTo("Activity");
+			assertThat(summary.status()).isEqualTo(ActivityStatus.PUBLISHED);
+			assertThat(summary.testCaseCount()).isEqualTo(2);
+		});
+	}
+
+	@Test
+	void getPublishedReturnsTestCasesIncludingHiddenOnes() {
+		Activity activity = new Activity(this.otherInstructorId, "Sum", "Statement.", "", ActivityStatus.PUBLISHED);
+		activity.addTestCase(new TestCase(2, "3 4\n", "7\n", true));
+		activity.addTestCase(new TestCase(1, "1 2\n", "3\n", false));
+		long activityId = this.activityRepository.save(activity).getId();
+
+		// Read outside a transaction: the test cases must already be loaded (open-in-view is off).
+		Activity published = this.activityService.getPublished(activityId);
+
+		assertThat(published.getTestCases()).extracting(TestCase::getExpectedOutput).containsExactly("3\n", "7\n");
+		assertThat(published.getTestCases()).extracting(TestCase::isHidden).containsExactly(false, true);
+	}
+
+	@Test
+	void getPublishedTreatsDraftArchivedAndMissingAsNotFound() {
+		long draft = saveActivity(ActivityStatus.DRAFT, 1).getId();
+		long archived = saveActivity(ActivityStatus.ARCHIVED, 1).getId();
+
+		assertThatThrownBy(() -> this.activityService.getPublished(draft))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.getPublished(archived))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.getPublished(Long.MAX_VALUE))
+			.isInstanceOf(ActivityNotFoundException.class);
 	}
 
 	/**

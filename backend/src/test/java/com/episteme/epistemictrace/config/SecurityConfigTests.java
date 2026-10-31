@@ -71,9 +71,10 @@ class SecurityConfigTests {
 
 	@Test
 	void studentTokenSignedByTestEncoderPassesAuthentication() throws Exception {
+		// Spec 08 added the student list endpoint: with no published activities it is an empty list.
 		mockMvc.perform(get("/api/activities")
 						.header(HttpHeaders.AUTHORIZATION, "Bearer " + token(jwtEncoder, "STUDENT")))
-				.andExpect(status().isNotFound());
+				.andExpect(status().isOk());
 	}
 
 	@Test
