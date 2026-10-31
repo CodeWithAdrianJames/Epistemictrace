@@ -16,6 +16,8 @@ export type AuthContextValue = AuthState & {
   login: (email: string, password: string) => Promise<User>
   register: (name: string, email: string, password: string) => Promise<User>
   logout: () => void
+  // Spec 15 R4: after PUT /api/me/consent succeeds, so the user reads consentAccepted = true without a reload.
+  markConsentAccepted: () => void
 }
 
 const ANONYMOUS: AuthState = { status: 'anonymous', user: null, token: null }
@@ -83,9 +85,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setState(ANONYMOUS)
   }, [])
 
+  const markConsentAccepted = useCallback(() => {
+    setState((current) =>
+      current.status === 'authenticated'
+        ? { ...current, user: { ...current.user, consentAccepted: true } }
+        : current,
+    )
+  }, [])
+
   const value = useMemo<AuthContextValue>(
-    () => ({ ...state, login, register, logout }),
-    [state, login, register, logout],
+    () => ({ ...state, login, register, logout, markConsentAccepted }),
+    [state, login, register, logout, markConsentAccepted],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

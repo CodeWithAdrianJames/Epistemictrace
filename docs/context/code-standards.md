@@ -53,6 +53,7 @@
 - Schema changes go in a new migration file (`V<n>__<description>.sql`). Never edit a migration that has been merged.
 - Write portable SQL that runs on PostgreSQL and on the test database (Q12).
 - The only browser storage is the code draft (`localStorage`) and the token (`sessionStorage`).
+- Exception: `sessionStorage` is permitted exclusively for ephemeral tab-scoped state (e.g., `'epistemictrace:consent-declined'` per Spec 15 R5).
 
 ## Testing
 

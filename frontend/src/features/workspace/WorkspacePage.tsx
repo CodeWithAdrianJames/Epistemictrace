@@ -4,6 +4,8 @@ import { ApiError } from '../../api/ApiError.ts'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import ConsentNotice from '../consent/ConsentNotice.tsx'
+import { useConsent } from '../consent/useConsent.ts'
 import CodeEditor, { type EditorChange } from './CodeEditor.tsx'
 import ProblemPanel from './ProblemPanel.tsx'
 import ResultsPanel from './ResultsPanel.tsx'
@@ -89,6 +91,8 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   const [code, setCode] = useDraft(user ? user.id : 'local', activity.id, activity.starterCode)
   const { runner, status: runnerStatus } = usePythonRunner()
   const { state: runState, lastReport, run } = useRunTests(code, activity.testCases, runner)
+  // Spec 15 R3/R7: mounted only here, after the activity has loaded. Spec 17 starts tracking on consent.status === 'accepted'.
+  const consent = useConsent()
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
@@ -104,6 +108,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
         <h1 className={styles.title}>{activity.title}</h1>
         <RunButton state={runButtonState(runnerStatus, runState)} onRun={() => void run()} />
       </header>
+      <ConsentNotice consent={consent} />
       <div className={styles.regions}>
         <div className={styles.problem}>
           <ProblemPanel problemStatement={activity.problemStatement} testCases={activity.testCases} />
