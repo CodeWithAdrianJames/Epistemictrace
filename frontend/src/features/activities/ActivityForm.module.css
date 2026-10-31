@@ -37,6 +37,12 @@ textarea.input {
   tab-size: 4;
 }
 
+/* Spec 09 R5: archived activities are read-only; a muted fill tells them apart from editable fields. */
+.input[readonly] {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
 .input[aria-invalid='true'] {
   border-color: var(--state-fail);
 }
@@ -68,8 +74,30 @@ textarea.input {
   cursor: not-allowed;
 }
 
+/* Secondary actions (Delete, Archive): outlined, never the accent fill. */
+.secondary {
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.secondary:hover:not(:disabled) {
+  background: var(--bg-subtle);
+}
+
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .input:focus-visible,
-.submit:focus-visible {
+.submit:focus-visible,
+.secondary:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }

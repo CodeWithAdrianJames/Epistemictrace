@@ -34,12 +34,13 @@ export type TestCasesUpdate = (current: TestCase[]) => TestCase[]
 interface TestCaseEditorProps {
   activityId: number
   testCases: TestCase[]
+  readOnly: boolean
   onTestCasesChange: (update: TestCasesUpdate) => void
 }
 
 // Spec 09 R4: the test cases section of the edit page. Errors without a field land at its top (R6),
-// and every list change comes from a server response (R7).
-function TestCaseEditor({ activityId, testCases, onTestCasesChange }: TestCaseEditorProps) {
+// and every list change comes from a server response (R7). Archived activities are read-only (R5).
+function TestCaseEditor({ activityId, testCases, readOnly, onTestCasesChange }: TestCaseEditorProps) {
   const headingId = useId()
   const [sectionError, setSectionError] = useState<string | null>(null)
   const ordered = [...testCases].sort((a, b) => a.position - b.position)
@@ -63,6 +64,7 @@ function TestCaseEditor({ activityId, testCases, onTestCasesChange }: TestCaseEd
               <TestCaseRow
                 activityId={activityId}
                 testCase={testCase}
+                readOnly={readOnly}
                 onSectionError={setSectionError}
                 onTestCasesChange={onTestCasesChange}
               />
@@ -73,6 +75,7 @@ function TestCaseEditor({ activityId, testCases, onTestCasesChange }: TestCaseEd
       <NewTestCaseForm
         activityId={activityId}
         count={testCases.length}
+        readOnly={readOnly}
         onSectionError={setSectionError}
         onTestCasesChange={onTestCasesChange}
       />
@@ -83,12 +86,13 @@ function TestCaseEditor({ activityId, testCases, onTestCasesChange }: TestCaseEd
 interface TestCaseRowProps {
   activityId: number
   testCase: TestCase
+  readOnly: boolean
   onSectionError: (message: string | null) => void
   onTestCasesChange: (update: TestCasesUpdate) => void
 }
 
 // One saved test case with Save (enabled only when something changed) and Delete (after confirm()).
-function TestCaseRow({ activityId, testCase, onSectionError, onTestCasesChange }: TestCaseRowProps) {
+function TestCaseRow({ activityId, testCase, readOnly, onSectionError, onTestCasesChange }: TestCaseRowProps) {
   const request = useProtectedRequest()
   const headingId = useId()
   const [values, setValues] = useState<TestCaseFormValues>(() => testCaseValuesFrom(testCase))
@@ -147,7 +151,7 @@ function TestCaseRow({ activityId, testCase, onSectionError, onTestCasesChange }
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (pending !== null || !changed) {
+    if (readOnly || pending !== null || !changed) {
       return
     }
     const errors = validateTestCase(values)
@@ -160,7 +164,7 @@ function TestCaseRow({ activityId, testCase, onSectionError, onTestCasesChange }
   }
 
   function handleDelete() {
-    if (pending !== null || !window.confirm(`Delete ${name}? This can't be undone.`)) {
+    if (readOnly || pending !== null || !window.confirm(`Delete ${name}? This can't be undone.`)) {
       return
     }
     onSectionError(null)
@@ -172,21 +176,21 @@ function TestCaseRow({ activityId, testCase, onSectionError, onTestCasesChange }
       <h3 id={headingId} className={styles.testCaseHeading}>
         {name}
       </h3>
-      <TestCaseFields values={values} fieldErrors={fieldErrors} onChange={setValues} />
+      <TestCaseFields values={values} fieldErrors={fieldErrors} readOnly={readOnly} onChange={setValues} />
       <div className={styles.actions}>
         <button
           type="submit"
           aria-label={`Save ${name}`}
           className={formStyles.submit}
-          disabled={pending !== null || !changed}
+          disabled={readOnly || pending !== null || !changed}
         >
           Save
         </button>
         <button
           type="button"
           aria-label={`Delete ${name}`}
-          className={styles.secondary}
-          disabled={pending !== null}
+          className={formStyles.secondary}
+          disabled={readOnly || pending !== null}
           onClick={handleDelete}
         >
           Delete
@@ -199,12 +203,13 @@ function TestCaseRow({ activityId, testCase, onSectionError, onTestCasesChange }
 interface NewTestCaseFormProps {
   activityId: number
   count: number
+  readOnly: boolean
   onSectionError: (message: string | null) => void
   onTestCasesChange: (update: TestCasesUpdate) => void
 }
 
 // The Add test case form below the list; it empties itself after the server has stored the test case.
-function NewTestCaseForm({ activityId, count, onSectionError, onTestCasesChange }: NewTestCaseFormProps) {
+function NewTestCaseForm({ activityId, count, readOnly, onSectionError, onTestCasesChange }: NewTestCaseFormProps) {
   const request = useProtectedRequest()
   const headingId = useId()
   const [values, setValues] = useState<TestCaseFormValues>(EMPTY_TEST_CASE)
@@ -232,7 +237,7 @@ function NewTestCaseForm({ activityId, count, onSectionError, onTestCasesChange 
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (submitting) {
+    if (readOnly || submitting) {
       return
     }
     if (count >= MAX_TEST_CASES) {
@@ -259,9 +264,9 @@ function NewTestCaseForm({ activityId, count, onSectionError, onTestCasesChange 
       <h3 id={headingId} className={styles.testCaseHeading}>
         New test case
       </h3>
-      <TestCaseFields values={values} fieldErrors={fieldErrors} onChange={setValues} />
+      <TestCaseFields values={values} fieldErrors={fieldErrors} readOnly={readOnly} onChange={setValues} />
       <div className={styles.actions}>
-        <button type="submit" className={formStyles.submit} disabled={submitting}>
+        <button type="submit" className={formStyles.submit} disabled={readOnly || submitting}>
           Add test case
         </button>
       </div>
@@ -272,11 +277,13 @@ function NewTestCaseForm({ activityId, count, onSectionError, onTestCasesChange 
 interface TestCaseFieldsProps {
   values: TestCaseFormValues
   fieldErrors: FieldErrors<TestCaseField>
+  readOnly: boolean
   onChange: (values: TestCaseFormValues) => void
 }
 
 // Input and expected output are program text, so both are mono textareas that keep spaces and line breaks.
-function TestCaseFields({ values, fieldErrors, onChange }: TestCaseFieldsProps) {
+// Read-only textareas stay focusable so their text can still be selected and copied.
+function TestCaseFields({ values, fieldErrors, readOnly, onChange }: TestCaseFieldsProps) {
   return (
     <>
       <Field label="Input" error={fieldErrors.input}>
@@ -289,6 +296,7 @@ function TestCaseFields({ values, fieldErrors, onChange }: TestCaseFieldsProps) 
             autoCapitalize="off"
             autoCorrect="off"
             wrap="off"
+            readOnly={readOnly}
             value={values.input}
             className={`${formStyles.input} ${formStyles.code}`}
             onChange={(event) => {
@@ -307,6 +315,7 @@ function TestCaseFields({ values, fieldErrors, onChange }: TestCaseFieldsProps) 
             autoCapitalize="off"
             autoCorrect="off"
             wrap="off"
+            readOnly={readOnly}
             value={values.expectedOutput}
             className={`${formStyles.input} ${formStyles.code}`}
             onChange={(event) => {
@@ -320,6 +329,7 @@ function TestCaseFields({ values, fieldErrors, onChange }: TestCaseFieldsProps) 
           type="checkbox"
           name="hidden"
           checked={values.hidden}
+          disabled={readOnly}
           onChange={(event) => {
             onChange({ ...values, hidden: event.target.checked })
           }}

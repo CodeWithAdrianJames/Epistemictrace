@@ -56,12 +56,19 @@ function apiError(status: number, detail: string, fieldErrors: Record<string, st
 }
 
 // Holds the list like the edit page does, so every update from the editor is rendered back (R7).
-function Harness({ initial }: { initial: TestCase[] }) {
+function Harness({ initial, readOnly }: { initial: TestCase[]; readOnly: boolean }) {
   const [testCases, setTestCases] = useState(initial)
-  return <TestCaseEditor activityId={ACTIVITY_ID} testCases={testCases} onTestCasesChange={setTestCases} />
+  return (
+    <TestCaseEditor
+      activityId={ACTIVITY_ID}
+      testCases={testCases}
+      readOnly={readOnly}
+      onTestCasesChange={setTestCases}
+    />
+  )
 }
 
-function renderEditor(initial: TestCase[] = [FIRST, SECOND]) {
+function renderEditor(initial: TestCase[] = [FIRST, SECOND], readOnly = false) {
   setToken(TOKEN, FUTURE)
   meMock.mockResolvedValue(INSTRUCTOR)
   const router = createMemoryRouter(
@@ -70,7 +77,7 @@ function renderEditor(initial: TestCase[] = [FIRST, SECOND]) {
         path: '/instructor/activities/:activityId',
         element: (
           <RequireRole role="INSTRUCTOR">
-            <Harness initial={initial} />
+            <Harness initial={initial} readOnly={readOnly} />
           </RequireRole>
         ),
       },
@@ -612,6 +619,60 @@ describe('TestCaseEditor', () => {
       expect(await screen.findByRole('heading', { level: 1, name: 'Log in page' })).toBeInTheDocument()
       expect(router.state.location.pathname).toBe('/login')
       expect(getToken()).toBeNull()
+    })
+  })
+
+  describe('read-only (archived, spec 09 R5)', () => {
+    it('makes every row field read-only and disables Hidden, Save and Delete', async () => {
+      renderEditor([FIRST, SECOND], true)
+
+      await findSection()
+      for (const name of ['Test 1', 'Test 2']) {
+        expect(textbox(row(name), 'Input')).toHaveAttribute('readonly')
+        expect(textbox(row(name), 'Expected output')).toHaveAttribute('readonly')
+        expect(hiddenBox(row(name))).toBeDisabled()
+        expect(button(row(name), `Save ${name}`)).toBeDisabled()
+        expect(button(row(name), `Delete ${name}`)).toBeDisabled()
+      }
+      expect(textbox(row('Test 1'), 'Input')).toHaveValue('1 2\n')
+      expect(hiddenBox(row('Test 2'))).toBeChecked()
+    })
+
+    it('makes the add form read-only with Add test case disabled', async () => {
+      renderEditor([FIRST], true)
+
+      await findSection()
+      expect(textbox(addForm(), 'Input')).toHaveAttribute('readonly')
+      expect(textbox(addForm(), 'Expected output')).toHaveAttribute('readonly')
+      expect(hiddenBox(addForm())).toBeDisabled()
+      expect(button(addForm(), 'Add test case')).toBeDisabled()
+    })
+
+    it('sends nothing when a row or the add form is submitted anyway', async () => {
+      const confirm = confirmWith(true)
+      renderEditor([FIRST], true)
+
+      await findSection()
+      type(textbox(row('Test 1'), 'Expected output'), '4\n')
+      fireEvent.submit(row('Test 1'))
+      type(textbox(addForm(), 'Expected output'), '5\n')
+      fireEvent.submit(addForm())
+      fireEvent.click(button(row('Test 1'), 'Delete Test 1'))
+
+      expect(updateTestCaseMock).not.toHaveBeenCalled()
+      expect(addTestCaseMock).not.toHaveBeenCalled()
+      expect(deleteTestCaseMock).not.toHaveBeenCalled()
+      expect(confirm).not.toHaveBeenCalled()
+    })
+
+    it('leaves the fields editable when the activity is not archived', async () => {
+      renderEditor([FIRST])
+
+      await findSection()
+      expect(textbox(row('Test 1'), 'Input')).not.toHaveAttribute('readonly')
+      expect(hiddenBox(row('Test 1'))).toBeEnabled()
+      expect(textbox(addForm(), 'Expected output')).not.toHaveAttribute('readonly')
+      expect(button(addForm(), 'Add test case')).toBeEnabled()
     })
   })
 })
