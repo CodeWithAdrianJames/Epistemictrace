@@ -95,6 +95,21 @@ public class SessionService {
 		return session;
 	}
 
+	/**
+	 * Like {@link #requireOwnedSession}, but the session row stays locked until the caller's transaction ends, so
+	 * concurrent changes to the breaker state run one after the other (spec 24 R6).
+	 * @throws SessionNotFoundException if there is no session with this id
+	 * @throws AccessDeniedException if the session belongs to another student
+	 */
+	public CodingSession lockOwnedSession(long sessionId, long studentId) {
+		CodingSession session = this.codingSessionRepository.findByIdForUpdate(sessionId)
+			.orElseThrow(SessionNotFoundException::new);
+		if (session.getStudentId() != studentId) {
+			throw new AccessDeniedException("Session " + sessionId + " belongs to another student.");
+		}
+		return session;
+	}
+
 	private boolean isResumable(CodingSession session, Instant now) {
 		Instant endedAt = session.getEndedAt();
 		return endedAt == null || !endedAt.isBefore(now.minus(this.sessionProperties.resumeWindow()));

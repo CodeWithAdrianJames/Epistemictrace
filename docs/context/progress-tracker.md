@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 23 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 24 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 24 are done. Next: 25 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -257,6 +257,12 @@ Update this file whenever the current phase, active feature, open questions or i
   - Tests: `useBreakerState.test.ts` 11, `useRunGate.test.ts` 6, `LockedPanel.test.tsx` 3, `sessionsApi.test.ts` +12 (`parseBreaker`), `RunButton.test.tsx` +2, `WorkspacePage.test.tsx` +5 (resumed locked session: panel, focus, disabled button, editor still edits; batch lock after a run; Running… until the answer; fail-open notice; cooldown notice and runs work).
   - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 805 passed in 48 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (443 tests on `main`).
   - Not done: the manual end-to-end check (lock by wheel-spinning, refresh, still locked; backend stopped → re-enabled within 5 s) and MCB-01 screenshots.
+- 24 Save reflections API (IMP-24) — **Completed** 2026-11-01, Parts 1 and 2 on branch `feature/imp-24`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gate Q8 Accepted. Spec 23 was merged first as `30dcd85` (PR #51). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1–R4, R6): `reflection/ReflectionService.submit(sessionId, studentId, request)` — trims both fields and checks `ReflectionProperties` min/max (`400` `InvalidReflectionException`, `errors.hypothesis` / `errors.plannedFix`, detail = first message, e.g. "Write at least 20 characters."); loads the session with `SessionService.lockOwnedSession` (`CodingSessionRepository.findByIdForUpdate`, `PESSIMISTIC_WRITE`; `404`/`403` as `requireOwnedSession`); not locked → `409` `RunnerNotLockedException` "Tests aren't paused right now."; saves `reflections(..., sdi_at_trigger = sdi_at_lock, submitted_at = now)` and applies `BreakerService.onReflection` with the activity's `cooldown_seconds`, in one transaction.
+  - Part 2 (R5, R7): `ReflectionController` (`POST /api/sessions/{id}/reflections` → `201 { reflectionId, submittedAt, breaker }`, breaker `COOLDOWN`), `ReflectionRequest`, `ReflectionResponse`. No `sdi_at_trigger` in the body. `SecurityConfig` unchanged (`/api/sessions/**` is `STUDENT`).
+  - Choices not spelled out in the spec: (1) lengths are checked before ownership, so an invalid body for another student's session is a `400`, not a `403` (same order as bean validation elsewhere); (2) a missing field counts as empty; (3) a locked session without `sdi_at_lock` (impossible through the API) is treated as not locked (`409`).
+  - Tests: `ReflectionServiceTests` 9 (saved with `sdi_at_lock` and cooldown 600 s; second submit `409`; trimming; boundaries 20 and 2000; too short/long field errors; whitespace only; detail names the minimum; `403`; `404`; two concurrent submits store one reflection and one gets `409`), `ReflectionControllerTests` 9 (`201` shape without SDI, next session start shows `COOLDOWN`, `400` field errors, empty body, `409`, other student `403`, `404`, instructor `403`, no token `401`).
+  - Local (2026-11-01): `./mvnw -B test` 461 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
 
 ## In Progress
 
@@ -271,7 +277,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Completed | — |
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Completed | — |
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Completed | — |
-| 24 Save reflections API | — (Q8 Accepted) | Waits on 22 | — |
+| 24 Save reflections API | — (Q8 Accepted) | Completed | — |
 | 25 Reflection form | — (Q8 Accepted) | Waits on 23, 24 | — |
 | 26 Session history API | — | Waits on 24 | — |
 | 27 Session history page | — | Waits on 26 | — |
