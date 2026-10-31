@@ -1,22 +1,25 @@
 import styles from './RunButton.module.css'
 
-export type RunButtonState = 'preparing' | 'ready' | 'running' | 'failed'
+export type RunButtonState = 'preparing' | 'ready' | 'running' | 'waiting' | 'locked' | 'failed'
 
 interface RunButtonProps {
   state: RunButtonState
   onRun: () => void
 }
 
-// ui-context.md → Run Tests Button. The locked and cooldown states come with specs 22–23.
+// ui-context.md → Run Tests Button. 'waiting' is the wait for the server after a run (≤ 5 s,
+// spec 23 R2); 'locked' is the breaker (R3). Cooldown is plain 'ready'.
 const LABELS: Record<RunButtonState, string> = {
   preparing: 'Preparing Python…',
   ready: 'Run tests',
   running: 'Running…',
+  waiting: 'Running…',
+  locked: 'Paused — see below',
   failed: 'Run tests',
 }
 
 // ui-context.md → Accessibility: a disabled button has aria-disabled and a visible reason. The
-// label is the reason while preparing or running; a failed start-up gets its own message.
+// label is the reason while preparing, running, waiting or locked; a failed start-up gets its own message.
 function RunButton({ state, onRun }: RunButtonProps) {
   const disabled = state !== 'ready'
 

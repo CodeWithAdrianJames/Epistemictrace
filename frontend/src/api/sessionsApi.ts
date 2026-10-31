@@ -42,6 +42,16 @@ export interface ErrorEvent {
 
 export type TelemetryEvent = EditEvent | RunEvent | ErrorEvent
 
+// The breaker object of session, events and reflection responses (spec 22 R7). Never the SDI.
+export type BreakerStatus = 'UNLOCKED' | 'LOCKED' | 'COOLDOWN'
+
+export interface Breaker {
+  state: BreakerStatus
+  // Set only while the state is COOLDOWN.
+  cooldownEndsAt: string | null
+  reflectionMinLength: number
+}
+
 export interface KeepaliveOption {
   keepalive?: boolean
 }
@@ -70,6 +80,21 @@ export async function sendEvents(
     keepalive,
   })
   return parseBatchResponse(body)
+}
+
+// Spec 23 R1: a missing or malformed breaker is ignored (null), never trusted.
+export function parseBreaker(value: unknown): Breaker | null {
+  const record = asRecord(value)
+  if (!record) return null
+  const { state, cooldownEndsAt, reflectionMinLength } = record
+  if (state !== 'UNLOCKED' && state !== 'LOCKED' && state !== 'COOLDOWN') return null
+  if (!(typeof reflectionMinLength === 'number' && Number.isSafeInteger(reflectionMinLength) && reflectionMinLength > 0)) {
+    return null
+  }
+  if (state === 'COOLDOWN') {
+    return isInstant(cooldownEndsAt) ? { state, cooldownEndsAt, reflectionMinLength } : null
+  }
+  return { state, cooldownEndsAt: null, reflectionMinLength }
 }
 
 function parseSessionStart(value: unknown): SessionStart {

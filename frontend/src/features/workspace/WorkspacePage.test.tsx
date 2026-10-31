@@ -11,6 +11,7 @@ import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { setToken } from '../../auth/tokenStore.ts'
 import { CONSENT_DECLINED_KEY } from '../consent/useConsent.ts'
+import type { BatchResponse, SessionStart } from '../../api/sessionsApi.ts'
 import { createPythonRunner, type ExecutionResult, type PythonRunner } from '../runner/pythonRunner.ts'
 import type { EditorChange } from './CodeEditor.tsx'
 import WorkspacePage from './WorkspacePage.tsx'
@@ -30,7 +31,9 @@ vi.mock('../../api/consentApi.ts', () => ({
   putConsent: vi.fn(),
 }))
 
-vi.mock('../../api/sessionsApi.ts', () => ({
+// Only the requests are mocked; parseBreaker stays real so the page validates breaker payloads as in production.
+vi.mock('../../api/sessionsApi.ts', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../api/sessionsApi.ts')>()),
   startSession: vi.fn(),
   endSession: vi.fn(),
   sendEvents: vi.fn(),
@@ -109,6 +112,8 @@ interface RenderOptions {
   onEditorChange?: (value: string, change: EditorChange) => void
   // The signed-in student; defaults to one who already accepted, so the consent notice stays out of the way.
   user?: User
+  // The POST /api/sessions answer; defaults to a new, unlocked session without a breaker.
+  start?: SessionStart
 }
 
 type FakeRunner = { [K in keyof PythonRunner]: ReturnType<typeof vi.fn<PythonRunner[K]>> }
@@ -144,11 +149,11 @@ async function runTestsAndWait(): Promise<void> {
 }
 
 // The page sits behind RequireRole in the app router, so it only mounts once the stored token is confirmed.
-function renderAt(path: string, { onEditorChange, user = STUDENT }: RenderOptions = {}) {
+function renderAt(path: string, { onEditorChange, user = STUDENT, start }: RenderOptions = {}) {
   setToken('token-7', FUTURE)
   meMock.mockResolvedValue(user)
   installRunner()
-  startSessionMock.mockResolvedValue({ sessionId: 5, activityId: 42, startedAt: '2026-11-03T02:00:00Z', resumed: false })
+  startSessionMock.mockResolvedValue(start ?? { sessionId: 5, activityId: 42, startedAt: '2026-11-03T02:00:00Z', resumed: false })
   endSessionMock.mockResolvedValue(undefined)
   sendEventsMock.mockResolvedValue({ accepted: 1, duplicates: 0 })
   const router = createMemoryRouter(
@@ -667,5 +672,83 @@ describe('WorkspacePage telemetry', () => {
     unmount()
 
     await waitFor(() => expect(endSessionMock).toHaveBeenCalledWith('token-7', 5, { keepalive: true }))
+  })
+})
+
+describe('WorkspacePage breaker', () => {
+  const LOCKED = { state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 20 }
+  const START = { sessionId: 5, activityId: 42, startedAt: '2026-11-03T02:00:00Z', resumed: true }
+
+  it('a resumed locked session shows the paused panel and keeps the editor usable', async () => {
+    await renderLoaded(ACTIVITY, { start: { ...START, breaker: LOCKED } })
+    await screen.findByRole('heading', { name: "Let's pause and plan" })
+    await warmUpDone()
+
+    const button = screen.getByRole('button', { name: 'Paused — see below' })
+    expect(button).toBeDisabled()
+    expect(screen.getByRole('heading', { name: "Let's pause and plan" })).toHaveFocus()
+
+    type('b = 2', 'b = 2')
+    expect(lastProps().value).toBe('b = 2')
+  })
+
+  it('a batch response that locks disables Run tests after the run', async () => {
+    await renderLoaded()
+    sendEventsMock.mockResolvedValue({ accepted: 1, duplicates: 0, breaker: LOCKED })
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalled())
+    await warmUpDone()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+
+    expect(await screen.findByRole('button', { name: 'Paused — see below' })).toBeDisabled()
+    expect(screen.getByRole('heading', { name: "Let's pause and plan" })).toBeInTheDocument()
+    expect(screen.queryByText(/SDI/)).not.toBeInTheDocument()
+  })
+
+  it('keeps Run tests disabled as Running… until the server answers the run', async () => {
+    let answer: (response: BatchResponse) => void = () => undefined
+    await renderLoaded()
+    sendEventsMock.mockReturnValue(
+      new Promise<BatchResponse>((resolve) => {
+        answer = resolve
+      }),
+    )
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalled())
+    await act(async () => {})
+    await warmUpDone()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+    await waitFor(() => expect(sendEventsMock).toHaveBeenCalled())
+    expect(screen.getByRole('button', { name: 'Running…' })).toBeDisabled()
+
+    await act(async () => answer({ accepted: 1, duplicates: 0 }))
+    expect(screen.getByRole('button', { name: 'Run tests' })).toBeEnabled()
+    expect(screen.queryByText(/couldn't reach the server/)).not.toBeInTheDocument()
+  })
+
+  it('fails open with a notice when sending the run fails', async () => {
+    await renderLoaded()
+    sendEventsMock.mockRejectedValue(new ApiError({ status: 0, title: 'Network error', detail: 'x', fieldErrors: {} }))
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalled())
+    await act(async () => {})
+    await warmUpDone()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+
+    expect(
+      await screen.findByText("We couldn't reach the server. Your tests still run, but pauses may not work right now."),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Run tests' })).toBeEnabled()
+  })
+
+  it('during cooldown shows the top-bar notice and Run tests works', async () => {
+    await renderLoaded(ACTIVITY, {
+      start: { ...START, breaker: { state: 'COOLDOWN', cooldownEndsAt: '2099-01-01T00:00:00Z', reflectionMinLength: 20 } },
+    })
+    expect(await screen.findByText('Tests are running again. Keep going step by step.')).toBeInTheDocument()
+    await warmUpDone()
+
+    await runTestsAndWait()
+    expect(runner.run).toHaveBeenCalled()
   })
 })

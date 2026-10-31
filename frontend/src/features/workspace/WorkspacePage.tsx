@@ -4,6 +4,10 @@ import { ApiError } from '../../api/ApiError.ts'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import type { BreakerStatus } from '../../api/sessionsApi.ts'
+import LockedPanel from '../breaker/LockedPanel.tsx'
+import { useBreakerState } from '../breaker/useBreakerState.ts'
+import { SERVER_UNREACHABLE_MESSAGE, useRunGate } from '../breaker/useRunGate.ts'
 import ConsentNotice from '../consent/ConsentNotice.tsx'
 import { useConsent } from '../consent/useConsent.ts'
 import { TRACKING_UNAVAILABLE_MESSAGE, useTelemetrySession } from '../telemetry/useTelemetrySession.ts'
@@ -17,6 +21,9 @@ import { usePythonRunner, type RunnerStatus } from './usePythonRunner.ts'
 import { useRunTests, type RunState } from './useRunTests.ts'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
+
+// ui-context.md → Breaker Panel: the top-bar notice during cooldown.
+export const COOLDOWN_NOTICE = 'Tests are running again. Keep going step by step.'
 
 export type EditorChangeListener = (value: string, change: EditorChange) => void
 
@@ -96,15 +103,13 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   const consent = useConsent()
   // Spec 17 R4/R5: tracking starts only when consent.status is 'accepted'.
   const telemetry = useTelemetrySession({ activityId: activity.id, consentStatus: consent.status })
-  const { recordEdit, recordRun } = telemetry
+  const { recordEdit, recordRun, onBatchResponse } = telemetry
+  // Spec 23: the server's breaker state, and the wait for the server after each run (fail-open after 5 s).
+  const breaker = useBreakerState({ startResponse: telemetry.startResponse, onBatchResponse })
+  const gate = useRunGate(recordRun, telemetry.sessionId !== null)
+  const { handleReport } = gate
 
-  useEffect(
-    () =>
-      onReportReady((report) => {
-        void recordRun(report)
-      }),
-    [onReportReady, recordRun],
-  )
+  useEffect(() => onReportReady(handleReport), [onReportReady, handleReport])
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
@@ -119,12 +124,27 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>{activity.title}</h1>
-        <RunButton state={runButtonState(runnerStatus, runState)} onRun={() => void run()} />
+        <div className={styles.actions}>
+          {breaker.state === 'COOLDOWN' && (
+            <p role="status" className={styles.cooldownNotice}>
+              {COOLDOWN_NOTICE}
+            </p>
+          )}
+          <RunButton
+            state={runButtonState(runnerStatus, runState, gate.waiting, breaker.state)}
+            onRun={() => void run()}
+          />
+        </div>
       </header>
       <ConsentNotice consent={consent} />
       {telemetry.unavailable && (
         <p role="status" className={styles.trackingNotice}>
           {TRACKING_UNAVAILABLE_MESSAGE}
+        </p>
+      )}
+      {gate.unreachable && (
+        <p role="status" className={styles.trackingNotice}>
+          {SERVER_UNREACHABLE_MESSAGE}
         </p>
       )}
       <div className={styles.regions}>
@@ -135,6 +155,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
           <CodeEditor value={code} onChange={handleChange} />
         </section>
         <div className={styles.results}>
+          {breaker.state === 'LOCKED' && <LockedPanel />}
           <ResultsPanel report={lastReport} testCases={activity.testCases} />
         </div>
       </div>
@@ -142,10 +163,18 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   )
 }
 
-function runButtonState(runnerStatus: RunnerStatus, runState: RunState): RunButtonState {
+// Spec 23 R3: a locked runner shows its reason even while Python is still loading.
+function runButtonState(
+  runnerStatus: RunnerStatus,
+  runState: RunState,
+  waitingForServer: boolean,
+  breakerState: BreakerStatus,
+): RunButtonState {
   if (runnerStatus === 'failed') return 'failed'
+  if (breakerState === 'LOCKED') return 'locked'
   if (runnerStatus === 'warming') return 'preparing'
-  return runState === 'running' ? 'running' : 'ready'
+  if (runState === 'running') return 'running'
+  return waitingForServer ? 'waiting' : 'ready'
 }
 
 function NotAvailable() {

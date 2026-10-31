@@ -42,7 +42,26 @@
 .results {
   display: flex;
   flex-direction: column;
+  gap: var(--space-3);
   min-height: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+/* ui-context.md → Breaker Panel: a small notice in the top bar during cooldown. */
+.cooldownNotice {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--state-pause-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-pause);
+  font-size: 0.875rem;
 }
 
 /* Desktop: problem left (35%), editor top-right (60%), results bottom-right (40%). The page fills

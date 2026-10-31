@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 22 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 23 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 23 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 24 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -250,6 +250,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Choices not spelled out in the spec: (1) locking after an expired cooldown keeps the old `cooldownEndsAt` on the row (it is in the past, so `view` ignores it; `onReflection` overwrites it); (2) `cooldownEndsAt` in the payload is `null` unless the state is `COOLDOWN`; (3) a zero cooldown unlocks straight to `UNLOCKED`.
   - Tests: `BreakerRulesTests` 15 (every branch of R2–R4, cooldown end equal to now, threshold equality, already locked, full cycle), `BreakerIngestionTests` 9 (wheel-spinning locks, steady stays unlocked, runs while locked keep the first `sdi_at_lock`, breaker present without a RUN, cooldown blocks a re-trigger, lock again after the cooldown, resumed locked session returns `LOCKED`, new session `UNLOCKED`, resumed cooldown returns `COOLDOWN` with its end; no `sdi` text in any body), `ReflectionPropertiesTests` 6. Response-shape assertions updated in `SessionControllerTests`, `TelemetryControllerTests`, `TelemetryScoringControllerTests`.
   - Local (2026-11-01): `./mvnw -B test` 443 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
+- 23 Lock the Run button (IMP-23) — **Completed** 2026-11-01, Parts 1 and 2 on branch `feature/imp-23`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gates Q2, Q15 Accepted. Spec 22 was merged first as `bea8c81` (PR #50). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1): `api/sessionsApi.ts` gained `Breaker`/`BreakerStatus` and `parseBreaker(value)` (state must be one of the three; `cooldownEndsAt` a parsable instant for `COOLDOWN`, else `null`; `reflectionMinLength` a positive integer; unknown fields such as an SDI are dropped; anything else → `null`). `features/breaker/useBreakerState.ts` (`UNLOCKED` while `startResponse` is `null`; start value from `startResponse.breaker`; follows every batch response with a valid `breaker`; display timer turns `COOLDOWN` into `UNLOCKED` at `cooldownEndsAt`; `apply(breaker)` for the reflection answer in spec 25).
+  - Part 2 (R2–R7): `features/breaker/useRunGate.ts` (`SERVER_WAIT_MS = 5000`; waits for `recordRun` or 5 s; `null` or timeout → notice "We couldn't reach the server. Your tests still run, but pauses may not work right now."), `features/breaker/LockedPanel.tsx` (+ CSS; heading "Let's pause and plan" focused on mount, body from `ui-context.md`, `--state-pause` tokens, not a modal), `RunButton` states `waiting` ("Running…", disabled) and `locked` ("Paused — see below", disabled). `WorkspacePage` shows `LockedPanel` above the results panel, the cooldown notice "Tests are running again. Keep going step by step." in the top bar, and the fail-open notice under the header.
+  - Choices not spelled out in the spec: (1) runs are not gated when tracking is off, the report is `unavailable`, or there are no tests (no answer to wait for); (2) a locked runner shows "Paused — see below" even while Python is still loading; (3) the fail-open notice stays until the next run the server answers; (4) the reflection minimum while untracked is `0` (the panel never shows then); (5) `WorkspacePage.test.tsx` mocks only the requests of `sessionsApi` and keeps the real `parseBreaker`.
+  - Tests: `useBreakerState.test.ts` 10, `useRunGate.test.ts` 6, `LockedPanel.test.tsx` 3, `sessionsApi.test.ts` +12 (`parseBreaker`), `RunButton.test.tsx` +2, `WorkspacePage.test.tsx` +5 (resumed locked session: panel, focus, disabled button, editor still edits; batch lock after a run; Running… until the answer; fail-open notice; cooldown notice and runs work).
+  - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 804 passed in 48 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (443 tests on `main`).
+  - Not done: the manual end-to-end check (lock by wheel-spinning, refresh, still locked; backend stopped → re-enabled within 5 s) and MCB-01 screenshots.
 
 ## In Progress
 
@@ -263,7 +270,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 20 SDI score engine | — (Q1 Accepted) | Completed | — |
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Completed | — |
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Completed | — |
-| 23 Lock the Run button | — (Q2, Q15 Accepted) | Waits on 17, 22 | — |
+| 23 Lock the Run button | — (Q2, Q15 Accepted) | Completed | — |
 | 24 Save reflections API | — (Q8 Accepted) | Waits on 22 | — |
 | 25 Reflection form | — (Q8 Accepted) | Waits on 23, 24 | — |
 | 26 Session history API | — | Waits on 24 | — |

@@ -17,6 +17,8 @@ describe('RunButton', () => {
   it.each([
     ['preparing', 'Preparing Python…'],
     ['running', 'Running…'],
+    ['waiting', 'Running…'],
+    ['locked', 'Paused — see below'],
   ] as const)('is disabled with the label for the %s state', (state, label) => {
     const onRun = vi.fn()
     render(<RunButton state={state} onRun={onRun} />)
