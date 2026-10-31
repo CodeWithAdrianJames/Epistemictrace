@@ -61,6 +61,13 @@ public class CodingSession {
 		this.endedAt = endedAt;
 	}
 
+	/** Raises {@code peak_sdi} to {@code sdi} if it is higher (spec 21 R1). */
+	public void recordSdi(int sdi) {
+		if (this.peakSdi == null || sdi > this.peakSdi) {
+			this.peakSdi = sdi;
+		}
+	}
+
 	public Long getId() {
 		return this.id;
 	}

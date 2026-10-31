@@ -3,7 +3,7 @@
 - **Card:** IMP-20 (https://trello.com/c/WiKHZSr2) · **Feature:** TEL-03 / M6
 - **Owner:** Adrian · **Reviewer:** Jacob
 - **Depends on:** 19
-- **Gates:** Q1 (weights, caps, level boundary) â€” **Accepted** 2026-10-31
+- **Gates:** Q1 (weights, caps, level boundary) — **Accepted** 2026-10-31
 
 ## Goal
 

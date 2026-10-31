@@ -117,7 +117,7 @@ After every run, four signals are measured over a rolling window:
 
 **Recording:** the value is saved on the run event, and the session's peak SDI is updated.
 
-**Accepted settings (Q1, Q2, 2026-10-31):** the backend computes and owns the SDI; the browser never computes it. The window is a 5-minute sliding window ending at each run. The signals cover edit frequency (1, 2), test failure loops (4) and identical error signatures (3), with weights `0.20/0.20/0.25/0.35`. Bands: Nominal `0.00â€“0.39` (SDI 0â€“39, `LOW`), Elevated `0.40â€“0.69` (SDI 40â€“69, `MEDIUM`), Struggling `â‰¥ 0.70` (SDI â‰¥ 70, `HIGH`). The cooldown after a reflection is 10 minutes. If the server does not answer a run within 5 seconds, the browser fails open: the runner stays usable and the UI never blocks. Formula details: `docs/context/architecture-context.md` â†’ SDI.
+**Accepted settings (Q1, Q2, 2026-10-31):** the backend computes and owns the SDI; the browser never computes it. The window is a 5-minute sliding window ending at each run. The signals cover edit frequency (1, 2), test failure loops (4) and identical error signatures (3), with weights `0.20/0.20/0.25/0.35`. Bands: Nominal `0.00–0.39` (SDI 0–39, `LOW`), Elevated `0.40–0.69` (SDI 40–69, `MEDIUM`), Struggling `≥ 0.70` (SDI ≥ 70, `HIGH`). The cooldown after a reflection is 10 minutes. If the server does not answer a run within 5 seconds, the browser fails open: the runner stays usable and the UI never blocks. Formula details: `docs/context/architecture-context.md` → SDI.
 
 **Circuit breaker**
 
