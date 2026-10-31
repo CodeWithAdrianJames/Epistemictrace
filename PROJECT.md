@@ -216,7 +216,7 @@ npm test                  # Vitest run (jsdom + Testing Library)
 
 - **Repo:** specs 01 to 15 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, and the consent notice (`PUT /api/me/consent`). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
 - **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
-  - **Next:** blocked. IMP-16 needs Q15 (session resume) accepted; IMP-19 to IMP-22 and IMP-28 need Q1 and Q2 (SDI formula, server-authoritative SDI) accepted. Every other remaining spec depends on one of these. See In Progress in the tracker.
+  - **Next:** IMP-16 (coding session API) is implemented on `feature/imp-16` after Q15 was accepted (2026-10-31); then IMP-18 and IMP-17. IMP-19 to IMP-23 and IMP-28 still need Q1 and Q2 (SDI formula, server-authoritative SDI) accepted. See In Progress in the tracker.
 - **Dates:** no due dates are set except CW-01's, which has passed.
 
 ## 11. Open questions
