@@ -61,9 +61,10 @@ EpistemicTrace is a web-based **Python coding platform** that tracks *how* stude
 
 **Out of scope:** languages other than Python, real-time collaborative editing, and grading with the SDI.
 
+**Consent notice (IMP-15, Q6 accepted):** the workspace shows a consent notice before a student's first session. **I agree** records `consent_accepted_at` once for the account. **Not now** lets the student keep coding and running tests, but no session, telemetry, SDI or circuit breaker is used; the decline lasts for that browser tab only, and a banner offers to turn tracking on. Telemetry is kept for the academic term. Exact wording: `docs/context/architecture-context.md` → Consent.
+
 **Also in the CSIT321 doc but missing a card:**
 
-- A consent notice before a student's first session.
 - Instructor review of student reflections.
 
 ## 4. Rules that must never be broken
@@ -211,11 +212,11 @@ npm test                  # Vitest run (jsdom + Testing Library)
   - evidence attached to the card;
   - this file updated if anything here changed.
 
-## 10. Current status (2026-10-30)
+## 10. Current status (2026-10-31)
 
-- **Repo:** specs 01 to 05 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, and the register, login and `GET /api/auth/me` API with the instructor seeder. Pyodide is added to the frontend (spec 12, `314.0.7`, pinned). Role-based path rules are next (spec 06). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
+- **Repo:** specs 01 to 15 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, and the consent notice (`PUT /api/me/consent`). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
 - **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
-  - **Next:** IMP-06 (role-based access control); IMP-07 (login, register and logout pages) can run in parallel. See Next Up in the tracker.
+  - **Next:** blocked. IMP-16 needs Q15 (session resume) accepted; IMP-19 to IMP-22 and IMP-28 need Q1 and Q2 (SDI formula, server-authoritative SDI) accepted. Every other remaining spec depends on one of these. See In Progress in the tracker.
 - **Dates:** no due dates are set except CW-01's, which has passed.
 
 ## 11. Open questions
@@ -225,7 +226,6 @@ npm test                  # Vitest run (jsdom + Testing Library)
 | 1 | SDI weights, normalization, window length and default cooldown | TEL-03, MCB-01 |
 | 2 | Is the SDI computed in the browser or on the server, and which is authoritative? | TEL-03, MCB-01 |
 | 4 | Telemetry batch format, when batches are sent, how error signatures are defined | TEL-01, TEL-02 |
-| 6 | Consent notice text and what happens if a student declines; data retention | TEL-01 |
 | 7 | Execution time limit; reflection minimum length; how hidden tests are shown | CW-02, MCB-02 |
 | 8 | Hosting and deployment | Release |
 | 9 | Term dates, MVP demo date, pilot plan | Planning |
