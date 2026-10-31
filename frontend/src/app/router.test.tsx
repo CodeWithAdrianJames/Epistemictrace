@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { listActivities as listStudentActivities } from '../api/activitiesApi.ts'
 import { me, type User } from '../api/authApi.ts'
 import { getActivity, listActivities, type ActivityDetail } from '../api/instructorActivitiesApi.ts'
 import { AuthProvider } from '../auth/AuthProvider.tsx'
@@ -14,6 +15,11 @@ vi.mock('../api/authApi.ts', () => ({
   me: vi.fn(),
 }))
 
+vi.mock('../api/activitiesApi.ts', () => ({
+  listActivities: vi.fn(),
+  getActivity: vi.fn(),
+}))
+
 vi.mock('../api/instructorActivitiesApi.ts', () => ({
   listActivities: vi.fn(),
   createActivity: vi.fn(),
@@ -22,6 +28,7 @@ vi.mock('../api/instructorActivitiesApi.ts', () => ({
 }))
 
 const meMock = vi.mocked(me)
+const listStudentActivitiesMock = vi.mocked(listStudentActivities)
 const listActivitiesMock = vi.mocked(listActivities)
 const getActivityMock = vi.mocked(getActivity)
 
@@ -56,7 +63,8 @@ const ACTIVITY: ActivityDetail = {
 
 // Without a user there is no stored token, so AuthProvider starts anonymous and never calls the API.
 function renderAt(path: string, user?: User) {
-  // The instructor list and edit pages load on mount; mocked responses keep these routing tests offline.
+  // The student and instructor list/edit pages load on mount; mocked responses keep these routing tests offline.
+  listStudentActivitiesMock.mockResolvedValue([])
   listActivitiesMock.mockResolvedValue([])
   getActivityMock.mockResolvedValue(ACTIVITY)
   if (user) {
@@ -196,6 +204,13 @@ describe('router', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: 'My history' })).toBeInTheDocument()
     expect(meMock).toHaveBeenCalledExactlyOnceWith('token-7', expect.any(AbortSignal))
+  })
+
+  it('renders the student activity list at /student/activities', async () => {
+    renderAt('/student/activities', STUDENT)
+
+    expect(await screen.findByText('No activities are available yet. Check back later.')).toBeInTheDocument()
+    expect(listStudentActivitiesMock).toHaveBeenCalledExactlyOnceWith('token-7', expect.any(AbortSignal))
   })
 
   it('renders the instructor activity list at /instructor/activities', async () => {

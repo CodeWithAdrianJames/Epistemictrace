@@ -4,6 +4,7 @@ import RegisterPage from '../auth/RegisterPage.tsx'
 import ActivityEditPage from '../features/activities/ActivityEditPage.tsx'
 import ActivityListPage from '../features/activities/ActivityListPage.tsx'
 import ActivityNewPage from '../features/activities/ActivityNewPage.tsx'
+import StudentActivityListPage from '../features/activities/StudentActivityListPage.tsx'
 import AppLayout from './AppLayout.tsx'
 import GuestOnly from './GuestOnly.tsx'
 import HomeRedirect from './HomeRedirect.tsx'
@@ -41,7 +42,7 @@ export const routes: RouteObject[] = [
           </RequireRole>
         ),
         children: [
-          { path: 'student/activities', element: <PlaceholderPage title="Activities" /> },
+          { path: 'student/activities', element: <StudentActivityListPage /> },
           {
             path: 'student/activities/:activityId',
             element: <PlaceholderPage title="Activity workspace" />,

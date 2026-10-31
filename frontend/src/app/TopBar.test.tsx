@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { listActivities as listStudentActivities } from '../api/activitiesApi.ts'
 import { me, type User } from '../api/authApi.ts'
 import { listActivities } from '../api/instructorActivitiesApi.ts'
 import { AuthProvider } from '../auth/AuthProvider.tsx'
@@ -13,11 +14,16 @@ vi.mock('../api/authApi.ts', () => ({
   me: vi.fn(),
 }))
 
+vi.mock('../api/activitiesApi.ts', () => ({
+  listActivities: vi.fn(),
+}))
+
 vi.mock('../api/instructorActivitiesApi.ts', () => ({
   listActivities: vi.fn(),
 }))
 
 const meMock = vi.mocked(me)
+const listStudentActivitiesMock = vi.mocked(listStudentActivities)
 const listActivitiesMock = vi.mocked(listActivities)
 
 const FUTURE = '2099-01-01T00:00:00Z'
@@ -39,7 +45,8 @@ const INSTRUCTOR: User = {
 }
 
 function renderAt(entries: string[], user?: User) {
-  // The instructor list page loads on mount; an empty list keeps these tests offline.
+  // The student and instructor list pages load on mount; empty lists keep these tests offline.
+  listStudentActivitiesMock.mockResolvedValue([])
   listActivitiesMock.mockResolvedValue([])
   if (user) {
     setToken(`token-${user.id}`, FUTURE)
