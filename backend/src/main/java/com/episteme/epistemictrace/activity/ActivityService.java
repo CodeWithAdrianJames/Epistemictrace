@@ -7,13 +7,15 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.episteme.epistemictrace.config.SdiProperties;
+
 /**
  * Activity rules (spec 08 R3–R5). Every instructor method takes the caller's user id from the controller; an activity
  * that exists but belongs to another instructor is an {@link AccessDeniedException} ({@code 403}), a missing one is an
  * {@link ActivityNotFoundException} ({@code 404}). Student reads see {@link ActivityStatus#PUBLISHED} activities only.
  */
 @Service
-@EnableConfigurationProperties(SdiDefaultsProperties.class)
+@EnableConfigurationProperties(SdiProperties.class)
 public class ActivityService {
 
 	static final String ARCHIVED_DETAIL = "Archived activities can't be changed.";
@@ -35,14 +37,14 @@ public class ActivityService {
 
 	private final SdiConfigRepository sdiConfigRepository;
 
-	private final SdiDefaultsProperties sdiDefaults;
+	private final SdiProperties.Defaults sdiDefaults;
 
 	public ActivityService(ActivityRepository activityRepository, TestCaseRepository testCaseRepository,
-			SdiConfigRepository sdiConfigRepository, SdiDefaultsProperties sdiDefaults) {
+			SdiConfigRepository sdiConfigRepository, SdiProperties sdiProperties) {
 		this.activityRepository = activityRepository;
 		this.testCaseRepository = testCaseRepository;
 		this.sdiConfigRepository = sdiConfigRepository;
-		this.sdiDefaults = sdiDefaults;
+		this.sdiDefaults = sdiProperties.defaults();
 	}
 
 	/** The instructor's activities in every status, most recently updated first. */
