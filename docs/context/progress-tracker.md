@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 20 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 21 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 21 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 22 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -237,6 +237,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Choices not spelled out in the spec: (1) `Math.round` rounds half up, but a decimal `x.5` may be just below `.5` in binary floating point, so it can round down; the half-up test uses exactly representable weights. (2) If an activity's threshold is below `medium-from`, the threshold still wins (`HIGH` first).
   - Tests: `SdiEngineTests` 15, `SdiScenarioTests` 8, `SdiBoundsTests` 1 (1 000 sequences, `new Random(42)`), `config/SdiPropertiesTests` 26 (main values, weight change changes the score, sum 1.2 and zero caps fail start-up, every missing value fails, defaults boundaries). Removed: `SdiDefaultsPropertiesTests` 9.
   - Local (2026-10-31): `./mvnw -B test` 401 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
+- 21 Update the SDI after every run (IMP-21) — **Completed** 2026-10-31, Parts 1 and 2 on branch `feature/imp-21`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gates Q1, Q2 Accepted. Spec 20 was merged first as `dc83c94` (PR #48). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1–R3, R6): `sdi/SdiScoringService.score(session, newRuns)` → `ScoredBatch(scores, struggleLevel, config)`. One query per batch (`TelemetryEventRepository.findBySessionIdAndOccurredAtLessThanEqual(sessionId, latestRun)`); runs are scored in spec 19 order with `SdiEngine.compute`, the window from the activity's `sdi_configs.window_minutes` and weights/caps from `SdiProperties`; each run's `sdi_value` is set and `CodingSession.recordSdi` raises `peak_sdi`. Called from `TelemetryService.storeOnce`, inside the same transaction as the insert.
+  - Part 2 (R4, R5): `TelemetryBatchResponse` is now `{ accepted, duplicates, struggleLevel }` (`LOW`/`MEDIUM`/`HIGH` from the latest new RUN by `occurredAt` with `levels.medium-from` and the activity threshold; `null` without a new RUN). `StoredBatch` gained `struggleLevel`. No raw score in any response.
+  - Choices not spelled out in the spec: (1) a batch with no new RUN does not read the activity's `sdi_configs` row; (2) an activity without an `sdi_configs` row is an `IllegalStateException` (`500`) when a RUN arrives — every activity created through the API has one (spec 08), so only hand-made test data can hit it; (3) "latest" means latest in spec 19 order, not last in the request.
+  - Also fixed: mojibake (`â€”` for `—`, `â‰¥` for `≥`) that the gate ratification commit wrote into `PROJECT.md` §5 and the gate lines of specs 20 and 22.
+  - Tests: `SdiScoringServiceTests` 7 (scores per run, peak, window/threshold from the activity row, out-of-order run, duplicates not re-scored, no-run batch, level from the latest run), `TelemetryScoringControllerTests` 5 (wheel-spinning batches end `HIGH`, steady batches stay `LOW`, every RUN scored and `peak_sdi` = max, no `sdi`/`peak` in any body, `struggleLevel: null` without a RUN, re-sending keeps stored scores), `TelemetryControllerTests` updated (response has 3 fields; RUN gets an SDI).
+  - Local (2026-10-31): `./mvnw -B test` 413 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
 
 ## In Progress
 
@@ -248,7 +255,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Completed | — |
 | 19 SDI signal calculations | — (Q1, Q2 Accepted) | Completed | — |
 | 20 SDI score engine | — (Q1 Accepted) | Completed | — |
-| 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Waits on 18, 20 | — |
+| 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Completed | — |
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Waits on 20, 21 | — |
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Waits on 17, 22 | — |
 | 24 Save reflections API | — (Q8 Accepted) | Waits on 22 | — |

@@ -1,5 +1,6 @@
 package com.episteme.epistemictrace.telemetry;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -16,5 +17,8 @@ public interface TelemetryEventRepository extends JpaRepository<TelemetryEvent, 
 	Set<UUID> findStoredClientEventIds(@Param("sessionId") Long sessionId, @Param("ids") Collection<UUID> ids);
 
 	List<TelemetryEvent> findBySessionIdOrderByOccurredAtAscIdAsc(Long sessionId);
+
+	/** The session's events up to an instant, for scoring (spec 21 R6). */
+	List<TelemetryEvent> findBySessionIdAndOccurredAtLessThanEqual(Long sessionId, Instant occurredAt);
 
 }

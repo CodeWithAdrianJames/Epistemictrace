@@ -18,13 +18,16 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.episteme.epistemictrace.sdi.SdiScoringService;
+import com.episteme.epistemictrace.sdi.SdiScoringService.ScoredBatch;
 import com.episteme.epistemictrace.session.CodingSession;
 import com.episteme.epistemictrace.session.SessionNotFoundException;
 import com.episteme.epistemictrace.session.SessionService;
 
 /**
- * Stores telemetry batches (spec 18 R2–R7). A batch is stored in one transaction; events whose client id the session
- * already has are skipped and counted as duplicates.
+ * Stores telemetry batches (spec 18 R2–R7) and scores their new RUN events (spec 21). A batch is stored and scored in
+ * one transaction; events whose client id the session already has are skipped, counted as duplicates and not
+ * re-scored.
  */
 @Service
 public class TelemetryService {
@@ -40,14 +43,17 @@ public class TelemetryService {
 
 	private final SessionService sessionService;
 
+	private final SdiScoringService sdiScoringService;
+
 	private final TransactionTemplate transactionTemplate;
 
 	private final Clock clock;
 
 	public TelemetryService(TelemetryEventRepository telemetryEventRepository, SessionService sessionService,
-			PlatformTransactionManager transactionManager, Clock clock) {
+			SdiScoringService sdiScoringService, PlatformTransactionManager transactionManager, Clock clock) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.sessionService = sessionService;
+		this.sdiScoringService = sdiScoringService;
 		this.transactionTemplate = new TransactionTemplate(transactionManager);
 		this.clock = clock;
 	}
@@ -85,7 +91,8 @@ public class TelemetryService {
 			.filter(event -> event.getType() == EventType.RUN)
 			.sorted(BY_OCCURRED_AT)
 			.toList();
-		return new StoredBatch(saved.size(), events.size() - saved.size(), runs);
+		ScoredBatch scored = this.sdiScoringService.score(session, runs);
+		return new StoredBatch(saved.size(), events.size() - saved.size(), runs, scored.struggleLevel());
 	}
 
 	private static void checkOccurredAt(List<TelemetryEventRequest> events, Instant startedAt, Instant now) {

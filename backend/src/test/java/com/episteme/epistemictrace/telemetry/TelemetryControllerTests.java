@@ -42,6 +42,8 @@ import tools.jackson.databind.ObjectMapper;
 import com.episteme.epistemictrace.activity.Activity;
 import com.episteme.epistemictrace.activity.ActivityRepository;
 import com.episteme.epistemictrace.activity.ActivityStatus;
+import com.episteme.epistemictrace.activity.SdiConfig;
+import com.episteme.epistemictrace.activity.SdiConfigRepository;
 import com.episteme.epistemictrace.session.CodingSession;
 import com.episteme.epistemictrace.session.CodingSessionRepository;
 import com.episteme.epistemictrace.user.Role;
@@ -79,6 +81,9 @@ class TelemetryControllerTests {
 	private CodingSessionRepository codingSessionRepository;
 
 	@Autowired
+	private SdiConfigRepository sdiConfigRepository;
+
+	@Autowired
 	private TelemetryEventRepository telemetryEventRepository;
 
 	@Autowired
@@ -111,6 +116,7 @@ class TelemetryControllerTests {
 				Timestamp.from(STARTED_AT.minus(Duration.ofDays(1))));
 		Activity activity = this.activityRepository.save(new Activity(this.instructor.getId(), "Add two numbers",
 				"Read two integers and print their sum.", "", ActivityStatus.PUBLISHED));
+		this.sdiConfigRepository.save(new SdiConfig(activity.getId(), 70, 600, 5));
 		this.session = this.codingSessionRepository
 			.save(new CodingSession(this.student.getId(), activity.getId(), STARTED_AT));
 	}
@@ -135,7 +141,7 @@ class TelemetryControllerTests {
 			.getResponse()
 			.getContentAsString();
 
-		assertThat(this.objectMapper.readTree(body).size()).isEqualTo(2);
+		assertThat(this.objectMapper.readTree(body).size()).isEqualTo(3);
 		List<TelemetryEvent> stored = this.telemetryEventRepository
 			.findBySessionIdOrderByOccurredAtAscIdAsc(this.session.getId());
 		assertThat(stored).extracting(TelemetryEvent::getType)
@@ -148,7 +154,8 @@ class TelemetryControllerTests {
 		assertThat(stored.get(1).getErrorSignature()).isEqualTo("NameError@3");
 		assertThat(stored.get(2).getPassedCount()).isEqualTo(1);
 		assertThat(stored.get(2).getTotalCount()).isEqualTo(4);
-		assertThat(stored).allSatisfy(event -> assertThat(event.getSdiValue()).isNull());
+		assertThat(stored.subList(0, 2)).allSatisfy(event -> assertThat(event.getSdiValue()).isNull());
+		assertThat(stored.get(2).getSdiValue()).isBetween(0, 100);
 	}
 
 	@Test
