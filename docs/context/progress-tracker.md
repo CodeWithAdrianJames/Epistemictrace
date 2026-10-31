@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 25 are done. Next: 26 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 26 are done. Next: 27 and 28 (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -270,6 +270,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Tests: `ReflectionForm.test.tsx` 9, `sessionsApi.test.ts` +6 (`submitReflection`), `WorkspacePage.test.tsx` +2 (reflection → cooldown, focus on **Run tests**, editor usable while the form is open; `409` closes the panel).
   - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 822 passed in 49 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (461 tests on `main`).
   - Not done: manual lock → reflect → cooldown → run check and MCB-02 screenshots; the "saved reflection has the linked SDI" criterion is covered by `ReflectionServiceTests` on H2, not checked in PostgreSQL.
+- 26 Session history API (IMP-26) — **Completed** 2026-11-01, Parts 1 and 2 on branch `feature/imp-26`, squash-merged to `main` in an autonomous run on Adrian's instruction. No gates. Spec 25 was merged first as `e049150` (PR #53). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1, R3, R4): `history/HistoryRepository` (Spring Data `Repository<CodingSession, Long>` with JPQL constructor projections): `findSessionRows(studentId, pageable)` joins `Activity` for the title, newest `started_at` first (then id), with an explicit count query; `countRunsAndReflections(sessionIds, RUN)` returns RUN and reflection counts for the page's sessions in one query (two correlated subqueries); `findSessionRow(sessionId)`; `findReflections(sessionId)` (by `submitted_at`, then id). Records `SessionRow`, `SessionCounts`, `ReflectionEntry`.
+  - Part 2 (R1, R2): `HistoryService` (read-only transaction; `detail` checks ownership with `SessionService.requireOwnedSession`), `HistoryController` (`GET /api/me/sessions?page&size` with `@Min(0)` page and `@Min(1) @Max(50)` size → `400` otherwise; `GET /api/me/sessions/{id}`), DTOs `HistoryItem` (`durationSeconds` = whole seconds of `endedAt − startedAt`, `null` while open), `HistoryPage`, `HistoryDetail`. Role `STUDENT` from the existing `/api/me/**` rule. No SDI field anywhere.
+  - Queries per list request: the page query, Spring Data's count query for `totalItems`, and one aggregate count query (no N+1).
+  - Tests: `HistoryControllerTests` 11 (caller's sessions only, newest first, archived activity title kept, durations ended/open and whole seconds, run/reflection counts, paging, empty page, `400` for page/size out of range, detail reflections in submission order, no `sdi`/`peak` text or SDI number in either body, other student `403`, missing `404`, instructor `403`, no token `401`), `HistoryPerformanceTests` 1 (tagged `performance`, runs only with `-Depistemictrace.performance=true`).
+  - R4 timing check (2026-11-01, H2, developer laptop): `./mvnw -B test -Dtest=HistoryPerformanceTests -Depistemictrace.performance=true` printed "GET /api/me/sessions with 200 sessions and 10 000 events took 15 ms" (limit 500 ms). Not yet attached to the IMP-26 card, and not measured against PostgreSQL.
+  - Local (2026-11-01): `./mvnw -B test` 473 tests, 0 failures, 0 errors, 1 skipped (the performance test), BUILD SUCCESS. Frontend unchanged.
 
 ## In Progress
 
@@ -286,7 +293,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Completed | — |
 | 24 Save reflections API | — (Q8 Accepted) | Completed | — |
 | 25 Reflection form | — (Q8 Accepted) | Completed | — |
-| 26 Session history API | — | Waits on 24 | — |
+| 26 Session history API | — | Completed | — |
 | 27 Session history page | — | Waits on 26 | — |
 | 28 Struggle level indicator | — (Q1 Accepted) | Waits on 17, 21 | — |
 
