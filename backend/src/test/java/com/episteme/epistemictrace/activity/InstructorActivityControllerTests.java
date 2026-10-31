@@ -316,6 +316,9 @@ class InstructorActivityControllerTests {
 		Activity activity = saveActivity(this.instructor, "Old title", ActivityStatus.PUBLISHED, 2);
 		Instant before = Instant.parse("2026-10-01T08:00:00Z");
 		setUpdatedAt(activity, before);
+		// Read back rather than truncating the in-memory value: the database rounds to microseconds (H2 rounds half
+		// up), so truncation fails whenever the sub-microsecond part of Instant.now() is 500 ns or more.
+		Instant createdAt = this.activityRepository.findById(activity.getId()).orElseThrow().getCreatedAt();
 
 		perform(put(BASE + "/" + activity.getId()), this.instructorToken,
 				body("  New title ", "New statement.", "# new starter\n"))
@@ -334,7 +337,7 @@ class InstructorActivityControllerTests {
 		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.PUBLISHED);
 		assertThat(reloaded.getTestCases()).hasSize(2);
 		assertThat(reloaded.getUpdatedAt()).isAfter(before);
-		assertThat(reloaded.getCreatedAt()).isEqualTo(activity.getCreatedAt().truncatedTo(ChronoUnit.MICROS));
+		assertThat(reloaded.getCreatedAt()).isEqualTo(createdAt);
 	}
 
 	@Test
