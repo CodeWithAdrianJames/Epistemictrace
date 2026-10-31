@@ -1,0 +1,26 @@
+/* ui-context.md → Struggle Level Badge: gentle colors, never the pass/fail ones. */
+.region {
+  display: inline-flex;
+}
+
+.badge {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.low {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.medium {
+  background: var(--state-notice-soft);
+  color: var(--state-notice);
+}
+
+.high {
+  background: var(--state-pause-soft);
+  color: var(--state-pause);
+}

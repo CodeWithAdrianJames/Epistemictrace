@@ -4,11 +4,11 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Phase
 
-- Implementation started (Trello list 7 · Implement). Clarify and Plan continue for the remaining open questions.
+- Implementation of specs 01–28 is complete on `main` (Trello list 7 · Implement). Remaining: manual evidence and reviews for the merged cards, then specs for IMP-29 to IMP-40.
 
 ## Current Goal
 
-- Specs 01 to 27 are done (all MVP must-haves). Next: 28 (Should Have), then the run ends (autonomous delivery run on Adrian's instruction).
+- Specs 01 to 28 are done and merged (autonomous delivery run on Adrian's instruction, 2026-10-31 to 2026-11-01). Next: manual browser evidence for the IMP cards (see each entry's "Not done"), second-reviewer reads of PRs #44–#56, then specs for IMP-29 to IMP-40. Q9 (hosting), Q10 and Q18 are still open.
 
 ## Completed
 
@@ -284,6 +284,11 @@ Update this file whenever the current phase, active feature, open questions or i
   - Tests: `formatDuration.test.ts` 10, `formatDateTime.test.ts` 3, `HistoryListPage.test.tsx` 7, `SessionDetailPage.test.tsx` 8, `router.test.tsx` updated (history API mocked; `/student/history/7` heading is the session's activity title).
   - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 850 passed in 53 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (473 tests on `main`).
   - Not done: the browser timing check with 200 sessions (STU-01 AC 2) and its network-panel evidence.
+- 28 Struggle level indicator (IMP-28, Should Have) — **Completed** 2026-11-01 on branch `feature/imp-28`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gate Q1 Accepted (bands: Nominal/`LOW`, Elevated/`MEDIUM`, Struggling/`HIGH`). Spec 27 was merged first as `f20e0f0` (PR #55). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - `features/workspace/useStruggleLevel.ts` (latest `struggleLevel` from batch responses; `null`, a missing field and anything other than `LOW`/`MEDIUM`/`HIGH` are ignored; `null` until the first scored run and whenever tracking is off), `features/workspace/StruggleBadge.tsx` (+ CSS; text and colors from `ui-context.md`: `LOW` "Steady" `--text-secondary`/`--bg-subtle`, `MEDIUM` "Take a moment" `--state-notice`, `HIGH` "Time to pause and plan" `--state-pause`; an always-mounted `aria-live="polite"` region so changes are announced). `WorkspacePage` places the badge in the top bar before **Run tests**. Student-facing text uses the `ui-context.md` wording, not the Q1 band names (invariant 5).
+  - Also fixed: the same loading-before-request race as in spec 23 in three existing abort tests (`ActivityListPage`, `StudentActivityListPage`, `ActivityEditPage`); `ActivityListPage` failed once in a local full run. Each now waits for the request before unmounting.
+  - Tests: `useStruggleLevel.test.ts` 4, `StruggleBadge.test.tsx` 5 (text per level, no digits, `%`, "SDI" or progress element; empty live region; same region across changes), `WorkspacePage.test.tsx` +2 (no badge before the first scored run, then `LOW` → "Steady", `MEDIUM` → "Take a moment"; no badge and no session with consent declined).
+  - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 861 passed in 55 files (three full runs in a row); `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (473 tests, 1 skipped, on `main`).
 
 ## In Progress
 
@@ -302,7 +307,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 25 Reflection form | — (Q8 Accepted) | Completed | — |
 | 26 Session history API | — | Completed | — |
 | 27 Session history page | — | Completed | — |
-| 28 Struggle level indicator | — (Q1 Accepted) | Waits on 17, 21 | — |
+| 28 Struggle level indicator | — (Q1 Accepted) | Completed | — |
 
 ## Next Up
 

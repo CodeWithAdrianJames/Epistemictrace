@@ -811,3 +811,37 @@ describe('WorkspacePage reflection', () => {
     expect(screen.queryByRole('heading', { name: "Let's pause and plan" })).not.toBeInTheDocument()
   })
 })
+
+describe('WorkspacePage struggle level', () => {
+  it('shows no badge before the first scored run, then follows each run', async () => {
+    await renderLoaded()
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalled())
+    await act(async () => {})
+    await warmUpDone()
+    expect(screen.queryByText('Steady')).not.toBeInTheDocument()
+
+    sendEventsMock.mockResolvedValueOnce({ accepted: 1, duplicates: 0, struggleLevel: 'LOW' })
+    await runTestsAndWait()
+    expect(await screen.findByText('Steady')).toBeInTheDocument()
+
+    sendEventsMock.mockResolvedValueOnce({ accepted: 1, duplicates: 0, struggleLevel: 'MEDIUM' })
+    await runTestsAndWait()
+    expect(await screen.findByText('Take a moment')).toBeInTheDocument()
+    expect(screen.queryByText('Steady')).not.toBeInTheDocument()
+    // The workspace top bar holds the badge; it never shows a number or the word SDI.
+    expect(screen.getByRole('heading', { level: 1 }).closest('header')?.textContent).not.toMatch(/SDI|\d+%/)
+  })
+
+  it('never shows a badge when consent was declined', async () => {
+    sessionStorage.setItem(CONSENT_DECLINED_KEY, 'true')
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+    await warmUpDone()
+
+    await runTestsAndWait()
+
+    expect(startSessionMock).not.toHaveBeenCalled()
+    for (const text of ['Steady', 'Take a moment', 'Time to pause and plan']) {
+      expect(screen.queryByText(text)).not.toBeInTheDocument()
+    }
+  })
+})
