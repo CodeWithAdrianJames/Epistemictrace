@@ -1,5 +1,5 @@
-import { ApiError } from './ApiError.ts'
 import { apiFetch } from './apiFetch.ts'
+import { asRecord, isId, isInstant, unreadable } from './responseParsing.ts'
 
 export type Role = 'STUDENT' | 'INSTRUCTOR'
 
@@ -25,8 +25,6 @@ export interface LoginResult {
   expiresAt: string
   user: User
 }
-
-const UNREADABLE_DETAIL = "The server sent a response the app can't read."
 
 export async function register(name: string, email: string, password: string): Promise<RegisteredUser> {
   const body = await apiFetch<unknown>('/api/auth/register', {
@@ -69,8 +67,7 @@ function parseLoginResult(value: unknown, status: number): LoginResult {
     record &&
     typeof record.token === 'string' &&
     record.token !== '' &&
-    typeof record.expiresAt === 'string' &&
-    !Number.isNaN(Date.parse(record.expiresAt))
+    isInstant(record.expiresAt)
   ) {
     return { token: record.token, expiresAt: record.expiresAt, user: parseUser(record.user, status) }
   }
@@ -98,21 +95,6 @@ function parseUser(value: unknown, status: number): User {
   throw unreadable(status)
 }
 
-function asRecord(value: unknown): Record<string, unknown> | undefined {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? (value as Record<string, unknown>)
-    : undefined
-}
-
-function isId(value: unknown): value is number {
-  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0
-}
-
 function isRole(value: unknown): value is Role {
   return value === 'STUDENT' || value === 'INSTRUCTOR'
-}
-
-// Same shape apiFetch uses for an unreadable 2xx body, so callers only ever handle ApiError.
-function unreadable(status: number): ApiError {
-  return new ApiError({ status, title: 'Unreadable response', detail: UNREADABLE_DETAIL, fieldErrors: {} })
 }
