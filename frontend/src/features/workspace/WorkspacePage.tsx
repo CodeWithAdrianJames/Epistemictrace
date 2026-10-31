@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
-import type { BreakerStatus } from '../../api/sessionsApi.ts'
+import type { Breaker, BreakerStatus } from '../../api/sessionsApi.ts'
 import LockedPanel from '../breaker/LockedPanel.tsx'
+import ReflectionForm from '../breaker/ReflectionForm.tsx'
 import { useBreakerState } from '../breaker/useBreakerState.ts'
 import { SERVER_UNREACHABLE_MESSAGE, useRunGate } from '../breaker/useRunGate.ts'
 import ConsentNotice from '../consent/ConsentNotice.tsx'
@@ -108,8 +109,34 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   const breaker = useBreakerState({ startResponse: telemetry.startResponse, onBatchResponse })
   const gate = useRunGate(recordRun, telemetry.sessionId !== null)
   const { handleReport } = gate
+  const { apply: applyBreaker, state: breakerState, reflectionMinLength } = breaker
+  // Spec 25 R3: after a reflection unlocks the runner, focus goes back to Run tests.
+  const runButtonRef = useRef<HTMLButtonElement>(null)
+  const focusRunAfterUnlockRef = useRef(false)
 
   useEffect(() => onReportReady(handleReport), [onReportReady, handleReport])
+
+  useEffect(() => {
+    if (focusRunAfterUnlockRef.current && breakerState !== 'LOCKED') {
+      focusRunAfterUnlockRef.current = false
+      runButtonRef.current?.focus()
+    }
+  }, [breakerState])
+
+  const handleReflected = useCallback(
+    (next: Breaker) => {
+      focusRunAfterUnlockRef.current = true
+      applyBreaker(next)
+    },
+    [applyBreaker],
+  )
+
+  // Spec 25 R4: a 409 means the server no longer pauses this session; show it unlocked until the
+  // next response says otherwise.
+  const handleNotLocked = useCallback(() => {
+    focusRunAfterUnlockRef.current = true
+    applyBreaker({ state: 'UNLOCKED', cooldownEndsAt: null, reflectionMinLength })
+  }, [applyBreaker, reflectionMinLength])
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
@@ -131,6 +158,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
             </p>
           )}
           <RunButton
+            ref={runButtonRef}
             state={runButtonState(runnerStatus, runState, gate.waiting, breaker.state)}
             onRun={() => void run()}
           />
@@ -155,7 +183,16 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
           <CodeEditor value={code} onChange={handleChange} />
         </section>
         <div className={styles.results}>
-          {breaker.state === 'LOCKED' && <LockedPanel />}
+          {breaker.state === 'LOCKED' && telemetry.sessionId !== null && (
+            <LockedPanel>
+              <ReflectionForm
+                sessionId={telemetry.sessionId}
+                minLength={reflectionMinLength}
+                onSubmitted={handleReflected}
+                onNotLocked={handleNotLocked}
+              />
+            </LockedPanel>
+          )}
           <ResultsPanel report={lastReport} testCases={activity.testCases} />
         </div>
       </div>

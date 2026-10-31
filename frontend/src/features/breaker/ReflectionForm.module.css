@@ -1,0 +1,67 @@
+/* ui-context.md → Layout Patterns: one column, labels above fields, errors under the field, submit bottom-left. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.textarea {
+  padding: var(--space-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  resize: vertical;
+}
+
+.textarea:focus-visible {
+  outline: 2px solid var(--state-pause);
+  outline-offset: 1px;
+}
+
+.counter {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.error,
+.formError {
+  margin: 0;
+  color: var(--state-fail);
+  font-size: 0.875rem;
+}
+
+.submit {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  background: var(--state-pause);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--bg-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit:focus-visible {
+  outline: 2px solid var(--state-pause);
+  outline-offset: 2px;
+}

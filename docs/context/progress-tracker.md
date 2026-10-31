@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 24 are done. Next: 25 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 25 are done. Next: 26 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -263,6 +263,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Choices not spelled out in the spec: (1) lengths are checked before ownership, so an invalid body for another student's session is a `400`, not a `403` (same order as bean validation elsewhere); (2) a missing field counts as empty; (3) a locked session without `sdi_at_lock` (impossible through the API) is treated as not locked (`409`).
   - Tests: `ReflectionServiceTests` 9 (saved with `sdi_at_lock` and cooldown 600 s; second submit `409`; trimming; boundaries 20 and 2000; too short/long field errors; whitespace only; detail names the minimum; `403`; `404`; two concurrent submits store one reflection and one gets `409`), `ReflectionControllerTests` 9 (`201` shape without SDI, next session start shows `COOLDOWN`, `400` field errors, empty body, `409`, other student `403`, `404`, instructor `403`, no token `401`).
   - Local (2026-11-01): `./mvnw -B test` 461 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
+- 25 Reflection form (IMP-25) — **Completed** 2026-11-01, Parts 1 and 2 on branch `feature/imp-25`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gate Q8 Accepted. Spec 24 was merged first as `c6bc15b` (PR #52). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1, R2, R4, R5): `api/sessionsApi.ts` `submitReflection(token, sessionId, { hypothesis, plannedFix })` → `ReflectionResult` (`reflectionId`, `submittedAt`, `breaker` through `parseBreaker`; anything else → `ApiError` "Unreadable response"). `features/breaker/ReflectionForm.tsx` (+ CSS): textareas labelled **What do you think is wrong?** and **What will you try next?**, counter "N / min characters" on the trimmed length until the minimum (from `breaker.reflectionMinLength`), **Continue** enabled only when both trimmed values reach it, "Saving…" while submitting; `400` → field errors under the fields; `409` → `onNotLocked`; other errors → `ApiError.detail` at the top; typed text kept in component state only.
+  - Part 2 (R3, R6): `WorkspacePage` renders the form inside `LockedPanel` (only with a session id); on `201` it applies the response's breaker (`COOLDOWN`), which closes the panel and re-enables **Run tests**, and focus moves to **Run tests** (`RunButton` takes a React 19 `ref` prop). The editor stays usable (the form is part of the page).
+  - Choice not spelled out in the spec: on `409` the page shows the runner unlocked at once (the server said it is not paused) instead of waiting for a batch response, because **Run tests** is disabled while the page thinks it is locked, so no RUN batch could come to correct it; the next server response still wins.
+  - Tests: `ReflectionForm.test.tsx` 9, `sessionsApi.test.ts` +6 (`submitReflection`), `WorkspacePage.test.tsx` +2 (reflection → cooldown, focus on **Run tests**, editor usable while the form is open; `409` closes the panel).
+  - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 822 passed in 49 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (461 tests on `main`).
+  - Not done: manual lock → reflect → cooldown → run check and MCB-02 screenshots; the "saved reflection has the linked SDI" criterion is covered by `ReflectionServiceTests` on H2, not checked in PostgreSQL.
 
 ## In Progress
 
@@ -278,7 +285,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Completed | — |
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Completed | — |
 | 24 Save reflections API | — (Q8 Accepted) | Completed | — |
-| 25 Reflection form | — (Q8 Accepted) | Waits on 23, 24 | — |
+| 25 Reflection form | — (Q8 Accepted) | Completed | — |
 | 26 Session history API | — | Waits on 24 | — |
 | 27 Session history page | — | Waits on 26 | — |
 | 28 Struggle level indicator | — (Q1 Accepted) | Waits on 17, 21 | — |

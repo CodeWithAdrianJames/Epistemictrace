@@ -1,3 +1,4 @@
+import type { Ref } from 'react'
 import styles from './RunButton.module.css'
 
 export type RunButtonState = 'preparing' | 'ready' | 'running' | 'waiting' | 'locked' | 'failed'
@@ -5,6 +6,8 @@ export type RunButtonState = 'preparing' | 'ready' | 'running' | 'waiting' | 'lo
 interface RunButtonProps {
   state: RunButtonState
   onRun: () => void
+  // Spec 25 R3: the page moves focus back here after a reflection.
+  ref?: Ref<HTMLButtonElement>
 }
 
 // ui-context.md → Run Tests Button. 'waiting' is the wait for the server after a run (≤ 5 s,
@@ -20,7 +23,7 @@ const LABELS: Record<RunButtonState, string> = {
 
 // ui-context.md → Accessibility: a disabled button has aria-disabled and a visible reason. The
 // label is the reason while preparing, running, waiting or locked; a failed start-up gets its own message.
-function RunButton({ state, onRun }: RunButtonProps) {
+function RunButton({ state, onRun, ref }: RunButtonProps) {
   const disabled = state !== 'ready'
 
   return (
@@ -30,7 +33,7 @@ function RunButton({ state, onRun }: RunButtonProps) {
           Python couldn't start. Refresh the page to try again.
         </p>
       )}
-      <button type="button" className={styles.button} disabled={disabled} aria-disabled={disabled} onClick={onRun}>
+      <button ref={ref} type="button" className={styles.button} disabled={disabled} aria-disabled={disabled} onClick={onRun}>
         {LABELS[state]}
       </button>
     </div>
