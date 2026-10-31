@@ -1,0 +1,75 @@
+/* ui-context.md → Layout Patterns → Forms: one column, labels above fields, errors under the field, submit bottom-left. */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.label {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.input {
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+textarea.input {
+  resize: vertical;
+}
+
+/* Spec 09 Out of Scope: no Monaco here, a mono textarea is enough for starter code. */
+.code {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  white-space: pre;
+  tab-size: 4;
+}
+
+.input[aria-invalid='true'] {
+  border-color: var(--state-fail);
+}
+
+.fieldError {
+  margin: 0;
+  color: var(--state-fail);
+  font-size: 0.875rem;
+}
+
+.submit {
+  align-self: flex-start;
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--bg-surface);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.input:focus-visible,
+.submit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

@@ -1,0 +1,22 @@
+/* Status always carries its text label; color is only a second cue. Pass/fail colors stay reserved for tests. */
+.status {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.DRAFT {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.PUBLISHED {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ARCHIVED {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}

@@ -4,7 +4,8 @@ import { ApiError } from '../../api/ApiError.ts'
 import { listActivities, type ActivitySummary } from '../../api/instructorActivitiesApi.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import styles from './ActivityListPage.module.css'
-import { formatDate, STATUS_LABELS, testCaseCountLabel } from './activityLabels.ts'
+import { formatDate, testCaseCountLabel } from './activityLabels.ts'
+import StatusLabel from './StatusLabel.tsx'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
 
@@ -69,7 +70,7 @@ function ActivityRow({ activity }: { activity: ActivitySummary }) {
       <div className={styles.rowText}>
         <h2 className={styles.title}>{activity.title}</h2>
         <p className={styles.details}>
-          <span className={`${styles.status} ${styles[activity.status]}`}>{STATUS_LABELS[activity.status]}</span>
+          <StatusLabel status={activity.status} />
           <span>{testCaseCountLabel(activity.testCaseCount)}</span>
           <span>
             Updated <time dateTime={activity.updatedAt}>{formatDate(activity.updatedAt)}</time>

@@ -1,7 +1,9 @@
 import { Outlet, type RouteObject } from 'react-router'
 import LoginPage from '../auth/LoginPage.tsx'
 import RegisterPage from '../auth/RegisterPage.tsx'
+import ActivityEditPage from '../features/activities/ActivityEditPage.tsx'
 import ActivityListPage from '../features/activities/ActivityListPage.tsx'
+import ActivityNewPage from '../features/activities/ActivityNewPage.tsx'
 import AppLayout from './AppLayout.tsx'
 import GuestOnly from './GuestOnly.tsx'
 import HomeRedirect from './HomeRedirect.tsx'
@@ -57,8 +59,8 @@ export const routes: RouteObject[] = [
         ),
         children: [
           { path: 'instructor/activities', element: <ActivityListPage /> },
-          { path: 'instructor/activities/new', element: <PlaceholderPage title="New activity" /> },
-          { path: 'instructor/activities/:activityId', element: <PlaceholderPage title="Edit activity" /> },
+          { path: 'instructor/activities/new', element: <ActivityNewPage /> },
+          { path: 'instructor/activities/:activityId', element: <ActivityEditPage /> },
         ],
       },
       { path: '*', element: <PlaceholderPage title="Page not found" /> },
