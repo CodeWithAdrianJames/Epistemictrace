@@ -190,7 +190,12 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- 13 Test checker and error grouping (IMP-13) — **In Progress**, started 2026-10-31 on `feature/imp-13`. Gates Q4, Q8 and Q14 are all **Accepted** (Q4 and Q8 on 2026-10-31).
+- 13 Test checker and error grouping (IMP-13) — **In Progress**, started 2026-10-31 on `feature/imp-13`. Gates Q4, Q8 and Q14 are all **Accepted** (Q4 and Q8 on 2026-10-31). Both parts are implemented and verified locally; waiting for the PR and review.
+  - Part 1 (R1, R2): `src/features/runner/compareOutput.ts` (`normalizeOutput`, `compareOutput`), `errorSignature.ts` (`errorSignature(result: ExecutionResult)` → `<Type>@<line|?>` cut to 200 characters, `Timeout@?`, `null` for `ok`/`unavailable`).
+  - Part 2 (R3–R6): `runTests.ts` (`runTests(code, testCases, runner)`; exports `RunReport`, `TestResult`, `TestStatus`). No React or DOM imports; the only imports are types plus the two modules above.
+  - Choices not spelled out in R3/R4: (1) Tests are sorted by `position` on a copy; the caller's array is not changed. (2) `RunReport` has an optional `message` that is set only when `status` is `'unavailable'`. (3) On `unavailable`, the test being run and all later tests are `not_run`, and `errorSignature` and `firstError` are `null` even if an earlier test errored, so no ERROR event can come from it (spec 17). (4) A `timeout` result has no `actualOutput`. (5) Hidden tests are run, compared and reported like visible ones (Q8); `hidden` is only copied into each result. (6) If `runner.run` rejects (for example `Error('busy')`), `runTests` rejects with it. (7) `finishedAt` is `Date.now()` after the last test.
+  - Tests: `compareOutput.test.ts` 15, `errorSignature.test.ts` 9, `runTests.test.ts` 18 (fake runner: pass/fail/error, order and one-at-a-time, timeout `[passed, timeout, not_run, not_run]`, unavailable, hidden, counts, empty list, rejection).
+  - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 587 passed in 33 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged: `./mvnw -B test` 246 tests, 0 failures, BUILD SUCCESS. One unrelated test, `ActivityEditPage.test.tsx` "aborts the load when the page unmounts", failed once in a full run and passed in three single-file runs and a second full run, so it looks timing-dependent (not investigated).
 
 ## Next Up
 
