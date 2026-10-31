@@ -131,7 +131,7 @@ Unlocked ──(SDI ≥ threshold, no cooldown)──► Locked ──(valid ref
 |---|---|---|
 | Frontend | React 19, TypeScript, Vite 8, React Router (`react-router`), Monaco (`@monaco-editor/react`), Vitest, oxlint (`--deny-warnings`) | In repo |
 | Frontend state and styling | React state, custom hooks and one auth context (no state library); CSS Modules with tokens in `styles/tokens.css`; native `fetch`; no icon library | Decided |
-| Code execution | Pyodide (Python) in a Web Worker with a time limit | Decided, not yet added |
+| Code execution | Pyodide (Python) in a Web Worker with a time limit | In repo (`pyodide` 314.0.7, pinned) |
 | Backend | Java 21, Spring Boot 4.1, Maven wrapper, JUnit 5 + MockMvc | In repo |
 | Auth | Spring Security + JWT (HS256 via the OAuth2 resource server support, no third-party JWT library; claims `sub`, `role`, `email`; 8 h lifetime; no refresh token; token in `sessionStorage`). Passwords hashed with BCrypt, cost factor 10. Students self-register; instructor accounts are created by a seed runner from `INSTRUCTOR_SEED_EMAIL`, `INSTRUCTOR_SEED_PASSWORD`, `INSTRUCTOR_SEED_NAME` | In repo |
 | Database | PostgreSQL via Spring Data JPA | In repo |

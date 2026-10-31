@@ -8,7 +8,7 @@ Items marked **(Proposed — Qn)** are not decided yet. They are written down so
 | -------------- | ---------------------------------------------------------------- | ----------------------------------------------------------- | ------ |
 | Frontend       | React 19 + TypeScript + Vite 8                                   | Single-page app for students and instructors                | In repo |
 | Editor         | Monaco via `@monaco-editor/react`                                | Python editor on the activity page                          | In repo |
-| Code execution | Pyodide in a Web Worker                                          | Runs student Python in the browser with a time limit        | Decided, not added |
+| Code execution | Pyodide in a Web Worker                                          | Runs student Python in the browser with a time limit        | In repo (`pyodide` 314.0.7, pinned) |
 | Frontend tests | Vitest + Testing Library (`@testing-library/react`, `@testing-library/jest-dom`) on `jsdom`; oxlint (`--deny-warnings`) for linting | Unit and component tests; any lint warning fails | In repo |
 | Backend        | Java 21 + Spring Boot 4.1 (Maven wrapper)                        | REST API under `/api`                                       | In repo |
 | Auth           | Spring Security + JWT                                            | Stateless bearer-token auth and role checks                 | In repo |
