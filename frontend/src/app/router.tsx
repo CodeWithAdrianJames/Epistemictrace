@@ -5,6 +5,8 @@ import ActivityEditPage from '../features/activities/ActivityEditPage.tsx'
 import ActivityListPage from '../features/activities/ActivityListPage.tsx'
 import ActivityNewPage from '../features/activities/ActivityNewPage.tsx'
 import StudentActivityListPage from '../features/activities/StudentActivityListPage.tsx'
+import HistoryListPage from '../features/history/HistoryListPage.tsx'
+import SessionDetailPage from '../features/history/SessionDetailPage.tsx'
 import WorkspacePage from '../features/workspace/WorkspacePage.tsx'
 import AppLayout from './AppLayout.tsx'
 import GuestOnly from './GuestOnly.tsx'
@@ -49,8 +51,8 @@ export const routes: RouteObject[] = [
             element: <WorkspacePage />,
             handle: { fullWidth: true },
           },
-          { path: 'student/history', element: <PlaceholderPage title="My history" /> },
-          { path: 'student/history/:sessionId', element: <PlaceholderPage title="Session details" /> },
+          { path: 'student/history', element: <HistoryListPage /> },
+          { path: 'student/history/:sessionId', element: <SessionDetailPage /> },
         ],
       },
       {

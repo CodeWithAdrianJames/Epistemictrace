@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 26 are done. Next: 27 and 28 (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 27 are done (all MVP must-haves). Next: 28 (Should Have), then the run ends (autonomous delivery run on Adrian's instruction).
 
 ## Completed
 
@@ -277,6 +277,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Tests: `HistoryControllerTests` 11 (caller's sessions only, newest first, archived activity title kept, durations ended/open and whole seconds, run/reflection counts, paging, empty page, `400` for page/size out of range, detail reflections in submission order, no `sdi`/`peak` text or SDI number in either body, other student `403`, missing `404`, instructor `403`, no token `401`), `HistoryPerformanceTests` 1 (tagged `performance`, runs only with `-Depistemictrace.performance=true`).
   - R4 timing check (2026-11-01, H2, developer laptop): `./mvnw -B test -Dtest=HistoryPerformanceTests -Depistemictrace.performance=true` printed "GET /api/me/sessions with 200 sessions and 10 000 events took 15 ms" (limit 500 ms). Not yet attached to the IMP-26 card, and not measured against PostgreSQL.
   - Local (2026-11-01): `./mvnw -B test` 473 tests, 0 failures, 0 errors, 1 skipped (the performance test), BUILD SUCCESS. Frontend unchanged.
+- 27 Session history page (IMP-27) — **Completed** 2026-11-01, Parts 1 and 2 on branch `feature/imp-27`, squash-merged to `main` in an autonomous run on Adrian's instruction. No gates. Spec 26 was merged first as `baa1074` (PR #54). Review caveat: opened and merged from the author's own account, no second reviewer. With this spec every MVP must-have spec (01–27) is merged; spec 28 is a Should Have.
+  - Part 1 (R1–R3, R6, R7): `api/historyApi.ts` (`listSessions(token, page, signal?)`, `getSession(token, id, signal?)`; every 2xx body validated, only known fields kept), `features/history/formatDuration.ts` ("25 min", "1 h 5 min", "1 h", "In progress"), `features/history/formatDateTime.ts` (local time, "Tue, 3 Nov 2026, 10:15", built from `Intl.DateTimeFormat('en-GB')` parts), `features/history/HistoryListPage.tsx` ("My history", one linked row per session with date, title, duration and "N reflections"; **Previous**/**Next** only when there is more than one page; empty state "You haven't worked on any activities yet." with a link to Activities; loading text and API error at the top).
+  - Part 2 (R4–R6): `features/history/SessionDetailPage.tsx` (title, date, duration, number of test runs, reflection cards with time, "What I thought was wrong" and "What I planned to try"; "No pauses in this session." when there are none; `403`/`404`/non-numeric id → "This session isn't available." with a link back), `History.module.css` (reflection text `white-space: pre-wrap`, rendered as React text so `<b>` stays literal). `router.tsx` now renders both pages instead of the placeholders.
+  - Choices not spelled out in the spec: (1) under one minute shows "Less than 1 min"; (2) the client always asks for the server's default page size (20); (3) the detail page links "Back to My history".
+  - Tests: `formatDuration.test.ts` 10, `formatDateTime.test.ts` 3, `HistoryListPage.test.tsx` 7, `SessionDetailPage.test.tsx` 8, `router.test.tsx` updated (history API mocked; `/student/history/7` heading is the session's activity title).
+  - Local on Node 24.18.0 (2026-11-01): `npm test -- --run` 850 passed in 53 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged (473 tests on `main`).
+  - Not done: the browser timing check with 200 sessions (STU-01 AC 2) and its network-panel evidence.
 
 ## In Progress
 
@@ -294,7 +301,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 24 Save reflections API | — (Q8 Accepted) | Completed | — |
 | 25 Reflection form | — (Q8 Accepted) | Completed | — |
 | 26 Session history API | — | Completed | — |
-| 27 Session history page | — | Waits on 26 | — |
+| 27 Session history page | — | Completed | — |
 | 28 Struggle level indicator | — (Q1 Accepted) | Waits on 17, 21 | — |
 
 ## Next Up
