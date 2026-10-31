@@ -117,6 +117,8 @@ After every run, four signals are measured over a rolling window:
 
 **Recording:** the value is saved on the run event, and the session's peak SDI is updated.
 
+**Accepted settings (Q1, Q2, 2026-10-31):** the backend computes and owns the SDI; the browser never computes it. The window is a 5-minute sliding window ending at each run. The signals cover edit frequency (1, 2), test failure loops (4) and identical error signatures (3), with weights `0.20/0.20/0.25/0.35`. Bands: Nominal `0.00â€“0.39` (SDI 0â€“39, `LOW`), Elevated `0.40â€“0.69` (SDI 40â€“69, `MEDIUM`), Struggling `â‰¥ 0.70` (SDI â‰¥ 70, `HIGH`). The cooldown after a reflection is 10 minutes. If the server does not answer a run within 5 seconds, the browser fails open: the runner stays usable and the UI never blocks. Formula details: `docs/context/architecture-context.md` â†’ SDI.
+
 **Circuit breaker**
 
 ```
@@ -214,17 +216,15 @@ npm test                  # Vitest run (jsdom + Testing Library)
 
 ## 10. Current status (2026-10-31)
 
-- **Repo:** specs 01 to 15 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, and the consent notice (`PUT /api/me/consent`). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
+- **Repo:** specs 01 to 16 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, the consent notice (`PUT /api/me/consent`), and the coding session API (`POST /api/sessions`, `POST /api/sessions/{id}/end`). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
 - **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
-  - **Next:** IMP-16 (coding session API) is implemented on `feature/imp-16` after Q15 was accepted (2026-10-31); then IMP-18 and IMP-17. IMP-19 to IMP-23 and IMP-28 still need Q1 and Q2 (SDI formula, server-authoritative SDI) accepted. See In Progress in the tracker.
+  - **Next:** IMP-16 (coding session API) is merged (PR #44). Q1 and Q2 were accepted on 2026-10-31, so IMP-17 to IMP-28 are unblocked; order 18, 17, 19 to 28. See the tracker.
 - **Dates:** no due dates are set except CW-01's, which has passed.
 
 ## 11. Open questions
 
 | # | Question | Blocks |
 |---|---|---|
-| 1 | SDI weights, normalization, window length and default cooldown | TEL-03, MCB-01 |
-| 2 | Is the SDI computed in the browser or on the server, and which is authoritative? | TEL-03, MCB-01 |
 | 4 | Telemetry batch format, when batches are sent, how error signatures are defined | TEL-01, TEL-02 |
 | 7 | Execution time limit; reflection minimum length; how hidden tests are shown | CW-02, MCB-02 |
 | 8 | Hosting and deployment | Release |

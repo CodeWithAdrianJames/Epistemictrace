@@ -3,7 +3,7 @@
 - **Card:** IMP-22 (https://trello.com/c/1mKNcQcN) · **Feature:** MCB-01 / M7
 - **Owner:** Adrian · **Reviewer:** Jacob
 - **Depends on:** Part A: 20 · Part B: 21
-- **Gates:** Q1 (cooldown default), Q2 (server owns the state), Q8 (reflection minimum length, Part B)
+- **Gates:** Q1 (cooldown default, accepted as 10 minutes), Q2 (server owns the state), Q8 (reflection minimum length, Part B) â€” all **Accepted**
 
 ## Goal
 

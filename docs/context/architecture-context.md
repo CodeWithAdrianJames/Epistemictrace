@@ -118,10 +118,11 @@ The data model from `PROJECT.md` §7, with these additions:
 - Failed sends are retried with the same `clientEventId`s; the server ignores duplicates.
 - Capture starts only on the activity page, only after consent, and stops when the page unmounts.
 
-### SDI (Proposed — Q1, Q2)
+### SDI (Accepted — Q1, Q2, 2026-10-31)
 
-- **Where:** computed on the server when a batch containing RUN events is ingested. The server value is authoritative. The browser never computes the SDI.
-- **When:** once per RUN event, in `occurredAt` order, using that session's events with `occurredAt` in `[run.occurredAt − window, run.occurredAt]`.
+- **Where (Q2, CLR-02):** computed on the server when a batch containing RUN events is ingested. The backend computes and owns the SDI; the server value is authoritative. The browser never computes the SDI. If the server has not answered a run's batch within 5 seconds, the client fails open: the runner stays usable, the UI never freezes or blocks, and a notice is shown.
+- **When (Q1, CLR-01):** once per RUN event, in `occurredAt` order, over a 5-minute sliding window: that session's events with `occurredAt` in `[run.occurredAt − window, run.occurredAt]`.
+- **Signal families (Q1):** edit frequency (signals 1 and 2: rapid edit-and-run cycling), test failure loops (signal 4: runs that do not raise the number of passing tests), identical error signatures (signal 3).
 - **Signals and normalization** (each normalized value is in `[0, 1]`):
 
 | # | Signal | Raw value | Normalized |
@@ -132,18 +133,19 @@ The data model from `PROJECT.md` §7, with these additions:
 | 4 | No-progress runs | RUNs in window whose `passedCount` ≤ the best `passedCount` of any earlier RUN in the session; the session's first RUN never counts | `noProgressRuns / runs` |
 
 - **Score:** `round(100 × Σ wᵢ·nᵢ)`, clamped to `[0, 100]`.
-- **Proposed defaults:** `w = (0.20, 0.20, 0.25, 0.35)`, `runCap = 10`, `gapCap = 60 s`, `repeatCap = 5`, window 5 minutes, cooldown 120 seconds, threshold 70.
+- **Defaults (Accepted — Q1, 2026-10-31):** `w = (0.20, 0.20, 0.25, 0.35)`, `runCap = 10`, `gapCap = 60 s`, `repeatCap = 5`, window 5 minutes, cooldown 10 minutes (600 seconds) after the circuit breaker, threshold 70.
 - Weights and caps are application configuration (`epistemictrace.sdi.*`). Threshold, cooldown and window are per-activity rows in `sdi_configs`, created with the activity from `epistemictrace.sdi.defaults.*` (`threshold`, `cooldown-seconds`, `window-minutes`; spec 08).
 - **Recording:** `sdi_value` is saved on the RUN event; `coding_sessions.peak_sdi` = max of its RUN values.
 - **Struggle level** shown to students (never the number): `LOW` if SDI < 40, `MEDIUM` if 40 ≤ SDI < threshold, `HIGH` if SDI ≥ threshold. The 40 boundary is configuration.
+- **Ratified bands (Q1):** on the normalized `0.0–1.0` scale (SDI ÷ 100) the bands are **Nominal** `0.00–0.39` (`LOW`, SDI 0–39), **Elevated** `0.40–0.69` (`MEDIUM`, SDI 40–69) and **Struggling** `≥ 0.70` (`HIGH`, SDI ≥ 70 with the default threshold). Nominal/Elevated/Struggling are the band names for documentation and instructors; the API keeps `LOW`/`MEDIUM`/`HIGH`, and the student badge keeps the wording in `ui-context.md` (invariant 5: no punishing wording).
 
-### Circuit Breaker (Proposed — Q1, Q2; session resume Accepted — Q15)
+### Circuit Breaker (Accepted — Q1, Q2, 2026-10-31; session resume Accepted — Q15)
 
 State is stored on the session and changed only by the server, using server time (`now`).
 
 ```
 Unlocked ──(scored RUN with SDI ≥ threshold, not in cooldown)──► Locked
-Locked ──(valid reflection)──► Cooldown (cooldown_ends_at = now + cooldown)
+Locked ──(valid reflection)──► Cooldown (cooldown_ends_at = now + cooldown, default 10 minutes)
 Cooldown ──(now ≥ cooldown_ends_at)──► Unlocked
 ```
 

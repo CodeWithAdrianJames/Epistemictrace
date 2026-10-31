@@ -3,7 +3,7 @@
 - **Card:** IMP-20 (https://trello.com/c/WiKHZSr2) · **Feature:** TEL-03 / M6
 - **Owner:** Adrian · **Reviewer:** Jacob
 - **Depends on:** 19
-- **Gates:** Q1 (weights, caps, level boundary)
+- **Gates:** Q1 (weights, caps, level boundary) â€” **Accepted** 2026-10-31
 
 ## Goal
 
@@ -33,7 +33,7 @@ The signals are combined into a 0–100 score with configurable weights, and det
   - `levels.medium-from`;
   - and the existing `defaults.threshold`, `defaults.cooldown-seconds`, `defaults.window-minutes` (spec 08) moved into this record if they were separate.
   It exposes `toWeights()` and `toTuning()`.
-- **R6** Main configuration contains the Q1 proposed values (`0.20`, `0.20`, `0.25`, `0.35`; `10`, `60s`, `5`; `40`). No numeric weight, cap or level value appears in Java code outside tests (invariant 7).
+- **R6** Main configuration contains the Q1 accepted values (`0.20`, `0.20`, `0.25`, `0.35`; `10`, `60s`, `5`; `40`), and `defaults.cooldown-seconds` changes from `120` to `600` (Q1 accepted a 10-minute cooldown after the circuit breaker; new activities get `cooldown_seconds = 600`, existing rows are unchanged). No numeric weight, cap or level value appears in Java code outside tests (invariant 7).
 - **R7** Test fixtures in `src/test/java/.../sdi/SdiScenarios.java` build event lists with fixed instants:
   - **Wheel-spinning:** 10 runs in 5 minutes, each 10 s after an edit, the same error signature on 8 runs, `passedCount` never above 1.
   - **Steady progress:** 4 runs in 5 minutes, each 60–90 s after an edit, no repeated errors, `passedCount` 1, 2, 3, 4.
