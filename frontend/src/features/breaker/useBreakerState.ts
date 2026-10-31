@@ -16,6 +16,9 @@ export interface BreakerStateResult extends Breaker {
 
 export const UNLOCKED: Breaker = { state: 'UNLOCKED', cooldownEndsAt: null, reflectionMinLength: 0 }
 
+// setTimeout fires at once for delays above 2^31 − 1 ms (about 24.8 days); such a cooldown just stays shown.
+const MAX_TIMER_MS = 2 ** 31 - 1
+
 // Spec 23 R1. The server owns the state (Q2); the browser only follows it. The cooldown timer is
 // for display: it shows UNLOCKED at cooldownEndsAt without waiting for the next response.
 export function useBreakerState({ startResponse, onBatchResponse }: BreakerStateOptions): BreakerStateResult {
@@ -53,7 +56,11 @@ export function useBreakerState({ startResponse, onBatchResponse }: BreakerState
     if (cooldownEndsAt === null) {
       return
     }
-    const timer = setTimeout(() => setExpired(cooldownEndsAt), Math.max(0, Date.parse(cooldownEndsAt) - Date.now()))
+    const delay = Math.max(0, Date.parse(cooldownEndsAt) - Date.now())
+    if (delay > MAX_TIMER_MS) {
+      return
+    }
+    const timer = setTimeout(() => setExpired(cooldownEndsAt), delay)
     return () => clearTimeout(timer)
   }, [cooldownEndsAt])
 

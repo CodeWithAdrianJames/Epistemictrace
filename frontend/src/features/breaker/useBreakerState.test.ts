@@ -96,6 +96,13 @@ describe('useBreakerState', () => {
     expect(result.current).toMatchObject({ state: 'UNLOCKED', cooldownEndsAt: null, reflectionMinLength: 20 })
   })
 
+  it('a cooldown further away than the longest timer stays COOLDOWN', () => {
+    const end = '2099-01-01T00:00:00Z'
+    const { result } = renderBreaker(start({ state: 'COOLDOWN', cooldownEndsAt: end, reflectionMinLength: 20 }))
+    act(() => vi.advanceTimersByTime(1000))
+    expect(result.current.state).toBe('COOLDOWN')
+  })
+
   it('a cooldown that already ended shows UNLOCKED straight away', () => {
     const end = new Date(T0 - 1000).toISOString()
     const { result } = renderBreaker(start({ state: 'COOLDOWN', cooldownEndsAt: end, reflectionMinLength: 20 }))
