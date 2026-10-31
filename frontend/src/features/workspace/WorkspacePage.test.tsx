@@ -5,9 +5,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { ApiError } from '../../api/ApiError.ts'
 import { me, type User } from '../../api/authApi.ts'
+import { putConsent } from '../../api/consentApi.ts'
 import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { setToken } from '../../auth/tokenStore.ts'
+import { CONSENT_DECLINED_KEY } from '../consent/useConsent.ts'
 import { createPythonRunner, type ExecutionResult, type PythonRunner } from '../runner/pythonRunner.ts'
 import type { EditorChange } from './CodeEditor.tsx'
 import WorkspacePage from './WorkspacePage.tsx'
@@ -23,6 +25,10 @@ vi.mock('../../api/activitiesApi.ts', () => ({
   getActivity: vi.fn(),
 }))
 
+vi.mock('../../api/consentApi.ts', () => ({
+  putConsent: vi.fn(),
+}))
+
 // Monaco needs a real browser (and loads from a CDN), so the wrapper is replaced by a spy on its props.
 vi.mock('@monaco-editor/react', () => ({
   default: vi.fn(() => <div data-testid="monaco-editor" />),
@@ -36,6 +42,7 @@ vi.mock('../runner/pythonRunner.ts', () => ({
 const createRunnerMock = vi.mocked(createPythonRunner)
 const meMock = vi.mocked(me)
 const getActivityMock = vi.mocked(getActivity)
+const putConsentMock = vi.mocked(putConsent)
 const EditorMock = vi.mocked(Editor)
 
 type ContentChangedEvent = Parameters<OnChange>[1]
@@ -47,8 +54,10 @@ const STUDENT: User = {
   name: 'Student One',
   email: 'student1@example.test',
   role: 'STUDENT',
-  consentAccepted: false,
+  consentAccepted: true,
 }
+
+const NEW_STUDENT: User = { ...STUDENT, consentAccepted: false }
 
 const ACTIVITY: ActivityDetail = {
   id: 42,
@@ -88,6 +97,8 @@ function type(value: string, text: string, rangeLength = 0): void {
 
 interface RenderOptions {
   onEditorChange?: (value: string, change: EditorChange) => void
+  // The signed-in student; defaults to one who already accepted, so the consent notice stays out of the way.
+  user?: User
 }
 
 type FakeRunner = { [K in keyof PythonRunner]: ReturnType<typeof vi.fn<PythonRunner[K]>> }
@@ -123,9 +134,9 @@ async function runTestsAndWait(): Promise<void> {
 }
 
 // The page sits behind RequireRole in the app router, so it only mounts once the stored token is confirmed.
-function renderAt(path: string, { onEditorChange }: RenderOptions = {}) {
+function renderAt(path: string, { onEditorChange, user = STUDENT }: RenderOptions = {}) {
   setToken('token-7', FUTURE)
-  meMock.mockResolvedValue(STUDENT)
+  meMock.mockResolvedValue(user)
   installRunner()
   const router = createMemoryRouter(
     [
@@ -495,5 +506,102 @@ describe('WorkspacePage results', () => {
     await runTestsAndWait()
     expect(screen.queryByText(/Your code ran longer than/)).not.toBeInTheDocument()
     expect(screen.getByText('1 of 2 tests passed')).toBeInTheDocument()
+  })
+})
+
+describe('WorkspacePage consent notice', () => {
+  const BANNER_TEXT = "Tracking is off for this visit, so tests won't pause and nothing is recorded."
+
+  it('shows the notice once the activity has loaded for a student who has not accepted', async () => {
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'I agree' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Not now' })).toBeInTheDocument()
+    // The page behind the dialog is still rendered.
+    expect(screen.getByTestId('monaco-editor')).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Problem' })).toBeInTheDocument()
+  })
+
+  it('does not show the notice while the activity is loading', async () => {
+    getActivityMock.mockReturnValue(new Promise<ActivityDetail>(() => {}))
+    renderAt('/student/activities/42', { user: NEW_STUDENT })
+
+    await screen.findByText('Loading activity…')
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('does not show the notice when the activity is not available', async () => {
+    getActivityMock.mockRejectedValue(notFound())
+    renderAt('/student/activities/42', { user: NEW_STUDENT })
+
+    await screen.findByText("This activity isn't available.")
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('does not show the notice or the banner for a student who already accepted', async () => {
+    await renderLoaded()
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument()
+  })
+
+  it('closes the notice after I agree and records the consent', async () => {
+    putConsentMock.mockResolvedValue({ consentAcceptedAt: '2026-10-31T08:00:00Z' })
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    fireEvent.click(screen.getByRole('button', { name: 'I agree' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument())
+    expect(putConsentMock).toHaveBeenCalledWith('token-7')
+    expect(screen.queryByText(BANNER_TEXT)).not.toBeInTheDocument()
+  })
+
+  it('shows the banner above the regions after Not now, and the student can still run tests', async () => {
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    const banner = screen.getByRole('status')
+    expect(banner).toHaveTextContent(BANNER_TEXT)
+    expect(banner.compareDocumentPosition(screen.getByRole('region', { name: 'Editor' }))).toBe(
+      Node.DOCUMENT_POSITION_FOLLOWING,
+    )
+    await warmUpDone()
+    await runTestsAndWait()
+    expect(runner.run).toHaveBeenCalledTimes(2)
+    expect(putConsentMock).not.toHaveBeenCalled()
+  })
+
+  it('shows the banner and no dialog when this tab declined earlier', async () => {
+    sessionStorage.setItem(CONSENT_DECLINED_KEY, 'true')
+
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('status')).toHaveTextContent(BANNER_TEXT)
+  })
+
+  it('reopens the notice from Turn on tracking', async () => {
+    sessionStorage.setItem(CONSENT_DECLINED_KEY, 'true')
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Turn on tracking' }))
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+
+  it('shows the notice again in a new tab (empty sessionStorage) after a decline', async () => {
+    const first = await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }))
+    first.unmount()
+    sessionStorage.removeItem(CONSENT_DECLINED_KEY)
+
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
   })
 })

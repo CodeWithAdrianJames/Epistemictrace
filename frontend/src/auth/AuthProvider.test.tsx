@@ -208,6 +208,34 @@ describe('AuthProvider', () => {
     expect(getToken()).toBeNull()
   })
 
+  it('markConsentAccepted sets consentAccepted on the signed-in user and keeps the rest', async () => {
+    setToken('stored.token.value', FUTURE)
+    meMock.mockResolvedValue(STUDENT)
+    const { result } = renderAuth()
+    await waitFor(() => {
+      expect(result.current.status).toBe('authenticated')
+    })
+
+    act(() => {
+      result.current.markConsentAccepted()
+    })
+
+    expect(result.current.status).toBe('authenticated')
+    expect(result.current.user).toEqual({ ...STUDENT, consentAccepted: true })
+    expect(result.current.token).toBe('stored.token.value')
+  })
+
+  it('markConsentAccepted does nothing while anonymous', () => {
+    const { result } = renderAuth()
+
+    act(() => {
+      result.current.markConsentAccepted()
+    })
+
+    expect(result.current.status).toBe('anonymous')
+    expect(result.current.user).toBeNull()
+  })
+
   it('ignores a restore that finishes after login replaced it, and aborts it', async () => {
     setToken('stored.token.value', FUTURE)
     const pending = deferred<User>()
