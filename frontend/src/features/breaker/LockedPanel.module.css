@@ -1,0 +1,26 @@
+/* ui-context.md → Breaker Panel: a pause, not a punishment. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--state-pause-soft);
+  border-radius: var(--radius-lg);
+  color: var(--text-primary);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.125rem;
+  color: var(--state-pause);
+}
+
+.heading:focus {
+  outline: 2px solid var(--state-pause);
+  outline-offset: 2px;
+}
+
+.body {
+  margin: 0;
+  color: var(--text-secondary);
+}

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from './ApiError.ts'
-import { endSession, sendEvents, startSession, type TelemetryEvent } from './sessionsApi.ts'
+import { endSession, parseBreaker, sendEvents, startSession, type TelemetryEvent } from './sessionsApi.ts'
 
 const BASE_URL = 'http://api.test'
 const TOKEN = 'token-1'
@@ -165,5 +165,46 @@ describe('sendEvents', () => {
     const error = await catchApiError(sendEvents(TOKEN, 5, EVENTS))
     expect(error.status).toBe(400)
     expect(error.fieldErrors).toEqual({ 'events[0].charsAdded': 'bad' })
+  })
+})
+
+describe('parseBreaker', () => {
+  it('accepts the three states', () => {
+    expect(parseBreaker({ state: 'UNLOCKED', cooldownEndsAt: null, reflectionMinLength: 20 })).toEqual({
+      state: 'UNLOCKED',
+      cooldownEndsAt: null,
+      reflectionMinLength: 20,
+    })
+    expect(parseBreaker({ state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 20 })?.state).toBe('LOCKED')
+    expect(parseBreaker({ state: 'COOLDOWN', cooldownEndsAt: STARTED_AT, reflectionMinLength: 20 })).toEqual({
+      state: 'COOLDOWN',
+      cooldownEndsAt: STARTED_AT,
+      reflectionMinLength: 20,
+    })
+  })
+
+  it('drops fields it does not know, including any SDI value', () => {
+    expect(parseBreaker({ state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 20, sdiAtLock: 88 })).toEqual({
+      state: 'LOCKED',
+      cooldownEndsAt: null,
+      reflectionMinLength: 20,
+    })
+  })
+
+  it('ignores a cooldown end outside the COOLDOWN state', () => {
+    expect(parseBreaker({ state: 'UNLOCKED', cooldownEndsAt: STARTED_AT, reflectionMinLength: 20 })?.cooldownEndsAt).toBeNull()
+  })
+
+  it.each([
+    ['nothing', undefined],
+    ['null', null],
+    ['an unknown state', { state: 'PAUSED', cooldownEndsAt: null, reflectionMinLength: 20 }],
+    ['COOLDOWN without an end', { state: 'COOLDOWN', cooldownEndsAt: null, reflectionMinLength: 20 }],
+    ['an unparsable end', { state: 'COOLDOWN', cooldownEndsAt: 'later', reflectionMinLength: 20 }],
+    ['a zero minimum length', { state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 0 }],
+    ['a fractional minimum length', { state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 2.5 }],
+    ['a missing minimum length', { state: 'LOCKED', cooldownEndsAt: null }],
+  ])('returns null for %s', (_, value) => {
+    expect(parseBreaker(value)).toBeNull()
   })
 })
