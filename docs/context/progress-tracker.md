@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 16 are done and merged (16 as `04f8f02`, PR #44). Gates Q1 and Q2 are **Accepted** (2026-10-31, CLR-01/CLR-02), so specs 17 to 28 have no open gate. Order: 18, 17, 19 to 28 (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 16 and 18 are done (16 as `04f8f02`, PR #44). Gates Q1 and Q2 are **Accepted** (2026-10-31, CLR-01/CLR-02), so specs 17 to 28 have no open gate. Next: 17, then 19 to 28 (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -210,6 +210,12 @@ Update this file whenever the current phase, active feature, open questions or i
   - Choices not spelled out in R3/R4: (1) Tests are sorted by `position` on a copy; the caller's array is not changed. (2) `RunReport` has an optional `message` that is set only when `status` is `'unavailable'`. (3) On `unavailable`, the test being run and all later tests are `not_run`, and `errorSignature` and `firstError` are `null` even if an earlier test errored, so no ERROR event can come from it (spec 17). (4) A `timeout` result has no `actualOutput`. (5) Hidden tests are run, compared and reported like visible ones (Q8); `hidden` is only copied into each result. (6) If `runner.run` rejects (for example `Error('busy')`), `runTests` rejects with it. (7) `finishedAt` is `Date.now()` after the last test.
   - Tests: `compareOutput.test.ts` 15, `errorSignature.test.ts` 9, `runTests.test.ts` 18 (fake runner: pass/fail/error, order and one-at-a-time, timeout `[passed, timeout, not_run, not_run]`, unavailable, hidden, counts, empty list, rejection).
   - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 587 passed in 33 files; `npm run lint` exit 0; `npm run build` exit 0. Backend unchanged: `./mvnw -B test` 246 tests, 0 failures, BUILD SUCCESS. One unrelated test, `ActivityEditPage.test.tsx` "aborts the load when the page unmounts", failed once in a full run and passed in three single-file runs and a second full run, so it looks timing-dependent (not investigated).
+- 18 Save tracked activity on the server (IMP-18) — **Completed** 2026-10-31, Parts 1 and 2 on branch `feature/imp-18`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gates Q4, Q5 Accepted. Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1, R2): `telemetry/TelemetryBatchRequest` (`events` 1–200, elements `@NotNull @Valid`), `TelemetryEventRequest` (`clientEventId`, `type`, `occurredAt` required; per-type fields optional; `sdiValue` `@Null`), `ValidTelemetryEvent` (class-level constraint; each violation is put on the field it concerns, so the `errors` map names e.g. `events[1].passedCount`).
+  - Part 2 (R3–R7): `TelemetryService.store(sessionId, studentId, events)` → `StoredBatch(accepted, duplicates, runs)`, `TelemetryController` (`POST /api/sessions/{id}/events` → `200 { accepted, duplicates }`), `TelemetryBatchResponse`, `InvalidTelemetryBatchException` (`400` with `errors` map), `TelemetryEventRepository.findStoredClientEventIds` and `findBySessionIdOrderByOccurredAtAscIdAsc`. No migration; `SecurityConfig` unchanged (`/api/sessions/**` is `STUDENT`).
+  - Choices not spelled out in the spec: (1) the `occurredAt` range (≤ now + 5 min, ≥ `started_at` − 5 min, both inclusive) is checked in the service after ownership, so it is a `400` with `errors['events[i].occurredAt']`; (2) a client id repeated inside one batch is stored once and counted as a duplicate; (3) `"sdiValue": null` is accepted (only a value is rejected); (4) if a concurrent request stores the same client id first, the unique key fails the insert and the batch is retried once in a new transaction, so those events count as duplicates; (5) an unknown `type` or a non-UUID `clientEventId` is a `400` from JSON parsing without an `errors` map; (6) `runs` is sorted by `occurredAt`, then id.
+  - Tests: `TelemetryBatchValidationTests` 12 (each R2 rule), `TelemetryControllerTests` 16 (success, duplicates across and inside batches, other session not a duplicate, one invalid event rejects all, `sdiValue`, empty batch, unknown type, future and before-start bounds, ended session accepted, other student `403`, missing `404`, instructor `403`, no token `401`, R7 run order).
+  - Local (2026-10-31): `./mvnw -B test` 334 tests, 0 failures, 0 errors, BUILD SUCCESS (306 + 28). Frontend unchanged.
 
 ## In Progress
 
@@ -218,7 +224,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | Spec | Blocking gate(s) | Status | Decision needed |
 |---|---|---|---|
 | 17 Activity tracking in the browser | — (Q4 Accepted) | Waits on 18 | — |
-| 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Next | — |
+| 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Completed | — |
 | 19 SDI signal calculations | — (Q1, Q2 Accepted) | Not started | — |
 | 20 SDI score engine | — (Q1 Accepted) | Waits on 19 | — |
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Waits on 18, 20 | — |
