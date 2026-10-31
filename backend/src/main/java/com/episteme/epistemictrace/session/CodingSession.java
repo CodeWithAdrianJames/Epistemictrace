@@ -51,6 +51,16 @@ public class CodingSession {
 		this.startedAt = startedAt;
 	}
 
+	/** Reopens the session (spec 16 R1): it counts as running again until the next {@link #end}. */
+	public void resume() {
+		this.endedAt = null;
+	}
+
+	/** Records the end of the session; a later call replaces an earlier end (spec 16 R2). */
+	public void end(Instant endedAt) {
+		this.endedAt = endedAt;
+	}
+
 	public Long getId() {
 		return this.id;
 	}
