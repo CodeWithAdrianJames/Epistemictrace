@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 10 are done (spec 10 implemented locally on `feature/imp-10`, not yet merged). Next: spec 11, Python code editor (`feature-specs/11-*.md`, card IMP-11, Frontend lane). Depends on 04 (done). Gates: none. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 to 10 are done and merged. Now: spec 11, Python code editor (`feature-specs/11-*.md`, card IMP-11, Frontend lane), in two parts on `feature/imp-11-part-1` and `feature/imp-11-part-2`. Depends on 04 (done). Gates: none. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -158,16 +158,16 @@ Update this file whenever the current phase, active feature, open questions or i
     - Acceptance criteria (spec 09) covered by component tests: create → add test cases (Parts 2–3) → publish → Published (list rows from Part 1, publish here); edit the title of a published activity; archiving makes the edit page read-only; publishing impossible without a test case with the reason shown; validation errors next to their fields (Parts 2–3). Not checked in a browser against a running backend; no screenshots on the IMP-09 card.
     - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 378 passed in 19 files, no React/act or jsdom "Not implemented" warnings in the output; `npm run lint` exit 0; `npm run build` exit 0 (138 modules). No hex colors in `src/**/*.css` outside `tokens.css`. Backend unchanged: `./mvnw -B test` 246 tests, 0 failures, 0 errors, 0 skipped, BUILD SUCCESS (JDK 21.0.11).
   - Review caveat for the whole spec: all PRs (#28–#31) were merged from the author's own account (`CodeWithAdrianJames`), so a second team member (Noel or Jacob) should still read them.
-- 10 Student activity list (IMP-10) — implemented 2026-10-31 on branch `feature/imp-10`, single part, not yet opened as a PR.
+- 10 Student activity list (IMP-10) — merged 2026-10-31 from branch `feature/imp-10`, single part: PR #32 (squash, `3aae86c`) and a follow-up PR #33 from the same branch (squash, `a61f79b`). Review caveat: both opened and merged from the author's own account (`CodeWithAdrianJames`), `reviewDecision` empty, no second reviewer, so a second team member (Noel or Jacob) should still read them.
   - `src/api/activitiesApi.ts`: `listActivities(token, signal?)` → `GET /api/activities`, `getActivity(token, activityId, signal?)` → `GET /api/activities/{id}` (used by spec 14). Types (`ActivityStatus`, `ActivitySummary`, `TestCase`, `ActivityDetail`) match spec 08 R1/the instructor module; every 2xx body is validated the same way (`responseParsing.ts`), unknown fields dropped, a bad body throws the "Unreadable response" `ApiError`. A non-canonical activity id throws a plain `Error` before any request, as the instructor module does.
   - `src/features/activities/StudentActivityListPage.tsx` + `.module.css` (tokens only, `router.tsx` renders it at `/student/activities` instead of the placeholder): `h1` "Activities"; "Loading activities…" while loading; one row per published activity in server order (by title) with the title (`h2`) and "N tests"/"1 test", the **whole row** as a `Link` to `/student/activities/{id}` (no separate edit control, unlike the instructor list); empty state "No activities are available yet. Check back later."; a load error shows `ApiError.detail` at the top (`role="alert"`). Loads through `useProtectedRequest` (`401` → logout + `/login`) with an `AbortController` aborted on unmount. No status badge, date or other instructor-only field is shown (R2 names only title and test count).
   - Choices not spelled out in R2/R3: (1) count text is "0 tests" / "1 test" / "N tests" (not "test case(s)", to read naturally for students). (2) the row renders as a single `<a>` covering the title and count, matching "the whole row links" literally, rather than a title plus a separate link as the instructor list uses for Edit.
   - Tests: `activitiesApi.test.ts` 22 (both functions' method/path/bearer token, abort signal on both reads, invalid ids send nothing, responses parsed and unknown fields dropped, malformed summary/detail bodies rejected, `401`/`404` passed through unchanged), `StudentActivityListPage.test.tsx` 14 (loading text, token + `AbortSignal`, row order, row contents and count wording, whole-row link target and navigation, empty state, `500`/network/non-`ApiError` messages, `401` → `/login` with token cleared, abort on unmount). `router.test.tsx` (new mock for `activitiesApi.ts`, new test for the real list page at `/student/activities`) and `TopBar.test.tsx` (new mock so navigating to `/student/activities` stays offline) updated accordingly.
-  - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 414 passed in 21 files; `npm run lint` exit 0; `npm run build` exit 0 (141 modules). Backend unchanged: `./mvnw -B test` 246 tests, 0 failures, 0 errors, BUILD SUCCESS (JDK 21.0.11). Not checked in a browser against a running backend; no PR opened yet.
+  - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 414 passed in 21 files; `npm run lint` exit 0; `npm run build` exit 0 (141 modules). Backend unchanged: `./mvnw -B test` 246 tests, 0 failures, 0 errors, BUILD SUCCESS (JDK 21.0.11). Not checked in a browser against a running backend.
 
 ## In Progress
 
-- None.
+- 11 Python code editor (IMP-11) — started 2026-10-31. Part 1 (`draftStore` + `useDraft`) on `feature/imp-11-part-1`; Part 2 (`CodeEditor`, change accounting, placeholder mount) on `feature/imp-11-part-2`, branched from Part 1.
 
 ## Next Up
 
