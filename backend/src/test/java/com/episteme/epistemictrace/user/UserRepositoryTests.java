@@ -3,6 +3,8 @@ package com.episteme.epistemictrace.user;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Instant;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
@@ -41,6 +43,24 @@ class UserRepositoryTests {
 		assertThat(this.userRepository.existsByEmail("student1@example.test")).isTrue();
 		assertThat(this.userRepository.findByEmail("nobody@example.test")).isEmpty();
 		assertThat(this.userRepository.existsByEmail("nobody@example.test")).isFalse();
+	}
+
+	@Test
+	void consentIsSetOnlyWhileAbsent() {
+		User saved = this.userRepository.saveAndFlush(new User("Student One", "student1@example.test", "fake-hash", Role.STUDENT));
+		Instant first = Instant.parse("2026-10-31T22:30:00Z");
+		Instant later = Instant.parse("2026-11-01T09:00:00Z");
+
+		assertThat(this.userRepository.setConsentAcceptedAtIfAbsent(saved.getId(), first)).isEqualTo(1);
+		assertThat(this.userRepository.setConsentAcceptedAtIfAbsent(saved.getId(), later)).isZero();
+
+		assertThat(this.userRepository.findById(saved.getId()).orElseThrow().getConsentAcceptedAt()).isEqualTo(first);
+	}
+
+	@Test
+	void consentUpdateForUnknownUserChangesNothing() {
+		assertThat(this.userRepository.setConsentAcceptedAtIfAbsent(999_999L, Instant.parse("2026-10-31T22:30:00Z")))
+				.isZero();
 	}
 
 	@Test
