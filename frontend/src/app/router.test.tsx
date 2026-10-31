@@ -27,6 +27,11 @@ vi.mock('../api/instructorActivitiesApi.ts', () => ({
   updateActivity: vi.fn(),
 }))
 
+// The workspace route mounts the Monaco editor, which needs a real browser and loads from a CDN.
+vi.mock('@monaco-editor/react', () => ({
+  default: () => <div data-testid="monaco-editor" />,
+}))
+
 const meMock = vi.mocked(me)
 const listStudentActivitiesMock = vi.mocked(listStudentActivities)
 const listActivitiesMock = vi.mocked(listActivities)
@@ -241,6 +246,12 @@ describe('router', () => {
     const main = screen.getByRole('main')
     expect(main).toHaveClass(styles.contentFull)
     expect(main).not.toHaveClass(styles.contentContained)
+  })
+
+  it('mounts the code editor on the activity workspace', async () => {
+    renderAt('/student/activities/42', STUDENT)
+
+    expect(await screen.findByTestId('monaco-editor')).toBeInTheDocument()
   })
 
   it.each([
