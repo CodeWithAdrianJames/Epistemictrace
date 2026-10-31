@@ -133,7 +133,7 @@ class InstructorActivityControllerTests {
 		assertThat(this.sdiConfigRepository.findAll()).singleElement().satisfies(config -> {
 			assertThat(config.getActivityId()).isEqualTo(id);
 			assertThat(config.getThreshold()).isEqualTo(70);
-			assertThat(config.getCooldownSeconds()).isEqualTo(120);
+			assertThat(config.getCooldownSeconds()).isEqualTo(600);
 			assertThat(config.getWindowMinutes()).isEqualTo(5);
 		});
 	}

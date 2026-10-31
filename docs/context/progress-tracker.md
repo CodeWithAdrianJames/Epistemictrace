@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 19 are done (17 as `da44ceb`, PR #46). Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 20 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 20 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 21 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -229,6 +229,14 @@ Update this file whenever the current phase, active feature, open questions or i
   - Spec conflict resolved by R5's own formula: acceptance criterion "the four signals … stay at 0 for a single first run with no edits" cannot hold for signal 1, because R5 says the window always contains the scored run, so `n1 = 1 / runCap` (0.1 with the default cap). Signals 2–4 are 0 in that case; the test asserts exactly that.
   - Tests: `SignalCalculatorTests` 26 (records; ordering and window boundaries; events after the run ignored; run frequency 0.3 / 1.0; gaps 10 s, re-run, first run → `gapCap`, previous run outside the window, even-count median, half-millisecond median; repeats `[A, A, A, B]` → 2 and cap; no-progress `[0, 1, 1, 2, 0]`; 500 random sequences from `new Random(19)` stay in `[0, 1]`).
   - Local (2026-10-31): `./mvnw -B test` 360 tests, 0 failures, 0 errors, BUILD SUCCESS (334 + 26). Frontend unchanged (767 tests on `main`).
+- 20 SDI score engine (IMP-20) — **Completed** 2026-10-31, Parts 1–3 on branch `feature/imp-20`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gate Q1 Accepted (2026-10-31). Spec 19 was merged first (PR #47). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1, R2, R4): `sdi/SdiWeights` (each in `[0, 1]`, sum `1 ± 0.001`, else `IllegalArgumentException`), `sdi/SdiEngine` (`score` = `Math.round(100 × Σ wᵢ·nᵢ)` clamped to `[0, 100]`; `compute` = `score(SignalCalculator.calculate(...))`; `MIN_SDI`/`MAX_SDI`), `sdi/StruggleLevel` (`LOW`/`MEDIUM`/`HIGH` = Q1 Nominal/Elevated/Struggling), `sdi/StruggleLevels.of(sdi, mediumFrom, threshold)`.
+  - Part 2 (R5, R6): `config/SdiProperties` (`epistemictrace.sdi`: nested `weights`, `caps`, `levels`, `defaults` records, all `@NotNull` and range-checked; weights `@AssertTrue` sum 1; `caps.gap` must be positive; `toWeights()`, `toTuning()`). R5 "moved into this record if they were separate": `activity/SdiDefaultsProperties` (spec 08) and its tests were removed; `ActivityService` now takes `SdiProperties` and reads `defaults()`; the property names are unchanged. `application.properties` holds the Q1 values and **`defaults.cooldown-seconds` changed from `120` to `600`** (Q1: 10-minute cooldown); `InstructorActivityControllerTests` now expects `600` for a new activity's `sdi_configs` row. Existing rows are not migrated.
+  - Part 3 (R7): `src/test/java/.../sdi/SdiScenarios` (wheel-spinning, steady progress, single first run, 30 runs without edits, alternating passes; fixed instants).
+  - Results with the configured defaults: wheel-spinning **SDI 90** (runs 10, median gap 10 s, repeats 7, no-progress 8 of 10) → `HIGH`; steady progress **SDI 8** (runs 4, median gap 72.5 s, no repeats, no no-progress runs) → `LOW`; single first run SDI 2.
+  - Choices not spelled out in the spec: (1) `Math.round` rounds half up, but a decimal `x.5` may be just below `.5` in binary floating point, so it can round down; the half-up test uses exactly representable weights. (2) If an activity's threshold is below `medium-from`, the threshold still wins (`HIGH` first).
+  - Tests: `SdiEngineTests` 15, `SdiScenarioTests` 8, `SdiBoundsTests` 1 (1 000 sequences, `new Random(42)`), `config/SdiPropertiesTests` 26 (main values, weight change changes the score, sum 1.2 and zero caps fail start-up, every missing value fails, defaults boundaries). Removed: `SdiDefaultsPropertiesTests` 9.
+  - Local (2026-10-31): `./mvnw -B test` 401 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
 
 ## In Progress
 
@@ -239,7 +247,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 17 Activity tracking in the browser | — (Q4 Accepted) | Completed | — |
 | 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Completed | — |
 | 19 SDI signal calculations | — (Q1, Q2 Accepted) | Completed | — |
-| 20 SDI score engine | — (Q1 Accepted) | Waits on 19 | — |
+| 20 SDI score engine | — (Q1 Accepted) | Completed | — |
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Waits on 18, 20 | — |
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Waits on 20, 21 | — |
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Waits on 17, 22 | — |
