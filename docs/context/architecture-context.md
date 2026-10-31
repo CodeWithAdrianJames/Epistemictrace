@@ -137,7 +137,7 @@ The data model from `PROJECT.md` §7, with these additions:
 - **Recording:** `sdi_value` is saved on the RUN event; `coding_sessions.peak_sdi` = max of its RUN values.
 - **Struggle level** shown to students (never the number): `LOW` if SDI < 40, `MEDIUM` if 40 ≤ SDI < threshold, `HIGH` if SDI ≥ threshold. The 40 boundary is configuration.
 
-### Circuit Breaker (Proposed — Q1, Q2, Q15)
+### Circuit Breaker (Proposed — Q1, Q2; session resume Accepted — Q15)
 
 State is stored on the session and changed only by the server, using server time (`now`).
 
@@ -153,7 +153,7 @@ Cooldown ──(now ≥ cooldown_ends_at)──► Unlocked
 - RUN events that arrive while locked are stored and scored but cannot change the state.
 - During cooldown the runner works normally; the cooldown only blocks a new lock.
 - The browser disables **Run tests** while the state is `LOCKED`. It also keeps **Run tests** disabled from the end of a run until the server answers that run's batch, for at most 5 seconds; if the server does not answer, the runner stays usable (fail-open) and a notice is shown.
-- **Session resume:** opening an activity resumes the student's latest session for that activity if it has no `ended_at` or ended less than 30 minutes ago (`ended_at` is cleared); otherwise a new session starts. A refresh therefore keeps the session and its lock **(Proposed — Q15)**.
+- **Session resume (Accepted — Q15, 2026-10-31, PLN-06/SPC-04):** opening an activity resumes the student's latest session for that activity (by `started_at`) if it has no `ended_at` or ended at most 30 minutes ago (`ended_at` is cleared); otherwise a new session starts. The window slides: every end overwrites `ended_at`, so it is always measured from the latest end. The length is configuration (`epistemictrace.session.resume-window`, default `PT30M`). A page reload therefore keeps the session and its lock: the reloaded page calls `POST /api/sessions` again and the server answers `200` with the same `sessionId` and `resumed: true`. The decision is made on the server only; the browser keeps no session id in `sessionStorage` or `localStorage` across reloads (see Storage).
 
 ### AI Assistant (Could Have)
 

@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 15 are done and merged. Spec 15 (consent notice, IMP-15) is **Completed** (PR #42, `328b7dc`; gate Q6 Accepted 2026-10-31). **Every remaining spec (16 to 28) is blocked by a gate that is not Accepted** — see In Progress. The next step is a team decision on Q15 (unblocks 16, then 18 and 17) and on Q1 + Q2 (unblock 19 to 22, 28). Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 to 15 are done and merged. Gate Q15 is **Accepted** (2026-10-31, PLN-06/SPC-04) and spec 16 (coding session API, IMP-16) is **In Progress** on `feature/imp-16`. After 16: 18, then 17. Specs 19 to 23 and 28 still wait on Q1 + Q2. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -205,18 +205,26 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- None. Every remaining spec is blocked by a gate that is not Accepted (checked 2026-10-31 against Open Questions and `architecture-context.md`). No implementation starts until the deciding card accepts the gate.
+- 16 Coding session API (IMP-16) — **In Progress**, `feature/imp-16`. Gate Q15 **Accepted** (2026-10-31, PLN-06/SPC-04); Q5 Accepted earlier. Parts 1 and 2 implemented and committed on `feature/imp-16` (`15365cf`, `c7a7533`); not yet merged, so not Completed.
+  - Part 1 (R1–R4): `config/ClockConfig` (`Clock.systemUTC()` bean), `session/SessionProperties` (`epistemictrace.session.resume-window`, `PT30M` in `application.properties`, `@NotNull @DurationMin(nanos = 0)`), `SessionService.start/end/requireOwnedSession`, `SessionStart` record, `ConsentRequiredException` (`403`, "Consent is required before tracking starts."), `SessionNotFoundException` (`404`, "Session not found."), `CodingSession.resume()`/`end(Instant)`, `CodingSessionRepository.findFirstByStudentIdAndActivityIdOrderByStartedAtDescIdDesc`. No migration (`coding_sessions` is from `V3`).
+  - Part 2 (R1, R2): `SessionController` (`POST /api/sessions` → `201` new / `200` resumed; `POST /api/sessions/{id}/end` → `204`), `StartSessionRequest` (`@NotNull activityId`), `SessionResponse` (`sessionId`, `activityId`, `startedAt`, `resumed`). Role `STUDENT` comes from the existing `/api/sessions/**` rule; `SecurityConfig` unchanged.
+  - Choices not spelled out in the spec: (1) check order in `start` is activity (`404`) → user exists (`401`, `UnknownTokenUserException`) → consent (`403`), so a draft activity is `404` even without consent; (2) the window is inclusive (`ended_at ≥ now − window` resumes, as in R1); (3) equal `started_at` values fall back to the highest id; (4) "not owner" reuses Spring's `AccessDeniedException`, so its body is the shared "You don't have access to this." detail, as in spec 08; (5) `end` does not check consent or activity status; (6) `start` reuses `ActivityService.getPublished` for the published check.
+  - Open (not in the spec): two concurrent `POST /api/sessions` calls for the same student and activity with no resumable session can both create a session; there is no unique constraint or lock. The next start resumes the later one. Left as is; raise if specs 17/18 need exactly one open session.
+  - Not built (outside spec 16): no heartbeat endpoint and no frontend code; `api/sessionsApi.ts` belongs to spec 17 R1.
+  - Tests: `SessionServiceTests` 22 (`@MockitoBean Clock`: new, resume-open, resume-recent-end, 30-minute boundary, new-after-31-minutes, latest-by-`started_at` only, other student/activity ignored, consent missing, draft/archived/missing activity, unknown student, end/overwrite, end→start within/after window, ownership `403`/`404`), `SessionPropertiesTests` 5, `SessionControllerTests` 19 (`201` vs `200`, 30/31-minute window, `403` consent with no row, `404` draft/archived/missing, `400` missing field and malformed body, instructor `403` on both endpoints, `401` no token and deleted user, end `204`/overwrite/`403`/`404`).
+  - Local on Node 24.18.0 (2026-10-31): backend `./mvnw -B test` 306 tests, 0 failures, 0 errors, BUILD SUCCESS (260 before + 46). Frontend unchanged: `npm test -- --run` 711 passed in 41 files; `npm run lint` exit 0; `npm run build` exit 0.
+- Every other remaining spec is blocked by a gate that is not Accepted or by a spec that is not done (checked 2026-10-31 against Open Questions and `architecture-context.md`).
 
 | Spec | Blocking gate(s) | Status | Decision needed |
 |---|---|---|---|
-| 16 Coding session API | Q15 | Proposed | Does a refresh resume the session? Proposal: resume the latest session for the activity if `ended_at` is null or < 30 min ago (`epistemictrace.session.resume-window`, default `PT30M`). Decided by PLN-06 (Adrian) / SPC-04 (Noel). |
+| 16 Coding session API | — (Q5, Q15 Accepted) | In Progress | — |
 | 17 Activity tracking in the browser | — (Q4 Accepted) | Waits on 16 and 18 | Unblocked once 16 and 18 are done. |
 | 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Waits on 16 | Unblocked once 16 is done. |
 | 19 SDI signal calculations | Q1, Q2 | Proposed | Q1: signal definitions and caps (`runCap 10`, `gapCap 60 s`, `repeatCap 5`, window 5 min). Q2: SDI computed on the server only. Decided by CLR-01 / CLR-02 (Adrian). |
 | 20 SDI score engine | Q1 | Proposed | Weights `0.20/0.20/0.25/0.35`, MEDIUM from 40, HIGH from threshold. |
 | 21 Update the SDI after every run | Q1, Q2 | Proposed | Also waits on 18 and 20. |
 | 22 Circuit breaker logic | Q1, Q2 (Q8 Accepted) | Proposed | Cooldown default 120 s; server owns breaker state. Also waits on 20 and 21. |
-| 23 Lock the Run button | Q2, Q15 | Proposed | Browser follows server state, fail-open after 5 s; lock survives refresh through session resume. |
+| 23 Lock the Run button | Q2 (Q15 Accepted) | Proposed | Browser follows server state, fail-open after 5 s. Also waits on 17 and 22. |
 | 24 Save reflections API | — (Q8 Accepted) | Waits on 22 | — |
 | 25 Reflection form | — (Q8 Accepted) | Waits on 23, 24 | — |
 | 26 Session history API | — | Waits on 24 | — |
@@ -275,7 +283,7 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q9 | Hosting and deployment (`PROJECT.md` Q8). Flyway and CI were accepted; see Architecture Decisions. | — | CLR-08 (Noel) | Open (hosting) |
 | Q10 | Term dates, MVP demo date, pilot plan (`PROJECT.md` Q9) | — | CLR-09 (Jacob) | Open |
 | Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Accepted |
-| Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
+| Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended ≤ 30 min ago (server-side; `epistemictrace.session.resume-window`, default `PT30M`). | PLN-06 (Adrian) / SPC-04 (Noel) | Accepted |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
 
 ## Architecture Decisions
@@ -320,6 +328,7 @@ Accepted from Open Questions (2026-10-31):
 - **Q4** (CLR-04): accepted as proposed on Adrian's instruction (2026-10-31) before starting spec 13. Telemetry format as in `architecture-context.md` → Telemetry: `clientEventId` idempotency, 2 s EDIT coalescing, batches of at most 200 events, send every 10 s + after every RUN + on page leave (`keepalive`). Error signature is `<ExceptionType>@<line>` (`@?` when unknown, `Timeout@?` for timeouts), truncated to 200 characters; one ERROR event per run, from the first `error` or `timeout` test. The "(Proposed — Q4)" marker is removed. Specs 17 and 18 still implement the sending and storage.
 - **Q8** (CLR-07): accepted as proposed on Adrian's instruction (2026-10-31) before starting spec 13. Reflection fields are at least 20 characters after trimming and at most 2000 (server config `epistemictrace.reflection.*`, used by specs 24 and 25). Hidden tests are hidden from display only: they are processed and reported exactly like visible tests, and their data reaches the browser, so they are not secret. The "(Proposed — Q8)" marker is removed.
 - **Q6** (CLR-05): accepted 2026-10-31 during spec 15 (PR #42). Notice shown on the workspace page before the first session. Accept → `PUT /api/me/consent` sets `consent_accepted_at` once. Decline → coding and tests still work, but no session, telemetry, SDI or breaker; `epistemictrace:consent-declined` in `sessionStorage` (tab only); banner offers to accept later. Ratified title, three paragraphs and banner text in `architecture-context.md` → Consent. Retention: academic term.
+- **Q15** (PLN-06 / SPC-04): accepted 2026-10-31 on Adrian's instruction before starting spec 16. A refresh does not start a new session: `POST /api/sessions` resumes the student's latest session for the activity (by `started_at`) when it has no `ended_at` or `ended_at` ≥ now − resume window, clearing `ended_at`; otherwise it creates one. The window slides (each end overwrites `ended_at`) and is configuration (`epistemictrace.session.resume-window`, default `PT30M`). Resume is decided on the server only; no session id is kept in browser storage. Details in `architecture-context.md` → Circuit Breaker → Session resume.
 
 ## Session Notes
 
