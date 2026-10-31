@@ -55,4 +55,14 @@ public class InstructorActivityController {
 		return ActivityDetail.from(activity);
 	}
 
+	@PostMapping("/{id}/publish")
+	public ActivityDetail publish(@PathVariable long id) {
+		return ActivityDetail.from(this.activityService.publish(this.currentUser.id(), id));
+	}
+
+	@PostMapping("/{id}/archive")
+	public ActivityDetail archive(@PathVariable long id) {
+		return ActivityDetail.from(this.activityService.archive(this.currentUser.id(), id));
+	}
+
 }

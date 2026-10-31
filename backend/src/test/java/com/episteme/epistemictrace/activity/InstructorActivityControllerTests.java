@@ -37,7 +37,10 @@ import com.episteme.epistemictrace.user.UserRepository;
 
 import tools.jackson.databind.ObjectMapper;
 
-/** Spec 08 Part 1: instructor activity CRUD ({@code GET}/{@code POST} list, {@code GET}/{@code PUT} one). */
+/**
+ * Spec 08 Parts 1–2: instructor activity CRUD ({@code GET}/{@code POST} list, {@code GET}/{@code PUT} one) and the
+ * publish and archive transitions.
+ */
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -394,6 +397,225 @@ class InstructorActivityControllerTests {
 			.andExpect(status().isForbidden());
 
 		assertThat(this.activityRepository.findById(activity.getId()).orElseThrow().getTitle()).isEqualTo("Mine");
+	}
+
+	// POST /api/instructor/activities/{id}/publish
+
+	@Test
+	void publishDraftWithTestCasesReturns200PublishedDetail() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Sum", ActivityStatus.DRAFT, 2);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.instructorToken, null)
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.id").value(activity.getId()))
+			.andExpect(jsonPath("$.title").value("Sum"))
+			.andExpect(jsonPath("$.problemStatement").value("Statement for Sum"))
+			.andExpect(jsonPath("$.status").value("PUBLISHED"))
+			.andExpect(jsonPath("$.testCases", hasSize(2)))
+			.andExpect(jsonPath("$.testCases[0].position").value(1))
+			.andExpect(jsonPath("$.testCases[1].position").value(2))
+			.andExpect(jsonPath("$.createdAt").isString())
+			.andExpect(jsonPath("$.updatedAt").isString());
+
+		Activity reloaded = this.activityRepository.findById(activity.getId()).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.PUBLISHED);
+		assertThat(reloaded.getUpdatedAt()).isAfter(before);
+	}
+
+	@Test
+	void publishDraftWithoutTestCasesIs409AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Empty", ActivityStatus.DRAFT, 0);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.instructorToken, null)
+			.andExpect(status().isConflict())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.status").value(409))
+			.andExpect(jsonPath("$.detail").value("Add at least one test case before publishing."));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.DRAFT, before);
+	}
+
+	@Test
+	void publishAlreadyPublishedActivityIs409AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Live", ActivityStatus.PUBLISHED, 1);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.instructorToken, null)
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.detail").value("This activity is already published."));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.PUBLISHED, before);
+	}
+
+	@Test
+	void publishArchivedActivityIs409AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Old", ActivityStatus.ARCHIVED, 1);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.instructorToken, null)
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.detail").value("Archived activities can't be changed."));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.ARCHIVED, before);
+	}
+
+	@Test
+	void publishAnotherInstructorsActivityIs403AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Mine", ActivityStatus.DRAFT, 1);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.otherInstructorToken, null)
+			.andExpect(status().isForbidden())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.detail").value(DENIED_DETAIL));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.DRAFT, before);
+	}
+
+	@Test
+	void publishMissingActivityIs404() throws Exception {
+		perform(post(BASE + "/999999/publish"), this.instructorToken, null)
+			.andExpect(status().isNotFound())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.detail").value("Activity not found."));
+	}
+
+	@Test
+	void publishWithNonNumericIdIs400() throws Exception {
+		perform(post(BASE + "/abc/publish"), this.instructorToken, null).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void publishWithoutTokenIs401AndAsStudentIs403() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Mine", ActivityStatus.DRAFT, 1);
+
+		perform(post(BASE + "/" + activity.getId() + "/publish"), null, null).andExpect(status().isUnauthorized());
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.studentToken, null)
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.detail").value(DENIED_DETAIL));
+
+		assertThat(this.activityRepository.findById(activity.getId()).orElseThrow().getStatus())
+			.isEqualTo(ActivityStatus.DRAFT);
+	}
+
+	// POST /api/instructor/activities/{id}/archive
+
+	@Test
+	void archiveDraftReturns200ArchivedDetail() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Draft", ActivityStatus.DRAFT, 0);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.instructorToken, null)
+			.andExpect(status().isOk())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+			.andExpect(jsonPath("$.id").value(activity.getId()))
+			.andExpect(jsonPath("$.title").value("Draft"))
+			.andExpect(jsonPath("$.status").value("ARCHIVED"))
+			.andExpect(jsonPath("$.testCases", hasSize(0)));
+
+		Activity reloaded = this.activityRepository.findById(activity.getId()).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.ARCHIVED);
+		assertThat(reloaded.getUpdatedAt()).isAfter(before);
+	}
+
+	@Test
+	void archivePublishedReturns200ArchivedDetailWithTestCases() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Live", ActivityStatus.PUBLISHED, 2);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.instructorToken, null)
+			.andExpect(status().isOk())
+			.andExpect(jsonPath("$.status").value("ARCHIVED"))
+			.andExpect(jsonPath("$.testCases", hasSize(2)));
+
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activity.getId()).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.ARCHIVED);
+		assertThat(reloaded.getTestCases()).hasSize(2);
+		assertThat(reloaded.getUpdatedAt()).isAfter(before);
+	}
+
+	@Test
+	void archiveAlreadyArchivedActivityIs409AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Old", ActivityStatus.ARCHIVED, 1);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.instructorToken, null)
+			.andExpect(status().isConflict())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.status").value(409))
+			.andExpect(jsonPath("$.detail").value("This activity is already archived."));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.ARCHIVED, before);
+	}
+
+	@Test
+	void archiveAnotherInstructorsActivityIs403AndChangesNothing() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Mine", ActivityStatus.PUBLISHED, 1);
+		Instant before = Instant.parse("2026-10-01T08:00:00Z");
+		setUpdatedAt(activity, before);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.otherInstructorToken, null)
+			.andExpect(status().isForbidden())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.detail").value(DENIED_DETAIL));
+
+		assertStatusAndUpdatedAt(activity, ActivityStatus.PUBLISHED, before);
+	}
+
+	@Test
+	void archiveMissingActivityIs404() throws Exception {
+		perform(post(BASE + "/999999/archive"), this.instructorToken, null)
+			.andExpect(status().isNotFound())
+			.andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
+			.andExpect(jsonPath("$.detail").value("Activity not found."));
+	}
+
+	@Test
+	void archiveWithoutTokenIs401AndAsStudentIs403() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Mine", ActivityStatus.PUBLISHED, 1);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), null, null).andExpect(status().isUnauthorized());
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.studentToken, null)
+			.andExpect(status().isForbidden())
+			.andExpect(jsonPath("$.detail").value(DENIED_DETAIL));
+
+		assertThat(this.activityRepository.findById(activity.getId()).orElseThrow().getStatus())
+			.isEqualTo(ActivityStatus.PUBLISHED);
+	}
+
+	@Test
+	void archivedActivityRejectsUpdateAndPublishAfterArchive() throws Exception {
+		Activity activity = saveActivity(this.instructor, "Live", ActivityStatus.PUBLISHED, 1);
+
+		perform(post(BASE + "/" + activity.getId() + "/archive"), this.instructorToken, null)
+			.andExpect(status().isOk());
+
+		perform(put(BASE + "/" + activity.getId()), this.instructorToken, body("Changed", "Changed.", ""))
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.detail").value("Archived activities can't be changed."));
+		perform(post(BASE + "/" + activity.getId() + "/publish"), this.instructorToken, null)
+			.andExpect(status().isConflict())
+			.andExpect(jsonPath("$.detail").value("Archived activities can't be changed."));
+		perform(get(BASE), this.instructorToken, null)
+			.andExpect(jsonPath("$", hasSize(1)))
+			.andExpect(jsonPath("$[0].status").value("ARCHIVED"));
+	}
+
+	private void assertStatusAndUpdatedAt(Activity activity, ActivityStatus status, Instant updatedAt) {
+		Activity reloaded = this.activityRepository.findById(activity.getId()).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(status);
+		assertThat(reloaded.getUpdatedAt()).isEqualTo(updatedAt);
 	}
 
 	private ResultActions perform(MockHttpServletRequestBuilder request, String token, String json) throws Exception {

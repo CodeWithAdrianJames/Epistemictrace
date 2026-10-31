@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.sql.Timestamp;
 import java.time.Instant;
 
+import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import com.episteme.epistemictrace.user.User;
 import com.episteme.epistemictrace.user.UserRepository;
 
 /**
- * Spec 08 Part 1 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
+ * Spec 08 Parts 1–2 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
  * to show that the new {@code sdi_configs} row comes from configuration.
  */
 @SpringBootTest(properties = { "epistemictrace.sdi.defaults.threshold=65",
@@ -169,6 +170,111 @@ class ActivityServiceTests {
 
 		assertThat(this.activityService.listForInstructor(this.instructorId)).extracting(ActivitySummary::id)
 			.containsExactly(second, first);
+	}
+
+	@Test
+	void publishDraftWithTestCaseChangesStatusAndUpdatedAt() {
+		long activityId = saveActivity(ActivityStatus.DRAFT, 1).getId();
+		setUpdatedAt(activityId, PAST);
+
+		Activity published = this.activityService.publish(this.instructorId, activityId);
+
+		assertThat(published.getStatus()).isEqualTo(ActivityStatus.PUBLISHED);
+		assertThat(published.getTestCases()).hasSize(1);
+		Activity reloaded = this.activityRepository.findById(activityId).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.PUBLISHED);
+		assertThat(reloaded.getUpdatedAt()).isAfter(PAST);
+	}
+
+	@Test
+	void publishIsAConflictUnlessDraftWithTestCases() {
+		long emptyDraft = saveActivity(ActivityStatus.DRAFT, 0).getId();
+		long published = saveActivity(ActivityStatus.PUBLISHED, 1).getId();
+		long archived = saveActivity(ActivityStatus.ARCHIVED, 1).getId();
+		setUpdatedAt(emptyDraft, PAST);
+		setUpdatedAt(published, PAST);
+		setUpdatedAt(archived, PAST);
+
+		assertConflict(() -> this.activityService.publish(this.instructorId, emptyDraft),
+				ActivityService.NO_TEST_CASES_DETAIL);
+		assertConflict(() -> this.activityService.publish(this.instructorId, published),
+				ActivityService.ALREADY_PUBLISHED_DETAIL);
+		assertConflict(() -> this.activityService.publish(this.instructorId, archived),
+				ActivityService.ARCHIVED_DETAIL);
+
+		assertStatusAndUpdatedAt(emptyDraft, ActivityStatus.DRAFT);
+		assertStatusAndUpdatedAt(published, ActivityStatus.PUBLISHED);
+		assertStatusAndUpdatedAt(archived, ActivityStatus.ARCHIVED);
+	}
+
+	@Test
+	void archiveFromDraftOrPublishedChangesStatusAndUpdatedAt() {
+		long draft = saveActivity(ActivityStatus.DRAFT, 0).getId();
+		long published = saveActivity(ActivityStatus.PUBLISHED, 2).getId();
+		setUpdatedAt(draft, PAST);
+		setUpdatedAt(published, PAST);
+
+		assertThat(this.activityService.archive(this.instructorId, draft).getStatus())
+			.isEqualTo(ActivityStatus.ARCHIVED);
+		Activity archivedPublished = this.activityService.archive(this.instructorId, published);
+		assertThat(archivedPublished.getStatus()).isEqualTo(ActivityStatus.ARCHIVED);
+		assertThat(archivedPublished.getTestCases()).hasSize(2);
+
+		for (long activityId : new long[] { draft, published }) {
+			Activity reloaded = this.activityRepository.findById(activityId).orElseThrow();
+			assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.ARCHIVED);
+			assertThat(reloaded.getUpdatedAt()).isAfter(PAST);
+		}
+	}
+
+	@Test
+	void archiveAlreadyArchivedActivityIsAConflict() {
+		long activityId = saveActivity(ActivityStatus.ARCHIVED, 0).getId();
+		setUpdatedAt(activityId, PAST);
+
+		assertConflict(() -> this.activityService.archive(this.instructorId, activityId),
+				ActivityService.ALREADY_ARCHIVED_DETAIL);
+
+		assertStatusAndUpdatedAt(activityId, ActivityStatus.ARCHIVED);
+	}
+
+	@Test
+	void publishAndArchiveCheckOwnershipAndExistence() {
+		long activityId = saveActivity(ActivityStatus.DRAFT, 1).getId();
+		setUpdatedAt(activityId, PAST);
+
+		assertThatThrownBy(() -> this.activityService.publish(this.otherInstructorId, activityId))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.archive(this.otherInstructorId, activityId))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.publish(this.instructorId, 999_999L))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.archive(this.instructorId, 999_999L))
+			.isInstanceOf(ActivityNotFoundException.class);
+
+		assertStatusAndUpdatedAt(activityId, ActivityStatus.DRAFT);
+	}
+
+	private Activity saveActivity(ActivityStatus status, int testCaseCount) {
+		Activity activity = new Activity(this.instructorId, "Activity", "Statement.", "", status);
+		for (int position = 1; position <= testCaseCount; position++) {
+			activity.addTestCase(new TestCase(position, "", "out " + position + "\n", false));
+		}
+		return this.activityRepository.save(activity);
+	}
+
+	private void assertConflict(ThrowingCallable call, String detail) {
+		assertThatThrownBy(call).isInstanceOfSatisfying(ActivityConflictException.class, ex -> {
+			assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+			assertThat(ex.getBody().getDetail()).isEqualTo(detail);
+		});
+	}
+
+	/** The activity still has {@code status} and the {@link #PAST} timestamp set before the rejected call. */
+	private void assertStatusAndUpdatedAt(long activityId, ActivityStatus status) {
+		Activity reloaded = this.activityRepository.findById(activityId).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(status);
+		assertThat(reloaded.getUpdatedAt()).isEqualTo(PAST);
 	}
 
 	private void setUpdatedAt(long activityId, Instant updatedAt) {

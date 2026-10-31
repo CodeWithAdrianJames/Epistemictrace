@@ -18,6 +18,12 @@ public class ActivityService {
 
 	static final String ARCHIVED_DETAIL = "Archived activities can't be changed.";
 
+	static final String ALREADY_PUBLISHED_DETAIL = "This activity is already published.";
+
+	static final String NO_TEST_CASES_DETAIL = "Add at least one test case before publishing.";
+
+	static final String ALREADY_ARCHIVED_DETAIL = "This activity is already archived.";
+
 	private final ActivityRepository activityRepository;
 
 	private final SdiConfigRepository sdiConfigRepository;
@@ -63,6 +69,41 @@ public class ActivityService {
 			throw new ActivityConflictException(ARCHIVED_DETAIL);
 		}
 		activity.edit(title.strip(), problemStatement, starterCode);
+		return activity;
+	}
+
+	/**
+	 * Moves a {@link ActivityStatus#DRAFT} activity with at least one test case to {@link ActivityStatus#PUBLISHED}.
+	 * @throws ActivityConflictException if the activity is not a draft or has no test cases
+	 */
+	@Transactional
+	public Activity publish(long instructorId, long activityId) {
+		Activity activity = ownedActivity(instructorId, activityId);
+		switch (activity.getStatus()) {
+			case PUBLISHED -> throw new ActivityConflictException(ALREADY_PUBLISHED_DETAIL);
+			case ARCHIVED -> throw new ActivityConflictException(ARCHIVED_DETAIL);
+			case DRAFT -> {
+				if (activity.getTestCases().isEmpty()) {
+					throw new ActivityConflictException(NO_TEST_CASES_DETAIL);
+				}
+			}
+		}
+		activity.changeStatus(ActivityStatus.PUBLISHED);
+		return activity;
+	}
+
+	/**
+	 * Moves a {@link ActivityStatus#DRAFT} or {@link ActivityStatus#PUBLISHED} activity to
+	 * {@link ActivityStatus#ARCHIVED}; there is no way back in the MVP.
+	 * @throws ActivityConflictException if the activity is already archived
+	 */
+	@Transactional
+	public Activity archive(long instructorId, long activityId) {
+		Activity activity = ownedActivity(instructorId, activityId);
+		if (activity.getStatus() == ActivityStatus.ARCHIVED) {
+			throw new ActivityConflictException(ALREADY_ARCHIVED_DETAIL);
+		}
+		activity.changeStatus(ActivityStatus.ARCHIVED);
 		return activity;
 	}
 
