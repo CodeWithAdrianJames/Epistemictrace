@@ -1,0 +1,76 @@
+/* ui-context.md → Coding Workspace: the left column, scrollable on its own. */
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  padding: var(--space-4);
+  overflow-y: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+/* Spec 14 R3: plain text with the instructor's line breaks and spacing kept. */
+.statement {
+  margin: 0;
+  font-family: var(--font-mono);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.subheading {
+  margin: var(--space-2) 0 0;
+  font-size: 1rem;
+}
+
+.examples {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.example {
+  padding: var(--space-3);
+  background: var(--bg-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.exampleName {
+  margin: 0 0 var(--space-2);
+  font-size: 0.875rem;
+}
+
+.values {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.values dd {
+  margin: 0 0 var(--space-2);
+}
+
+/* An empty input still shows as a block, so it reads as "no input" rather than a missing value. */
+.block {
+  min-height: 2.25em;
+  margin: 0;
+  padding: var(--space-2);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

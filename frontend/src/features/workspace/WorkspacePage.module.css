@@ -1,52 +1,107 @@
-/* Temporary editor mount (spec 11 R6); spec 14 replaces it with the ui-context.md → Coding Workspace layout. */
+/* ui-context.md → Coding Workspace: a top bar over three regions that are visible together. */
 .page {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
 }
 
-.heading {
-  margin: 0;
-  font-size: 1.5rem;
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
 }
 
-/* The content area has no fixed height, so the editor takes the viewport height below the top bar,
-   the page padding and the heading (about 160px), and never shrinks below a usable size. */
+.title {
+  margin: 0;
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+/* Below 1024px the regions stack: problem, editor, results. */
+.regions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.problem {
+  display: flex;
+  flex-direction: column;
+}
+
 .editor {
-  height: calc(100vh - 160px);
-  min-height: 320px;
+  height: 420px;
   overflow: hidden;
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
 }
 
-/* Temporary runner check (spec 12); spec 14 removes it. */
-.runnerCheck {
+.results {
   display: flex;
   flex-direction: column;
-  gap: var(--space-2);
-  padding: var(--space-3);
-  background: var(--bg-subtle);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  min-height: 0;
 }
 
-.runnerHeading {
+/* Desktop: problem left (35%), editor top-right (60%), results bottom-right (40%). The page fills
+   the viewport below the app top bar and the content padding (about 110px), so a 1280×800 screen
+   shows all three regions without scrolling the page. */
+@media (min-width: 1024px) {
+  .page {
+    height: calc(100vh - 110px);
+    min-height: 560px;
+  }
+
+  .regions {
+    display: grid;
+    flex: 1;
+    min-height: 0;
+    grid-template-columns: 35fr 65fr;
+    grid-template-rows: 60fr 40fr;
+    grid-template-areas:
+      'problem editor'
+      'problem results';
+  }
+
+  .problem {
+    grid-area: problem;
+    min-height: 0;
+  }
+
+  .problem > * {
+    flex: 1;
+  }
+
+  .editor {
+    grid-area: editor;
+    height: auto;
+    min-height: 0;
+  }
+
+  .results {
+    grid-area: results;
+  }
+}
+
+.message {
   margin: 0;
-  font-size: 1rem;
-}
-
-.runnerButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-}
-
-.runnerReport {
-  min-height: 1.5em;
-  margin: 0;
-  font-family: var(--font-mono);
-  white-space: pre-wrap;
   color: var(--text-secondary);
+}
+
+.notAvailable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+/* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */
+.pageError {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--state-fail-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-fail);
 }
