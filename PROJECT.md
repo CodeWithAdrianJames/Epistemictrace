@@ -213,7 +213,7 @@ npm test                  # Vitest run (jsdom + Testing Library)
 
 ## 10. Current status (2026-10-30)
 
-- **Repo:** specs 01 to 05 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, and the register, login and `GET /api/auth/me` API with the instructor seeder. Pyodide is not added yet. Role-based path rules are next (spec 06). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
+- **Repo:** specs 01 to 05 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, and the register, login and `GET /api/auth/me` API with the instructor seeder. Pyodide is added to the frontend (spec 12, `314.0.7`, pinned). Role-based path rules are next (spec 06). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
 - **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
   - **Next:** IMP-06 (role-based access control); IMP-07 (login, register and logout pages) can run in parallel. See Next Up in the tracker.
 - **Dates:** no due dates are set except CW-01's, which has passed.
