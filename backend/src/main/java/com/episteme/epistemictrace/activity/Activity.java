@@ -87,6 +87,15 @@ public class Activity {
 		this.updatedAt = Instant.now();
 	}
 
+	/**
+	 * Sets the status and {@code updated_at}. Which transitions are allowed is decided by {@link ActivityService}
+	 * (spec 08 R3, R5).
+	 */
+	public void changeStatus(ActivityStatus status) {
+		this.status = status;
+		this.updatedAt = Instant.now();
+	}
+
 	public void addTestCase(TestCase testCase) {
 		testCase.setActivity(this);
 		this.testCases.add(testCase);
