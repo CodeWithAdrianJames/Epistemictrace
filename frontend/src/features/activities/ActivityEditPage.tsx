@@ -6,6 +6,7 @@ import { formErrorsFrom, hasErrors, type FieldErrors } from '../../auth/authForm
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import ActivityForm from './ActivityForm.tsx'
 import styles from './ActivityPage.module.css'
+import ActivityStatusActions from './ActivityStatusActions.tsx'
 import {
   ACTIVITY_FIELDS,
   isChanged,
@@ -27,7 +28,7 @@ type LoadState =
   | { status: 'loaded'; activity: ActivityDetail }
   | { status: 'error'; message: string }
 
-// Spec 09 R3: the edit page. Keyed by id, so moving to another activity starts from a fresh load.
+// Spec 09 R3/R5: the edit page. Keyed by id, so moving to another activity starts from a fresh load.
 function ActivityEditPage() {
   const { activityId } = useParams()
   const id = parseActivityId(activityId)
@@ -35,7 +36,7 @@ function ActivityEditPage() {
   return id === null ? (
     <EditLayout
       state={{ status: 'error', message: NOT_FOUND_DETAIL }}
-      onSaved={() => {}}
+      onActivityChange={() => {}}
       onTestCasesChange={() => {}}
     />
   ) : (
@@ -77,7 +78,7 @@ function ActivityEditor({ activityId }: { activityId: number }) {
   return (
     <EditLayout
       state={state}
-      onSaved={(activity) => setState({ status: 'loaded', activity })}
+      onActivityChange={(activity) => setState({ status: 'loaded', activity })}
       onTestCasesChange={updateTestCases}
     />
   )
@@ -85,11 +86,11 @@ function ActivityEditor({ activityId }: { activityId: number }) {
 
 interface EditLayoutProps {
   state: LoadState
-  onSaved: (activity: ActivityDetail) => void
+  onActivityChange: (activity: ActivityDetail) => void
   onTestCasesChange: (update: TestCasesUpdate) => void
 }
 
-function EditLayout({ state, onSaved, onTestCasesChange }: EditLayoutProps) {
+function EditLayout({ state, onActivityChange, onTestCasesChange }: EditLayoutProps) {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
@@ -103,26 +104,51 @@ function EditLayout({ state, onSaved, onTestCasesChange }: EditLayoutProps) {
         </p>
       )}
       {state.status === 'loaded' && (
-        <>
-          <DetailsSection activity={state.activity} onSaved={onSaved} />
-          <TestCaseEditor
-            activityId={state.activity.id}
-            testCases={state.activity.testCases}
-            onTestCasesChange={onTestCasesChange}
-          />
-        </>
+        <LoadedSections
+          activity={state.activity}
+          onActivityChange={onActivityChange}
+          onTestCasesChange={onTestCasesChange}
+        />
       )}
     </div>
   )
 }
 
+interface LoadedSectionsProps {
+  activity: ActivityDetail
+  onActivityChange: (activity: ActivityDetail) => void
+  onTestCasesChange: (update: TestCasesUpdate) => void
+}
+
+// R5: an archived activity is read-only. The editing sections are keyed by that mode, so archiving
+// remounts them and the read-only view shows the server's values instead of unsaved edits.
+function LoadedSections({ activity, onActivityChange, onTestCasesChange }: LoadedSectionsProps) {
+  const readOnly = activity.status === 'ARCHIVED'
+  const mode = readOnly ? 'read-only' : 'editable'
+
+  return (
+    <>
+      <ActivityStatusActions activity={activity} onStatusChange={onActivityChange} />
+      <DetailsSection key={`details-${mode}`} activity={activity} readOnly={readOnly} onSaved={onActivityChange} />
+      <TestCaseEditor
+        key={`test-cases-${mode}`}
+        activityId={activity.id}
+        testCases={activity.testCases}
+        readOnly={readOnly}
+        onTestCasesChange={onTestCasesChange}
+      />
+    </>
+  )
+}
+
 interface DetailsSectionProps {
   activity: ActivityDetail
+  readOnly: boolean
   onSaved: (activity: ActivityDetail) => void
 }
 
 // The top section: title, problem statement and starter code with Save changes (R3, R6).
-function DetailsSection({ activity, onSaved }: DetailsSectionProps) {
+function DetailsSection({ activity, readOnly, onSaved }: DetailsSectionProps) {
   const request = useProtectedRequest()
   const headingId = useId()
   const [values, setValues] = useState<ActivityFormValues>(() => valuesFrom(activity))
@@ -160,7 +186,7 @@ function DetailsSection({ activity, onSaved }: DetailsSectionProps) {
   }
 
   function handleSubmit() {
-    if (submitting || !changed) {
+    if (readOnly || submitting || !changed) {
       return
     }
     const errors = validateActivity(values)
@@ -192,7 +218,8 @@ function DetailsSection({ activity, onSaved }: DetailsSectionProps) {
         values={values}
         fieldErrors={fieldErrors}
         submitLabel="Save changes"
-        submitDisabled={submitting || !changed}
+        submitDisabled={readOnly || submitting || !changed}
+        readOnly={readOnly}
         onChange={setField}
         onSubmit={handleSubmit}
       />

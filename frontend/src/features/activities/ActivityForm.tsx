@@ -9,12 +9,22 @@ interface ActivityFormProps {
   fieldErrors: FieldErrors<ActivityField>
   submitLabel: string
   submitDisabled: boolean
+  // Spec 09 R5: archived activities show their fields read-only; they stay focusable for copying.
+  readOnly?: boolean
   onChange: (field: ActivityField, value: string) => void
   onSubmit: () => void
 }
 
 // Spec 09 R2/R3: the title, problem statement and starter code fields shared by the new and edit pages.
-function ActivityForm({ values, fieldErrors, submitLabel, submitDisabled, onChange, onSubmit }: ActivityFormProps) {
+function ActivityForm({
+  values,
+  fieldErrors,
+  submitLabel,
+  submitDisabled,
+  readOnly = false,
+  onChange,
+  onSubmit,
+}: ActivityFormProps) {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     onSubmit()
@@ -29,6 +39,7 @@ function ActivityForm({ values, fieldErrors, submitLabel, submitDisabled, onChan
             name="title"
             type="text"
             autoComplete="off"
+            readOnly={readOnly}
             value={values.title}
             className={styles.input}
             onChange={(event) => {
@@ -43,6 +54,7 @@ function ActivityForm({ values, fieldErrors, submitLabel, submitDisabled, onChan
             {...props}
             name="problemStatement"
             rows={10}
+            readOnly={readOnly}
             value={values.problemStatement}
             className={styles.input}
             onChange={(event) => {
@@ -61,6 +73,7 @@ function ActivityForm({ values, fieldErrors, submitLabel, submitDisabled, onChan
             autoCapitalize="off"
             autoCorrect="off"
             wrap="off"
+            readOnly={readOnly}
             value={values.starterCode}
             className={`${styles.input} ${styles.code}`}
             onChange={(event) => {

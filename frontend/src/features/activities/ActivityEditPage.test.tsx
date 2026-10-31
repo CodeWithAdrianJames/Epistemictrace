@@ -5,7 +5,9 @@ import { ApiError } from '../../api/ApiError.ts'
 import { me, type User } from '../../api/authApi.ts'
 import {
   addTestCase,
+  archiveActivity,
   getActivity,
+  publishActivity,
   updateActivity,
   type ActivityDetail,
 } from '../../api/instructorActivitiesApi.ts'
@@ -24,6 +26,8 @@ vi.mock('../../api/authApi.ts', () => ({
 vi.mock('../../api/instructorActivitiesApi.ts', () => ({
   getActivity: vi.fn(),
   updateActivity: vi.fn(),
+  publishActivity: vi.fn(),
+  archiveActivity: vi.fn(),
   addTestCase: vi.fn(),
   updateTestCase: vi.fn(),
   deleteTestCase: vi.fn(),
@@ -34,6 +38,8 @@ const meMock = vi.mocked(me)
 const getActivityMock = vi.mocked(getActivity)
 const updateActivityMock = vi.mocked(updateActivity)
 const addTestCaseMock = vi.mocked(addTestCase)
+const publishActivityMock = vi.mocked(publishActivity)
+const archiveActivityMock = vi.mocked(archiveActivity)
 
 const FUTURE = '2099-01-01T00:00:00Z'
 const TOKEN = 'token-1'
@@ -103,8 +109,25 @@ function saveButton(): HTMLElement {
   return screen.getByRole('button', { name: 'Save changes' })
 }
 
+function header(): HTMLElement {
+  const heading = screen.getByRole('heading', { level: 1, name: 'Edit activity' })
+  if (heading.parentElement === null) {
+    throw new Error('The page heading has no parent')
+  }
+  return heading.parentElement
+}
+
+function statusSection(): HTMLElement {
+  return screen.getByRole('region', { name: 'Status' })
+}
+
+function testCasesSection(): HTMLElement {
+  return screen.getByRole('region', { name: 'Test cases' })
+}
+
 afterEach(() => {
   vi.resetAllMocks()
+  vi.restoreAllMocks()
   sessionStorage.clear()
 })
 
@@ -270,7 +293,8 @@ describe('ActivityEditPage', () => {
   })
 
   it('shows a 409 detail at the top of the details section', async () => {
-    getActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'ARCHIVED' })
+    // Loaded as published, then archived elsewhere before the save reached the server.
+    getActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'PUBLISHED' })
     updateActivityMock.mockRejectedValue(apiError(409, "Archived activities can't be edited."))
     renderPage()
 
@@ -468,5 +492,146 @@ describe('ActivityEditPage', () => {
     expect(await screen.findByDisplayValue('Activity 6')).toBeInTheDocument()
     expect(getActivityMock).toHaveBeenLastCalledWith(TOKEN, 6, expect.any(AbortSignal))
     expect(saveButton()).toBeDisabled()
+  })
+
+  describe('status actions (spec 09 R5)', () => {
+    it('shows the status section between the heading and the details', async () => {
+      getActivityMock.mockResolvedValue(ACTIVITY)
+      renderPage()
+
+      const details = await findDetails()
+      const status = statusSection()
+      expect(status.compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(within(status).getByRole('button', { name: 'Publish' })).toBeEnabled()
+      expect(within(status).getByRole('button', { name: 'Archive' })).toBeEnabled()
+    })
+
+    it('publishes and shows the returned status in the header', async () => {
+      getActivityMock.mockResolvedValue(ACTIVITY)
+      publishActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'PUBLISHED' })
+      renderPage()
+
+      await findDetails()
+      expect(within(header()).getByText('Draft')).toBeInTheDocument()
+      fireEvent.click(within(statusSection()).getByRole('button', { name: 'Publish' }))
+
+      expect(await within(header()).findByText('Published')).toBeInTheDocument()
+      expect(within(statusSection()).queryByRole('button', { name: 'Publish' })).not.toBeInTheDocument()
+      expect(publishActivityMock).toHaveBeenCalledExactlyOnceWith(TOKEN, 5)
+    })
+
+    it('keeps unsaved detail edits when the activity is published', async () => {
+      getActivityMock.mockResolvedValue(ACTIVITY)
+      publishActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'PUBLISHED' })
+      renderPage()
+
+      await findDetails()
+      type(field('Title'), 'Unsaved title')
+      fireEvent.click(within(statusSection()).getByRole('button', { name: 'Publish' }))
+
+      await within(header()).findByText('Published')
+      expect(field('Title')).toHaveValue('Unsaved title')
+      expect(saveButton()).toBeEnabled()
+    })
+
+    it('lets the instructor edit the title of a published activity', async () => {
+      const published: ActivityDetail = { ...ACTIVITY, status: 'PUBLISHED' }
+      getActivityMock.mockResolvedValue(published)
+      updateActivityMock.mockResolvedValue({ ...published, title: 'Sum three numbers' })
+      renderPage()
+
+      await findDetails()
+      expect(field('Title')).not.toHaveAttribute('readonly')
+      type(field('Title'), 'Sum three numbers')
+      fireEvent.click(saveButton())
+
+      expect(await screen.findByText('Changes saved.')).toBeInTheDocument()
+      expect(updateActivityMock).toHaveBeenCalledExactlyOnceWith(TOKEN, 5, {
+        title: 'Sum three numbers',
+        problemStatement: ACTIVITY.problemStatement,
+        starterCode: ACTIVITY.starterCode,
+      })
+      expect(field('Title')).toHaveValue('Sum three numbers')
+      expect(within(header()).getByText('Published')).toBeInTheDocument()
+    })
+
+    it('disables Publish with the reason until the first test case is added', async () => {
+      getActivityMock.mockResolvedValue({ ...ACTIVITY, testCases: [] })
+      addTestCaseMock.mockResolvedValue({ id: 12, position: 1, input: '', expectedOutput: '0\n', hidden: false })
+      renderPage()
+
+      await findDetails()
+      const publish = within(statusSection()).getByRole('button', { name: 'Publish' })
+      expect(publish).toBeDisabled()
+      expect(within(statusSection()).getByText('Add at least one test case')).toBeVisible()
+
+      const newForm = within(testCasesSection()).getByRole('form', { name: 'New test case' })
+      type(within(newForm).getByRole('textbox', { name: 'Expected output' }), '0\n')
+      fireEvent.click(within(newForm).getByRole('button', { name: 'Add test case' }))
+
+      await within(testCasesSection()).findByRole('form', { name: 'Test 1' })
+      expect(within(statusSection()).getByRole('button', { name: 'Publish' })).toBeEnabled()
+      expect(within(statusSection()).queryByText('Add at least one test case')).not.toBeInTheDocument()
+    })
+
+    it('makes the whole page read-only after archiving and shows the server values', async () => {
+      vi.spyOn(window, 'confirm').mockReturnValue(true)
+      getActivityMock.mockResolvedValue(ACTIVITY)
+      archiveActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'ARCHIVED' })
+      renderPage()
+
+      await findDetails()
+      type(field('Title'), 'Unsaved title')
+      fireEvent.click(within(statusSection()).getByRole('button', { name: 'Archive' }))
+
+      expect(await within(header()).findByText('Archived')).toBeInTheDocument()
+      expect(within(statusSection()).getByText("Archived activities can't be edited.")).toBeInTheDocument()
+      expect(field('Title')).toHaveValue('Sum two numbers')
+      expect(field('Title')).toHaveAttribute('readonly')
+      expect(saveButton()).toBeDisabled()
+      expect(within(testCasesSection()).getByRole('button', { name: 'Add test case' })).toBeDisabled()
+      expect(archiveActivityMock).toHaveBeenCalledExactlyOnceWith(TOKEN, 5)
+    })
+
+    it('shows every field and button read-only for an archived activity', async () => {
+      getActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'ARCHIVED' })
+      renderPage()
+
+      await findDetails()
+      expect(within(statusSection()).getByText("Archived activities can't be edited.")).toBeVisible()
+      expect(within(statusSection()).queryAllByRole('button')).toHaveLength(0)
+      for (const label of ['Title', 'Problem statement', 'Starter code']) {
+        expect(field(label)).toHaveAttribute('readonly')
+      }
+      expect(field('Title')).toHaveValue('Sum two numbers')
+      expect(saveButton()).toBeDisabled()
+
+      const section = testCasesSection()
+      for (const textbox of within(section).getAllByRole('textbox')) {
+        expect(textbox).toHaveAttribute('readonly')
+      }
+      for (const checkbox of within(section).getAllByRole('checkbox')) {
+        expect(checkbox).toBeDisabled()
+      }
+      for (const control of within(section).getAllByRole('button')) {
+        expect(control).toBeDisabled()
+      }
+    })
+
+    it('sends nothing when the archived details form is submitted anyway', async () => {
+      getActivityMock.mockResolvedValue({ ...ACTIVITY, status: 'ARCHIVED' })
+      renderPage()
+
+      const details = await findDetails()
+      type(field('Title'), 'Typed anyway')
+      const form = details.querySelector('form')
+      if (form === null) {
+        throw new Error('The details section has no form')
+      }
+      fireEvent.submit(form)
+
+      expect(updateActivityMock).not.toHaveBeenCalled()
+      expect(saveButton()).toBeDisabled()
+    })
   })
 })
