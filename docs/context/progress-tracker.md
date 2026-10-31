@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 21 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 22 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 22 are done. Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 23 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -244,6 +244,12 @@ Update this file whenever the current phase, active feature, open questions or i
   - Also fixed: mojibake (`â€”` for `—`, `â‰¥` for `≥`) that the gate ratification commit wrote into `PROJECT.md` §5 and the gate lines of specs 20 and 22.
   - Tests: `SdiScoringServiceTests` 7 (scores per run, peak, window/threshold from the activity row, out-of-order run, duplicates not re-scored, no-run batch, level from the latest run), `TelemetryScoringControllerTests` 5 (wheel-spinning batches end `HIGH`, steady batches stay `LOW`, every RUN scored and `peak_sdi` = max, no `sdi`/`peak` in any body, `struggleLevel: null` without a RUN, re-sending keeps stored scores), `TelemetryControllerTests` updated (response has 3 fields; RUN gets an SDI).
   - Local (2026-10-31): `./mvnw -B test` 413 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
+- 22 Circuit breaker logic (IMP-22) — **Completed** 2026-11-01, Parts A and B on branch `feature/imp-22`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gates Q1 (cooldown 10 minutes), Q2, Q8 Accepted. Spec 21 was merged first (PR #49). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part A (R1–R4, plain Java): `breaker/BreakerState` (`locked`, `sdiAtLock`, `cooldownEndsAt`; `UNLOCKED` constant), `breaker/BreakerView` (`Status` `UNLOCKED`/`LOCKED`/`COOLDOWN`, `cooldownEndsAt`), `breaker/BreakerRules.onRunScored`, `onReflection`, `view`.
+  - Part B (R5–R10): `config/ReflectionProperties` (`epistemictrace.reflection.min-length=20`, `max-length=2000`, validated `1 ≤ min ≤ max`), `breaker/BreakerPayload` (`state`, `cooldownEndsAt`, `reflectionMinLength`), `breaker/BreakerService` (`onRunScored(session, sdi, threshold)`, `onReflection(session, cooldown)` for spec 24, `payload(session)`; server time from the `Clock` bean), `CodingSession.breakerState()`/`applyBreakerState(...)`. `TelemetryService` applies `onRunScored` for each new score in session order with the activity threshold, in the ingestion transaction; `TelemetryBatchResponse` and `SessionResponse` gained `breaker` (always present); `SessionStart` carries the payload from `SessionService.start`.
+  - Choices not spelled out in the spec: (1) locking after an expired cooldown keeps the old `cooldownEndsAt` on the row (it is in the past, so `view` ignores it; `onReflection` overwrites it); (2) `cooldownEndsAt` in the payload is `null` unless the state is `COOLDOWN`; (3) a zero cooldown unlocks straight to `UNLOCKED`.
+  - Tests: `BreakerRulesTests` 15 (every branch of R2–R4, cooldown end equal to now, threshold equality, already locked, full cycle), `BreakerIngestionTests` 9 (wheel-spinning locks, steady stays unlocked, runs while locked keep the first `sdi_at_lock`, breaker present without a RUN, cooldown blocks a re-trigger, lock again after the cooldown, resumed locked session returns `LOCKED`, new session `UNLOCKED`, resumed cooldown returns `COOLDOWN` with its end; no `sdi` text in any body), `ReflectionPropertiesTests` 6. Response-shape assertions updated in `SessionControllerTests`, `TelemetryControllerTests`, `TelemetryScoringControllerTests`.
+  - Local (2026-11-01): `./mvnw -B test` 443 tests, 0 failures, 0 errors, BUILD SUCCESS. Frontend unchanged.
 
 ## In Progress
 
@@ -256,7 +262,7 @@ Update this file whenever the current phase, active feature, open questions or i
 | 19 SDI signal calculations | — (Q1, Q2 Accepted) | Completed | — |
 | 20 SDI score engine | — (Q1 Accepted) | Completed | — |
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Completed | — |
-| 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Waits on 20, 21 | — |
+| 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Completed | — |
 | 23 Lock the Run button | — (Q2, Q15 Accepted) | Waits on 17, 22 | — |
 | 24 Save reflections API | — (Q8 Accepted) | Waits on 22 | — |
 | 25 Reflection form | — (Q8 Accepted) | Waits on 23, 24 | — |

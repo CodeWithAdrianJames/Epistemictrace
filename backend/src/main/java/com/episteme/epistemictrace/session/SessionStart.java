@@ -1,6 +1,11 @@
 package com.episteme.epistemictrace.session;
 
-/** Result of {@link SessionService#start}: the session and whether an earlier one was resumed. */
-public record SessionStart(CodingSession session, boolean resumed) {
+import com.episteme.epistemictrace.breaker.BreakerPayload;
+
+/**
+ * Result of {@link SessionService#start}: the session, whether an earlier one was resumed, and its breaker state (spec
+ * 22 R8).
+ */
+public record SessionStart(CodingSession session, boolean resumed, BreakerPayload breaker) {
 
 }

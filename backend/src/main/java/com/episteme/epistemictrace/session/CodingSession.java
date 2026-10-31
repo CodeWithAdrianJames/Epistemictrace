@@ -9,6 +9,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import com.episteme.epistemictrace.breaker.BreakerState;
+
 @Entity
 @Table(name = "coding_sessions")
 public class CodingSession {
@@ -66,6 +68,18 @@ public class CodingSession {
 		if (this.peakSdi == null || sdi > this.peakSdi) {
 			this.peakSdi = sdi;
 		}
+	}
+
+	/** The circuit-breaker columns as one value (spec 22 R1). */
+	public BreakerState breakerState() {
+		return new BreakerState(this.runnerLocked, this.sdiAtLock, this.cooldownEndsAt);
+	}
+
+	/** Stores a breaker state computed by {@code BreakerRules} (spec 22 R6). */
+	public void applyBreakerState(BreakerState state) {
+		this.runnerLocked = state.locked();
+		this.sdiAtLock = state.sdiAtLock();
+		this.cooldownEndsAt = state.cooldownEndsAt();
 	}
 
 	public Long getId() {

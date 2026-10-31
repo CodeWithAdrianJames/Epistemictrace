@@ -120,7 +120,7 @@ class SessionControllerTests {
 			.getContentAsString();
 
 		JsonNode json = this.objectMapper.readTree(body);
-		assertThat(json.size()).isEqualTo(4);
+		assertThat(json.size()).isEqualTo(5);
 		long sessionId = json.get("sessionId").asLong();
 		CodingSession stored = this.codingSessionRepository.findById(sessionId).orElseThrow();
 		assertThat(stored.getStudentId()).isEqualTo(this.student.getId());

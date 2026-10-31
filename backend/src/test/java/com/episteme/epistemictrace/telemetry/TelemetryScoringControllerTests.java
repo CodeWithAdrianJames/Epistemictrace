@@ -128,7 +128,7 @@ class TelemetryScoringControllerTests {
 	@Test
 	void noResponseCarriesARawScore() throws Exception {
 		for (JsonNode json : postAsBatches(SdiScenarios.wheelSpinning())) {
-			assertThat(json.propertyNames()).containsOnly("accepted", "duplicates", "struggleLevel");
+			assertThat(json.propertyNames()).containsOnly("accepted", "duplicates", "struggleLevel", "breaker");
 			assertThat(json.toString()).doesNotContainIgnoringCase("sdi").doesNotContainIgnoringCase("peak");
 		}
 	}
