@@ -38,4 +38,16 @@ public interface ActivityRepository extends JpaRepository<Activity, Long> {
 			order by a.updatedAt desc, a.id desc""")
 	List<ActivitySummary> findSummariesByInstructorId(@Param("instructorId") Long instructorId);
 
+	/**
+	 * Summaries of every activity in one status, by title ignoring case (H2 and PostgreSQL collations differ); ties by
+	 * id, oldest first.
+	 */
+	@Query("""
+			select new com.episteme.epistemictrace.activity.ActivitySummary(
+				a.id, a.title, a.status, size(a.testCases), a.updatedAt)
+			from Activity a
+			where a.status = :status
+			order by lower(a.title), a.id""")
+	List<ActivitySummary> findSummariesByStatus(@Param("status") ActivityStatus status);
+
 }

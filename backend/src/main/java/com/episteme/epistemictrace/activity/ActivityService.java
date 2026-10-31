@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Activity rules (spec 08 R3, R5). Every method takes the caller's user id from the controller; an activity that
- * exists but belongs to another instructor is an {@link AccessDeniedException} ({@code 403}), a missing one is an
- * {@link ActivityNotFoundException} ({@code 404}).
+ * Activity rules (spec 08 R3–R5). Every instructor method takes the caller's user id from the controller; an activity
+ * that exists but belongs to another instructor is an {@link AccessDeniedException} ({@code 403}), a missing one is an
+ * {@link ActivityNotFoundException} ({@code 404}). Student reads see {@link ActivityStatus#PUBLISHED} activities only.
  */
 @Service
 @EnableConfigurationProperties(SdiDefaultsProperties.class)
@@ -182,6 +182,23 @@ public class ActivityService {
 			position++;
 		}
 		activity.touch();
+	}
+
+	/** Every {@link ActivityStatus#PUBLISHED} activity, by title (spec 08 R4); students see no other status. */
+	public List<ActivitySummary> listPublished() {
+		return this.activityRepository.findSummariesByStatus(ActivityStatus.PUBLISHED);
+	}
+
+	/**
+	 * A {@link ActivityStatus#PUBLISHED} activity with every test case, hidden ones included: the student's browser
+	 * runs them (spec 08 R4, Q8).
+	 * @throws ActivityNotFoundException if the activity is missing, a draft or archived, so students cannot tell an
+	 * unpublished activity from a missing one
+	 */
+	public Activity getPublished(long activityId) {
+		return this.activityRepository.findWithTestCasesById(activityId)
+			.filter(activity -> activity.getStatus() == ActivityStatus.PUBLISHED)
+			.orElseThrow(ActivityNotFoundException::new);
 	}
 
 	private Activity ownedActivity(long instructorId, long activityId) {
