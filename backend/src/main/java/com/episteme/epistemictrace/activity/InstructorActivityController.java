@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -63,6 +64,33 @@ public class InstructorActivityController {
 	@PostMapping("/{id}/archive")
 	public ActivityDetail archive(@PathVariable long id) {
 		return ActivityDetail.from(this.activityService.archive(this.currentUser.id(), id));
+	}
+
+	@GetMapping("/{id}/test-cases")
+	public List<TestCaseDto> listTestCases(@PathVariable long id) {
+		return this.activityService.listTestCases(this.currentUser.id(), id).stream().map(TestCaseDto::from).toList();
+	}
+
+	@PostMapping("/{id}/test-cases")
+	@ResponseStatus(HttpStatus.CREATED)
+	public TestCaseDto addTestCase(@PathVariable long id, @Valid @RequestBody TestCaseRequest request) {
+		TestCase testCase = this.activityService.addTestCase(this.currentUser.id(), id, request.input(),
+				request.expectedOutput(), request.hidden());
+		return TestCaseDto.from(testCase);
+	}
+
+	@PutMapping("/{id}/test-cases/{testCaseId}")
+	public TestCaseDto updateTestCase(@PathVariable long id, @PathVariable long testCaseId,
+			@Valid @RequestBody TestCaseRequest request) {
+		TestCase testCase = this.activityService.updateTestCase(this.currentUser.id(), id, testCaseId,
+				request.input(), request.expectedOutput(), request.hidden());
+		return TestCaseDto.from(testCase);
+	}
+
+	@DeleteMapping("/{id}/test-cases/{testCaseId}")
+	@ResponseStatus(HttpStatus.NO_CONTENT)
+	public void deleteTestCase(@PathVariable long id, @PathVariable long testCaseId) {
+		this.activityService.deleteTestCase(this.currentUser.id(), id, testCaseId);
 	}
 
 }

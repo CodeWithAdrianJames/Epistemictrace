@@ -5,6 +5,15 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.util.Map;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.IntStream;
 
 import org.assertj.core.api.ThrowableAssert.ThrowingCallable;
 import org.junit.jupiter.api.AfterEach;
@@ -16,13 +25,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import com.episteme.epistemictrace.user.Role;
 import com.episteme.epistemictrace.user.User;
 import com.episteme.epistemictrace.user.UserRepository;
 
 /**
- * Spec 08 Parts 1–2 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
+ * Spec 08 Parts 1–3 service rules against the H2 database. The SDI defaults differ from {@code application.properties}
  * to show that the new {@code sdi_configs} row comes from configuration.
  */
 @SpringBootTest(properties = { "epistemictrace.sdi.defaults.threshold=65",
@@ -39,6 +50,9 @@ class ActivityServiceTests {
 	private ActivityRepository activityRepository;
 
 	@Autowired
+	private TestCaseRepository testCaseRepository;
+
+	@Autowired
 	private SdiConfigRepository sdiConfigRepository;
 
 	@Autowired
@@ -46,6 +60,9 @@ class ActivityServiceTests {
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
+
+	@Autowired
+	private PlatformTransactionManager transactionManager;
 
 	private long instructorId;
 
@@ -253,6 +270,213 @@ class ActivityServiceTests {
 			.isInstanceOf(ActivityNotFoundException.class);
 
 		assertStatusAndUpdatedAt(activityId, ActivityStatus.DRAFT);
+	}
+
+	@Test
+	void addTestCaseAppendsAtMaxPositionPlusOneAndChangesUpdatedAt() {
+		long activityId = saveActivity(ActivityStatus.DRAFT, 2).getId();
+		setUpdatedAt(activityId, PAST);
+
+		TestCase added = this.activityService.addTestCase(this.instructorId, activityId, "1 1\n", "2\n", true);
+
+		assertThat(added.getId()).isNotNull();
+		assertThat(added.getPosition()).isEqualTo(3);
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activityId).orElseThrow();
+		assertThat(reloaded.getTestCases()).extracting(TestCase::getPosition).containsExactly(1, 2, 3);
+		assertThat(reloaded.getTestCases().get(2).getId()).isEqualTo(added.getId());
+		assertThat(reloaded.getTestCases().get(2).isHidden()).isTrue();
+		assertThat(reloaded.getUpdatedAt()).isAfter(PAST);
+	}
+
+	@Test
+	void addTestCaseStopsAtFiftyTestCases() {
+		long activityId = saveActivity(ActivityStatus.DRAFT, 49).getId();
+
+		assertThat(this.activityService.addTestCase(this.instructorId, activityId, "", "50\n", false).getPosition())
+			.isEqualTo(50);
+		setUpdatedAt(activityId, PAST);
+
+		assertThatThrownBy(() -> this.activityService.addTestCase(this.instructorId, activityId, "", "51\n", false))
+			.isInstanceOfSatisfying(TestCaseLimitException.class, ex -> {
+				assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+				assertThat(ex.getBody().getProperties()).containsEntry("errors",
+						Map.of("testCases", "An activity can have at most 50 test cases."));
+			});
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activityId).orElseThrow();
+		assertThat(reloaded.getTestCases()).hasSize(50);
+		assertThat(reloaded.getUpdatedAt()).isEqualTo(PAST);
+	}
+
+	@Test
+	void updateTestCaseKeepsPositionAndChangesUpdatedAt() {
+		Activity activity = saveActivity(ActivityStatus.PUBLISHED, 2);
+		long activityId = activity.getId();
+		long testCaseId = activity.getTestCases().get(0).getId();
+		setUpdatedAt(activityId, PAST);
+
+		TestCase updated = this.activityService.updateTestCase(this.instructorId, activityId, testCaseId, "7\n",
+				"49\n", true);
+
+		assertThat(updated.getPosition()).isEqualTo(1);
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activityId).orElseThrow();
+		assertThat(reloaded.getTestCases().get(0)).satisfies(testCase -> {
+			assertThat(testCase.getId()).isEqualTo(testCaseId);
+			assertThat(testCase.getPosition()).isEqualTo(1);
+			assertThat(testCase.getInput()).isEqualTo("7\n");
+			assertThat(testCase.getExpectedOutput()).isEqualTo("49\n");
+			assertThat(testCase.isHidden()).isTrue();
+		});
+		assertThat(reloaded.getUpdatedAt()).isAfter(PAST);
+	}
+
+	@Test
+	void deleteRenumbersRemainingPositionsInOrder() {
+		Activity activity = saveActivity(ActivityStatus.DRAFT, 5);
+		long activityId = activity.getId();
+		setUpdatedAt(activityId, PAST);
+
+		this.activityService.deleteTestCase(this.instructorId, activityId, activity.getTestCases().get(0).getId());
+		assertPositionsAndOutputs(activityId, "out 2\n", "out 3\n", "out 4\n", "out 5\n");
+		assertThat(this.activityRepository.findById(activityId).orElseThrow().getUpdatedAt()).isAfter(PAST);
+
+		this.activityService.deleteTestCase(this.instructorId, activityId, activity.getTestCases().get(2).getId());
+		assertPositionsAndOutputs(activityId, "out 2\n", "out 4\n", "out 5\n");
+
+		this.activityService.deleteTestCase(this.instructorId, activityId, activity.getTestCases().get(4).getId());
+		assertPositionsAndOutputs(activityId, "out 2\n", "out 4\n");
+	}
+
+	@Test
+	void deleteLastTestCaseOfPublishedActivityIsAConflictButOfDraftIsAllowed() {
+		Activity published = saveActivity(ActivityStatus.PUBLISHED, 1);
+		Activity draft = saveActivity(ActivityStatus.DRAFT, 1);
+		long publishedTestCaseId = published.getTestCases().get(0).getId();
+		setUpdatedAt(published.getId(), PAST);
+
+		assertConflict(() -> this.activityService.deleteTestCase(this.instructorId, published.getId(),
+				publishedTestCaseId), ActivityService.LAST_TEST_CASE_DETAIL);
+		this.activityService.deleteTestCase(this.instructorId, draft.getId(), draft.getTestCases().get(0).getId());
+
+		assertThat(this.activityRepository.findWithTestCasesById(published.getId()).orElseThrow().getTestCases())
+			.hasSize(1);
+		assertStatusAndUpdatedAt(published.getId(), ActivityStatus.PUBLISHED);
+		assertThat(this.activityRepository.findWithTestCasesById(draft.getId()).orElseThrow().getTestCases())
+			.isEmpty();
+	}
+
+	@Test
+	void testCaseChangesOnArchivedActivityAreConflicts() {
+		Activity activity = saveActivity(ActivityStatus.ARCHIVED, 2);
+		long activityId = activity.getId();
+		long testCaseId = activity.getTestCases().get(0).getId();
+		setUpdatedAt(activityId, PAST);
+
+		assertConflict(() -> this.activityService.addTestCase(this.instructorId, activityId, "", "x\n", false),
+				ActivityService.ARCHIVED_DETAIL);
+		assertConflict(() -> this.activityService.updateTestCase(this.instructorId, activityId, testCaseId, "",
+				"x\n", false), ActivityService.ARCHIVED_DETAIL);
+		assertConflict(() -> this.activityService.deleteTestCase(this.instructorId, activityId, testCaseId),
+				ActivityService.ARCHIVED_DETAIL);
+
+		assertPositionsAndOutputs(activityId, "out 1\n", "out 2\n");
+		assertStatusAndUpdatedAt(activityId, ActivityStatus.ARCHIVED);
+	}
+
+	@Test
+	void testCaseFromAnotherActivityIsNotFound() {
+		long activityId = saveActivity(ActivityStatus.DRAFT, 1).getId();
+		long foreignTestCaseId = saveActivity(ActivityStatus.DRAFT, 1).getTestCases().get(0).getId();
+
+		assertThatThrownBy(() -> this.activityService.updateTestCase(this.instructorId, activityId,
+				foreignTestCaseId, "", "x\n", false))
+			.isInstanceOfSatisfying(TestCaseNotFoundException.class,
+					ex -> assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND));
+		assertThatThrownBy(() -> this.activityService.deleteTestCase(this.instructorId, activityId, foreignTestCaseId))
+			.isInstanceOf(TestCaseNotFoundException.class);
+		assertThat(this.testCaseRepository.findById(foreignTestCaseId)).isPresent();
+	}
+
+	@Test
+	void testCaseMethodsCheckOwnershipAndExistence() {
+		Activity activity = saveActivity(ActivityStatus.DRAFT, 2);
+		long activityId = activity.getId();
+		long testCaseId = activity.getTestCases().get(0).getId();
+		setUpdatedAt(activityId, PAST);
+
+		assertThatThrownBy(() -> this.activityService.listTestCases(this.otherInstructorId, activityId))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.addTestCase(this.otherInstructorId, activityId, "", "x", false))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.updateTestCase(this.otherInstructorId, activityId, testCaseId,
+				"", "x", false))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.deleteTestCase(this.otherInstructorId, activityId, testCaseId))
+			.isInstanceOf(AccessDeniedException.class);
+		assertThatThrownBy(() -> this.activityService.listTestCases(this.instructorId, 999_999L))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.addTestCase(this.instructorId, 999_999L, "", "x", false))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.updateTestCase(this.instructorId, 999_999L, testCaseId, "",
+				"x", false))
+			.isInstanceOf(ActivityNotFoundException.class);
+		assertThatThrownBy(() -> this.activityService.deleteTestCase(this.instructorId, 999_999L, testCaseId))
+			.isInstanceOf(ActivityNotFoundException.class);
+
+		assertPositionsAndOutputs(activityId, "out 1\n", "out 2\n");
+		assertStatusAndUpdatedAt(activityId, ActivityStatus.DRAFT);
+	}
+
+	@Test
+	void listTestCasesReturnsPositionOrder() {
+		Activity activity = new Activity(this.instructorId, "Sum", "Statement.", "", ActivityStatus.ARCHIVED);
+		activity.addTestCase(new TestCase(2, "", "second\n", true));
+		activity.addTestCase(new TestCase(1, "", "first\n", false));
+		long activityId = this.activityRepository.save(activity).getId();
+
+		assertThat(this.activityService.listTestCases(this.instructorId, activityId))
+			.extracting(TestCase::getExpectedOutput)
+			.containsExactly("first\n", "second\n");
+	}
+
+	/**
+	 * The publish vs. delete race from Part 2: a delete of the last test case holds the activity row lock until its
+	 * transaction commits, so a publish started meanwhile waits and then sees no test cases, instead of publishing an
+	 * activity that is about to have none.
+	 */
+	@Test
+	void publishWaitsForAConcurrentDeleteOfTheLastTestCase() throws Exception {
+		Activity activity = saveActivity(ActivityStatus.DRAFT, 1);
+		long activityId = activity.getId();
+		long testCaseId = activity.getTestCases().get(0).getId();
+		AtomicReference<Future<Activity>> publish = new AtomicReference<>();
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		try {
+			new TransactionTemplate(this.transactionManager).executeWithoutResult(transaction -> {
+				this.activityService.deleteTestCase(this.instructorId, activityId, testCaseId);
+				publish.set(executor.submit(() -> this.activityService.publish(this.instructorId, activityId)));
+				assertThatThrownBy(() -> publish.get().get(300, TimeUnit.MILLISECONDS))
+					.isInstanceOf(TimeoutException.class);
+			});
+
+			assertThatThrownBy(() -> publish.get().get(10, TimeUnit.SECONDS)).isInstanceOf(ExecutionException.class)
+				.cause()
+				.isInstanceOfSatisfying(ActivityConflictException.class, ex -> assertThat(ex.getBody().getDetail())
+					.isEqualTo(ActivityService.NO_TEST_CASES_DETAIL));
+		}
+		finally {
+			executor.shutdownNow();
+		}
+
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activityId).orElseThrow();
+		assertThat(reloaded.getStatus()).isEqualTo(ActivityStatus.DRAFT);
+		assertThat(reloaded.getTestCases()).isEmpty();
+	}
+
+	private void assertPositionsAndOutputs(long activityId, String... expectedOutputs) {
+		Activity reloaded = this.activityRepository.findWithTestCasesById(activityId).orElseThrow();
+		assertThat(reloaded.getTestCases()).extracting(TestCase::getExpectedOutput).containsExactly(expectedOutputs);
+		assertThat(reloaded.getTestCases()).extracting(TestCase::getPosition)
+			.containsExactlyElementsOf(IntStream.rangeClosed(1, expectedOutputs.length).boxed().toList());
 	}
 
 	private Activity saveActivity(ActivityStatus status, int testCaseCount) {
