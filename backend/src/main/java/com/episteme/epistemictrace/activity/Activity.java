@@ -96,9 +96,22 @@ public class Activity {
 		this.updatedAt = Instant.now();
 	}
 
+	/**
+	 * Sets {@code updated_at} without changing any activity field: adding, editing or deleting a test case counts as a
+	 * change to its activity (spec 08 R3).
+	 */
+	public void touch() {
+		this.updatedAt = Instant.now();
+	}
+
 	public void addTestCase(TestCase testCase) {
 		testCase.setActivity(this);
 		this.testCases.add(testCase);
+	}
+
+	/** Removes the test case; {@code orphanRemoval} deletes its row on the next flush. */
+	public void removeTestCase(TestCase testCase) {
+		this.testCases.remove(testCase);
 	}
 
 	public Long getId() {

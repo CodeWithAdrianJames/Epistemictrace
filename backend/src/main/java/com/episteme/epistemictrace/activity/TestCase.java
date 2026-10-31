@@ -49,6 +49,18 @@ public class TestCase {
 		this.activity = activity;
 	}
 
+	/** Replaces the editable fields; the position stays as it is. */
+	public void edit(String input, String expectedOutput, boolean hidden) {
+		this.input = input;
+		this.expectedOutput = expectedOutput;
+		this.hidden = hidden;
+	}
+
+	/** Used by {@link ActivityService} to renumber positions 1..n after a delete. */
+	void moveTo(int position) {
+		this.position = position;
+	}
+
 	public Long getId() {
 		return this.id;
 	}
