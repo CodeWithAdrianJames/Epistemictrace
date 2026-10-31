@@ -60,7 +60,7 @@ Dependencies point inward: controller → service → repository. `sdi` and `bre
 
 - **PostgreSQL** holds everything persistent: users, activities, test cases, SDI configs, sessions, telemetry events, reflections.
 - **Browser `localStorage`** holds only the student's unsaved code draft, keyed per user and activity: `epistemictrace:draft:{userId}:{activityId}`.
-- **Browser `sessionStorage`** holds only the JWT.
+- **Browser `sessionStorage`** holds the JWT and, when the student declines the consent notice in a tab, `epistemictrace:consent-declined` (Spec 15 R5, Q6 Accepted 2026-10-31).
 - Nothing else is stored in the browser. Telemetry is never written to browser storage; unsent events live in memory only.
 - Schema changes are made only through new migration files; an applied migration is never edited.
 
@@ -98,6 +98,15 @@ The data model from `PROJECT.md` §7, with these additions:
 - Hidden tests are hidden from **display** only. Their data must reach the browser because execution is browser-only, so "hidden" is not "secret" **(Accepted — Q8, 2026-10-31)**.
 
 ## Telemetry, SDI and Circuit Breaker Model
+
+### Consent (Accepted — Q6, 2026-10-31)
+
+- The consent notice is shown on the workspace page before the first session, if `user.consentAccepted` is `false` and the student has not declined in this tab.
+- **Accept** → `PUT /api/me/consent`; server sets `consent_accepted_at` (idempotent: first timestamp survives repeated calls). Auth user updates to `consentAccepted = true`; dialog closes.
+- **Decline (Not now)** → the student can still code and run tests, but no session, telemetry, SDI or circuit breaker; `epistemictrace:consent-declined` written to `sessionStorage` (this tab only); a persistent banner offers to accept later.
+- Ratified notice title: **"Research & Learning Telemetry Consent"**. Three paragraphs: (1) EpistemicTrace collects process-level telemetry during coding sessions to understand problem-solving workflows and detect unproductive debugging loops. (2) Collected data includes timestamped edit history, runs, test outcomes, and error signatures. No external tabs, system files, or non-editor keystrokes are tracked. (3) Telemetry is pseudonymized, stored securely for the academic term, and voluntary (declining does not impact grades or activity access).
+- Decline banner text: "Tracking is off for this visit. Your code is evaluated locally, but session telemetry is disabled." Banner action: "Turn on tracking" (reopens the notice).
+- Retention: the academic term. Consent withdrawal and data deletion are out of scope for the MVP.
 
 ### Telemetry (Accepted — Q4, 2026-10-31)
 

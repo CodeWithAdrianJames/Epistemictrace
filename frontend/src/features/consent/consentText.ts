@@ -1,8 +1,12 @@
-// PLACEHOLDER — NOT FINAL COPY. The notice wording is gated on Q6 (Jacob writes the final text;
-// progress-tracker.md → Open Questions). Spec 15 R2: replace these values only by pasting the text
-// accepted for Q6 verbatim. Do not write or edit wording here in code review, and do not ship these.
-export const CONSENT_TITLE = '[Q6 pending] Consent notice title'
+export const CONSENT_TITLE = 'Research & Learning Telemetry Consent'
 
 export const CONSENT_PARAGRAPHS: readonly string[] = [
-  '[Q6 pending] Consent notice text. The final wording has not been accepted yet.',
+  'EpistemicTrace collects process-level telemetry during coding sessions to understand problem-solving workflows and detect unproductive debugging loops.',
+  'Collected data includes timestamped edit history, runs, test outcomes, and error signatures. No external tabs, system files, or non-editor keystrokes are tracked.',
+  'Telemetry is pseudonymized, stored securely for the academic term, and voluntary (declining does not impact grades or activity access).',
 ]
+
+export const CONSENT_BANNER_TEXT =
+  'Tracking is off for this visit. Your code is evaluated locally, but session telemetry is disabled.'
+
+export const CONSENT_BANNER_ACTION = 'Turn on tracking'
