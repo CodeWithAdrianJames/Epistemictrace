@@ -6,7 +6,7 @@ import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { ApiError } from '../../api/ApiError.ts'
 import { me, type User } from '../../api/authApi.ts'
 import { putConsent } from '../../api/consentApi.ts'
-import { endSession, sendEvents, startSession } from '../../api/sessionsApi.ts'
+import { endSession, sendEvents, startSession, submitReflection } from '../../api/sessionsApi.ts'
 import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { setToken } from '../../auth/tokenStore.ts'
@@ -37,6 +37,7 @@ vi.mock('../../api/sessionsApi.ts', async (importOriginal) => ({
   startSession: vi.fn(),
   endSession: vi.fn(),
   sendEvents: vi.fn(),
+  submitReflection: vi.fn(),
 }))
 
 // Monaco needs a real browser (and loads from a CDN), so the wrapper is replaced by a spy on its props.
@@ -56,6 +57,7 @@ const putConsentMock = vi.mocked(putConsent)
 const startSessionMock = vi.mocked(startSession)
 const endSessionMock = vi.mocked(endSession)
 const sendEventsMock = vi.mocked(sendEvents)
+const submitReflectionMock = vi.mocked(submitReflection)
 const EditorMock = vi.mocked(Editor)
 
 type ContentChangedEvent = Parameters<OnChange>[1]
@@ -752,5 +754,60 @@ describe('WorkspacePage breaker', () => {
 
     await runTestsAndWait()
     expect(runner.run).toHaveBeenCalled()
+  })
+})
+
+describe('WorkspacePage reflection', () => {
+  const START = {
+    sessionId: 5,
+    activityId: 42,
+    startedAt: '2026-11-03T02:00:00Z',
+    resumed: true,
+    breaker: { state: 'LOCKED', cooldownEndsAt: null, reflectionMinLength: 20 },
+  }
+
+  it('a reflection unlocks the runner into cooldown and moves focus back to Run tests', async () => {
+    submitReflectionMock.mockResolvedValue({
+      reflectionId: 3,
+      submittedAt: '2026-11-03T02:30:00Z',
+      breaker: { state: 'COOLDOWN', cooldownEndsAt: '2099-01-01T00:00:00Z', reflectionMinLength: 20 },
+    })
+    await renderLoaded(ACTIVITY, { start: START })
+    await screen.findByRole('heading', { name: "Let's pause and plan" })
+    await warmUpDone()
+    expect(screen.getAllByText('0 / 20 characters')).toHaveLength(2)
+
+    // The editor keeps working while the form is open.
+    type('c = 3', 'c = 3')
+    expect(lastProps().value).toBe('c = 3')
+    fireEvent.change(screen.getByLabelText('What do you think is wrong?'), { target: { value: 'The loop never stops at n.' } })
+    fireEvent.change(screen.getByLabelText('What will you try next?'), { target: { value: 'Print i before the check.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    const runButton = await screen.findByRole('button', { name: 'Run tests' })
+    expect(submitReflectionMock).toHaveBeenCalledWith('token-7', 5, {
+      hypothesis: 'The loop never stops at n.',
+      plannedFix: 'Print i before the check.',
+    })
+    expect(screen.queryByRole('heading', { name: "Let's pause and plan" })).not.toBeInTheDocument()
+    expect(screen.getByText('Tests are running again. Keep going step by step.')).toBeInTheDocument()
+    expect(runButton).toBeEnabled()
+    await waitFor(() => expect(runButton).toHaveFocus())
+  })
+
+  it('a 409 closes the panel and re-enables Run tests', async () => {
+    submitReflectionMock.mockRejectedValue(
+      new ApiError({ status: 409, title: 'Conflict', detail: "Tests aren't paused right now.", fieldErrors: {} }),
+    )
+    await renderLoaded(ACTIVITY, { start: START })
+    await screen.findByRole('heading', { name: "Let's pause and plan" })
+    await warmUpDone()
+
+    fireEvent.change(screen.getByLabelText('What do you think is wrong?'), { target: { value: 'The loop never stops at n.' } })
+    fireEvent.change(screen.getByLabelText('What will you try next?'), { target: { value: 'Print i before the check.' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(await screen.findByRole('button', { name: 'Run tests' })).toBeEnabled()
+    expect(screen.queryByRole('heading', { name: "Let's pause and plan" })).not.toBeInTheDocument()
   })
 })

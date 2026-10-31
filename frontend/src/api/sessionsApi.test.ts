@@ -1,6 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from './ApiError.ts'
-import { endSession, parseBreaker, sendEvents, startSession, type TelemetryEvent } from './sessionsApi.ts'
+import {
+  endSession,
+  parseBreaker,
+  sendEvents,
+  startSession,
+  submitReflection,
+  type TelemetryEvent,
+} from './sessionsApi.ts'
 
 const BASE_URL = 'http://api.test'
 const TOKEN = 'token-1'
@@ -206,5 +213,52 @@ describe('parseBreaker', () => {
     ['a missing minimum length', { state: 'LOCKED', cooldownEndsAt: null }],
   ])('returns null for %s', (_, value) => {
     expect(parseBreaker(value)).toBeNull()
+  })
+})
+
+describe('submitReflection', () => {
+  const BREAKER = { state: 'COOLDOWN', cooldownEndsAt: '2026-11-03T02:40:00Z', reflectionMinLength: 20 }
+  const BODY = { hypothesis: 'The loop never stops at n.', plannedFix: 'Print i before the check.' }
+
+  it('sends POST /api/sessions/{id}/reflections with both fields', async () => {
+    fetchMock.mockResolvedValue(jsonResponse({ reflectionId: 3, submittedAt: '2026-11-03T02:30:00Z', breaker: BREAKER }, 201))
+
+    await expect(submitReflection(TOKEN, 5, BODY)).resolves.toEqual({
+      reflectionId: 3,
+      submittedAt: '2026-11-03T02:30:00Z',
+      breaker: BREAKER,
+    })
+
+    const { url, init, headers } = lastRequest()
+    expect(url).toBe(`${BASE_URL}/api/sessions/5/reflections`)
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(String(init.body))).toEqual(BODY)
+    expect(headers.Authorization).toBe(`Bearer ${TOKEN}`)
+  })
+
+  it.each([
+    ['no breaker', { reflectionId: 3, submittedAt: '2026-11-03T02:30:00Z' }],
+    ['an invalid breaker', { reflectionId: 3, submittedAt: '2026-11-03T02:30:00Z', breaker: { state: 'OPEN' } }],
+    ['no reflectionId', { submittedAt: '2026-11-03T02:30:00Z', breaker: BREAKER }],
+    ['an unparsable submittedAt', { reflectionId: 3, submittedAt: 'now', breaker: BREAKER }],
+  ])('rejects a body with %s', async (_, body) => {
+    fetchMock.mockResolvedValue(jsonResponse(body, 201))
+    const error = await catchApiError(submitReflection(TOKEN, 5, BODY))
+    expect(error.title).toBe('Unreadable response')
+  })
+
+  it('passes 400 field errors and a 409 through', async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({ status: 400, detail: 'Write at least 20 characters.', errors: { hypothesis: 'Write at least 20 characters.' } }),
+        { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
+      ),
+    )
+    const invalid = await catchApiError(submitReflection(TOKEN, 5, BODY))
+    expect(invalid.fieldErrors).toEqual({ hypothesis: 'Write at least 20 characters.' })
+
+    fetchMock.mockResolvedValue(problemResponse(409, "Tests aren't paused right now."))
+    const conflict = await catchApiError(submitReflection(TOKEN, 5, BODY))
+    expect(conflict.status).toBe(409)
   })
 })

@@ -52,6 +52,18 @@ export interface Breaker {
   reflectionMinLength: number
 }
 
+// Body of 201 from POST /api/sessions/{id}/reflections (spec 24 R5). Never the SDI at trigger.
+export interface ReflectionResult {
+  reflectionId: number
+  submittedAt: string
+  breaker: Breaker
+}
+
+export interface ReflectionBody {
+  hypothesis: string
+  plannedFix: string
+}
+
 export interface KeepaliveOption {
   keepalive?: boolean
 }
@@ -80,6 +92,17 @@ export async function sendEvents(
     keepalive,
   })
   return parseBatchResponse(body)
+}
+
+// Spec 25: the server trims and checks the lengths; 400 has field errors for hypothesis and plannedFix.
+export async function submitReflection(token: string, sessionId: number, body: ReflectionBody): Promise<ReflectionResult> {
+  const response = await apiFetch<unknown>(`/api/sessions/${sessionId}/reflections`, { method: 'POST', body, token })
+  const record = asRecord(response)
+  const breaker = parseBreaker(record?.breaker)
+  if (record && isId(record.reflectionId) && isInstant(record.submittedAt) && breaker !== null) {
+    return { reflectionId: record.reflectionId, submittedAt: record.submittedAt, breaker }
+  }
+  throw unreadable(201)
 }
 
 // Spec 23 R1: a missing or malformed breaker is ignored (null), never trusted.
