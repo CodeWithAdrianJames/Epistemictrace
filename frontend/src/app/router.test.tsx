@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { me, type User } from '../api/authApi.ts'
-import { listActivities } from '../api/instructorActivitiesApi.ts'
+import { getActivity, listActivities, type ActivityDetail } from '../api/instructorActivitiesApi.ts'
 import { AuthProvider } from '../auth/AuthProvider.tsx'
 import { setToken } from '../auth/tokenStore.ts'
 import styles from './AppLayout.module.css'
@@ -16,10 +16,14 @@ vi.mock('../api/authApi.ts', () => ({
 
 vi.mock('../api/instructorActivitiesApi.ts', () => ({
   listActivities: vi.fn(),
+  createActivity: vi.fn(),
+  getActivity: vi.fn(),
+  updateActivity: vi.fn(),
 }))
 
 const meMock = vi.mocked(me)
 const listActivitiesMock = vi.mocked(listActivities)
+const getActivityMock = vi.mocked(getActivity)
 
 const FUTURE = '2099-01-01T00:00:00Z'
 
@@ -39,10 +43,22 @@ const INSTRUCTOR: User = {
   consentAccepted: false,
 }
 
+const ACTIVITY: ActivityDetail = {
+  id: 42,
+  title: 'Sum two numbers',
+  problemStatement: 'Read two integers and print their sum.',
+  starterCode: '',
+  status: 'DRAFT',
+  testCases: [],
+  createdAt: '2026-10-20T08:00:00Z',
+  updatedAt: '2026-10-21T08:00:00Z',
+}
+
 // Without a user there is no stored token, so AuthProvider starts anonymous and never calls the API.
 function renderAt(path: string, user?: User) {
-  // The instructor list page loads on mount; an empty list keeps these routing tests offline.
+  // The instructor list and edit pages load on mount; mocked responses keep these routing tests offline.
   listActivitiesMock.mockResolvedValue([])
+  getActivityMock.mockResolvedValue(ACTIVITY)
   if (user) {
     setToken(`token-${user.id}`, FUTURE)
     meMock.mockResolvedValue(user)
@@ -187,6 +203,20 @@ describe('router', () => {
 
     expect(await screen.findByText("You haven't created any activities yet.")).toBeInTheDocument()
     expect(listActivitiesMock).toHaveBeenCalledExactlyOnceWith('token-1', expect.any(AbortSignal))
+  })
+
+  it('renders the new activity form at /instructor/activities/new', async () => {
+    renderAt('/instructor/activities/new', INSTRUCTOR)
+
+    expect(await screen.findByRole('textbox', { name: 'Title' })).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Create' })).toBeInTheDocument()
+  })
+
+  it('renders the activity edit page for the id in the URL', async () => {
+    renderAt('/instructor/activities/42', INSTRUCTOR)
+
+    expect(await screen.findByRole('textbox', { name: 'Title' })).toHaveValue('Sum two numbers')
+    expect(getActivityMock).toHaveBeenCalledExactlyOnceWith('token-1', 42, expect.any(AbortSignal))
   })
 
   it('uses the full width for the activity workspace', async () => {
