@@ -6,6 +6,7 @@ import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { ApiError } from '../../api/ApiError.ts'
 import { me, type User } from '../../api/authApi.ts'
 import { putConsent } from '../../api/consentApi.ts'
+import { endSession, sendEvents, startSession } from '../../api/sessionsApi.ts'
 import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { setToken } from '../../auth/tokenStore.ts'
@@ -29,6 +30,12 @@ vi.mock('../../api/consentApi.ts', () => ({
   putConsent: vi.fn(),
 }))
 
+vi.mock('../../api/sessionsApi.ts', () => ({
+  startSession: vi.fn(),
+  endSession: vi.fn(),
+  sendEvents: vi.fn(),
+}))
+
 // Monaco needs a real browser (and loads from a CDN), so the wrapper is replaced by a spy on its props.
 vi.mock('@monaco-editor/react', () => ({
   default: vi.fn(() => <div data-testid="monaco-editor" />),
@@ -43,6 +50,9 @@ const createRunnerMock = vi.mocked(createPythonRunner)
 const meMock = vi.mocked(me)
 const getActivityMock = vi.mocked(getActivity)
 const putConsentMock = vi.mocked(putConsent)
+const startSessionMock = vi.mocked(startSession)
+const endSessionMock = vi.mocked(endSession)
+const sendEventsMock = vi.mocked(sendEvents)
 const EditorMock = vi.mocked(Editor)
 
 type ContentChangedEvent = Parameters<OnChange>[1]
@@ -138,6 +148,9 @@ function renderAt(path: string, { onEditorChange, user = STUDENT }: RenderOption
   setToken('token-7', FUTURE)
   meMock.mockResolvedValue(user)
   installRunner()
+  startSessionMock.mockResolvedValue({ sessionId: 5, activityId: 42, startedAt: '2026-11-03T02:00:00Z', resumed: false })
+  endSessionMock.mockResolvedValue(undefined)
+  sendEventsMock.mockResolvedValue({ accepted: 1, duplicates: 0 })
   const router = createMemoryRouter(
     [
       {
@@ -603,5 +616,56 @@ describe('WorkspacePage consent notice', () => {
     await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
 
     expect(screen.getByRole('dialog')).toBeInTheDocument()
+  })
+})
+
+describe('WorkspacePage telemetry', () => {
+  it('starts a session for the activity and sends the last edit, then RUN, after a run', async () => {
+    await renderLoaded()
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalledWith('token-7', 42, expect.any(AbortSignal)))
+    await warmUpDone()
+
+    type('a = 1', 'a = 1')
+    await runTestsAndWait()
+
+    await waitFor(() => expect(sendEventsMock).toHaveBeenCalled())
+    const [token, sessionId, events] = sendEventsMock.mock.calls[0]
+    expect([token, sessionId]).toEqual(['token-7', 5])
+    expect(events.map((event) => event.type)).toEqual(['EDIT', 'RUN'])
+    expect(events[1]).toMatchObject({ type: 'RUN', passedCount: 1, totalCount: 2 })
+  })
+
+  it('never starts a session while consent is not accepted', async () => {
+    await renderLoaded(ACTIVITY, { user: NEW_STUDENT })
+    await warmUpDone()
+
+    type('a = 1', 'a = 1')
+    await runTestsAndWait()
+
+    expect(startSessionMock).not.toHaveBeenCalled()
+    expect(sendEventsMock).not.toHaveBeenCalled()
+  })
+
+  it('shows a small notice and keeps the page usable when the session cannot start', async () => {
+    getActivityMock.mockResolvedValue(ACTIVITY)
+    renderAt('/student/activities/42')
+    // renderAt installs a resolving start; the session starts only after the activity loads.
+    startSessionMock.mockRejectedValue(new ApiError({ status: 0, title: 'Network error', detail: 'x', fieldErrors: {} }))
+
+    expect(await screen.findByText('Tracking is unavailable right now.')).toBeInTheDocument()
+    await waitFor(() => expect(runner.warmUp).toHaveBeenCalled())
+    await warmUpDone()
+    await runTestsAndWait()
+    expect(sendEventsMock).not.toHaveBeenCalled()
+  })
+
+  it('ends the session with keepalive when the student leaves the page', async () => {
+    const { unmount } = await renderLoaded()
+    await waitFor(() => expect(startSessionMock).toHaveBeenCalled())
+    await act(async () => {})
+
+    unmount()
+
+    await waitFor(() => expect(endSessionMock).toHaveBeenCalledWith('token-7', 5, { keepalive: true }))
   })
 })

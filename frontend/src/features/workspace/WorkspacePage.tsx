@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import ConsentNotice from '../consent/ConsentNotice.tsx'
 import { useConsent } from '../consent/useConsent.ts'
+import { TRACKING_UNAVAILABLE_MESSAGE, useTelemetrySession } from '../telemetry/useTelemetrySession.ts'
 import CodeEditor, { type EditorChange } from './CodeEditor.tsx'
 import ProblemPanel from './ProblemPanel.tsx'
 import ResultsPanel from './ResultsPanel.tsx'
@@ -90,16 +91,28 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   // RequireRole only renders this page for a signed-in student, so 'local' is a fallback only.
   const [code, setCode] = useDraft(user ? user.id : 'local', activity.id, activity.starterCode)
   const { runner, status: runnerStatus } = usePythonRunner()
-  const { state: runState, lastReport, run } = useRunTests(code, activity.testCases, runner)
-  // Spec 15 R3/R7: mounted only here, after the activity has loaded. Spec 17 starts tracking on consent.status === 'accepted'.
+  const { state: runState, lastReport, run, onReportReady } = useRunTests(code, activity.testCases, runner)
+  // Spec 15 R3/R7: mounted only here, after the activity has loaded.
   const consent = useConsent()
+  // Spec 17 R4/R5: tracking starts only when consent.status is 'accepted'.
+  const telemetry = useTelemetrySession({ activityId: activity.id, consentStatus: consent.status })
+  const { recordEdit, recordRun } = telemetry
+
+  useEffect(
+    () =>
+      onReportReady((report) => {
+        void recordRun(report)
+      }),
+    [onReportReady, recordRun],
+  )
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
       setCode(value)
+      recordEdit(change)
       onEditorChange?.(value, change)
     },
-    [setCode, onEditorChange],
+    [setCode, recordEdit, onEditorChange],
   )
 
   return (
@@ -109,6 +122,11 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
         <RunButton state={runButtonState(runnerStatus, runState)} onRun={() => void run()} />
       </header>
       <ConsentNotice consent={consent} />
+      {telemetry.unavailable && (
+        <p role="status" className={styles.trackingNotice}>
+          {TRACKING_UNAVAILABLE_MESSAGE}
+        </p>
+      )}
       <div className={styles.regions}>
         <div className={styles.problem}>
           <ProblemPanel problemStatement={activity.problemStatement} testCases={activity.testCases} />
