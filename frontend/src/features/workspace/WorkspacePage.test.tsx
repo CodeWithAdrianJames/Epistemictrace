@@ -266,6 +266,8 @@ describe('WorkspacePage loading', () => {
     getActivityMock.mockReturnValue(new Promise<ActivityDetail>(() => {}))
     const view = renderAt('/student/activities/42')
     await screen.findByText('Loading activity…')
+    // The loading text can render before the effect that requests the activity has run.
+    await waitFor(() => expect(getActivityMock).toHaveBeenCalled())
     const signal = getActivityMock.mock.lastCall?.[2]
 
     view.unmount()
