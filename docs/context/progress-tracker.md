@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 18 are done (18 as `a27c61c`, PR #45). Gates Q1 and Q2 are **Accepted** (2026-10-31, CLR-01/CLR-02). Next: 19 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 19 are done (17 as `da44ceb`, PR #46). Gates Q1 and Q2 are **Accepted** (2026-10-31). Next: 20 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -223,6 +223,12 @@ Update this file whenever the current phase, active feature, open questions or i
   - Tests: `sessionsApi.test.ts` 17, `editCoalescer.test.ts` 7, `telemetryBuffer.test.ts` 14, `useTelemetrySession.test.tsx` 14, `WorkspacePage.test.tsx` +4.
   - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 767 passed in 45 files; `npm run lint` exit 0; `npm run build` exit 0 (181 modules). Backend unchanged (334 tests on `main`).
   - Not done: the manual DevTools network check (start, batches, end; network off for 30 s) and the TEL-01 evidence; no browser was driven in this run.
+- 19 SDI signal calculations (IMP-19) — **Completed** 2026-10-31, Parts 1 and 2 on branch `feature/imp-19`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gates Q1, Q2 Accepted (2026-10-31). Spec 17 was merged first as `da44ceb` (PR #46). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Package `sdi/` (plain Java, no Spring, JPA or clock): `SdiEvent` (`id`, `type`, `occurredAt`, `passedCount`, `errorSignature`), `SignalTuning` (`runCap`, `gapCap`, `repeatCap`; rejects values ≤ 0), `Signals` (raw `runs`, `medianGap`, `repeats`, `noProgressRuns` plus four normalized doubles), `SignalCalculator.calculate(sessionEvents, run, window, tuning)` and `SignalCalculator.ORDER` (`occurredAt`, then EDIT < ERROR < RUN, then id). `SdiEvent` reuses the plain `telemetry.EventType` enum.
+  - Choices not spelled out in the spec: (1) the gap walks back from each RUN to the first EDIT or RUN before it, skipping ERROR events, which is R5's "latest EDIT after `prev`, else `prev`"; (2) the median of an even count is exact (`Duration.dividedBy(2)` keeps nanoseconds); (3) a RUN with a `null` `passedCount` counts as 0; (4) the input list is copied before sorting.
+  - Spec conflict resolved by R5's own formula: acceptance criterion "the four signals … stay at 0 for a single first run with no edits" cannot hold for signal 1, because R5 says the window always contains the scored run, so `n1 = 1 / runCap` (0.1 with the default cap). Signals 2–4 are 0 in that case; the test asserts exactly that.
+  - Tests: `SignalCalculatorTests` 26 (records; ordering and window boundaries; events after the run ignored; run frequency 0.3 / 1.0; gaps 10 s, re-run, first run → `gapCap`, previous run outside the window, even-count median, half-millisecond median; repeats `[A, A, A, B]` → 2 and cap; no-progress `[0, 1, 1, 2, 0]`; 500 random sequences from `new Random(19)` stay in `[0, 1]`).
+  - Local (2026-10-31): `./mvnw -B test` 360 tests, 0 failures, 0 errors, BUILD SUCCESS (334 + 26). Frontend unchanged (767 tests on `main`).
 
 ## In Progress
 
@@ -232,7 +238,7 @@ Update this file whenever the current phase, active feature, open questions or i
 |---|---|---|---|
 | 17 Activity tracking in the browser | — (Q4 Accepted) | Completed | — |
 | 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Completed | — |
-| 19 SDI signal calculations | — (Q1, Q2 Accepted) | Not started | — |
+| 19 SDI signal calculations | — (Q1, Q2 Accepted) | Completed | — |
 | 20 SDI score engine | — (Q1 Accepted) | Waits on 19 | — |
 | 21 Update the SDI after every run | — (Q1, Q2 Accepted) | Waits on 18, 20 | — |
 | 22 Circuit breaker logic | — (Q1, Q2, Q8 Accepted) | Waits on 20, 21 | — |
