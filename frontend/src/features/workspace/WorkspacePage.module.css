@@ -105,3 +105,13 @@
   border-radius: var(--radius-sm);
   color: var(--state-fail);
 }
+
+/* Spec 17 R4: starting the session failed, so this visit is not tracked. Coding keeps working. */
+.trackingNotice {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  background: var(--state-notice-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-notice);
+  font-size: 0.875rem;
+}

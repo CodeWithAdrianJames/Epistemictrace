@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 16 and 18 are done (16 as `04f8f02`, PR #44). Gates Q1 and Q2 are **Accepted** (2026-10-31, CLR-01/CLR-02), so specs 17 to 28 have no open gate. Next: 17, then 19 to 28 (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
+- Specs 01 to 18 are done (18 as `a27c61c`, PR #45). Gates Q1 and Q2 are **Accepted** (2026-10-31, CLR-01/CLR-02). Next: 19 to 28 in order (autonomous delivery run on Adrian's instruction, one branch and PR per spec).
 
 ## Completed
 
@@ -216,6 +216,13 @@ Update this file whenever the current phase, active feature, open questions or i
   - Choices not spelled out in the spec: (1) the `occurredAt` range (≤ now + 5 min, ≥ `started_at` − 5 min, both inclusive) is checked in the service after ownership, so it is a `400` with `errors['events[i].occurredAt']`; (2) a client id repeated inside one batch is stored once and counted as a duplicate; (3) `"sdiValue": null` is accepted (only a value is rejected); (4) if a concurrent request stores the same client id first, the unique key fails the insert and the batch is retried once in a new transaction, so those events count as duplicates; (5) an unknown `type` or a non-UUID `clientEventId` is a `400` from JSON parsing without an `errors` map; (6) `runs` is sorted by `occurredAt`, then id.
   - Tests: `TelemetryBatchValidationTests` 12 (each R2 rule), `TelemetryControllerTests` 16 (success, duplicates across and inside batches, other session not a duplicate, one invalid event rejects all, `sdiValue`, empty batch, unknown type, future and before-start bounds, ended session accepted, other student `403`, missing `404`, instructor `403`, no token `401`, R7 run order).
   - Local (2026-10-31): `./mvnw -B test` 334 tests, 0 failures, 0 errors, BUILD SUCCESS (306 + 28). Frontend unchanged.
+- 17 Activity tracking in the browser (IMP-17) — **Completed** 2026-10-31, Parts 1 and 2 on branch `feature/imp-17`, squash-merged to `main` in an autonomous run on Adrian's instruction. Gate Q4 Accepted. Spec 18 was merged first as `a27c61c` (PR #45). Review caveat: opened and merged from the author's own account, no second reviewer.
+  - Part 1 (R1–R3): `api/sessionsApi.ts` (`startSession(token, activityId, signal?)`, `endSession(token, sessionId, { keepalive })`, `sendEvents(token, sessionId, events, { keepalive })`; `SessionStart` and `BatchResponse` are open objects that keep unknown fields; event payload types `EditEvent`/`RunEvent`/`ErrorEvent` match spec 18 R1 exactly), `features/telemetry/editCoalescer.ts` (`EDIT_COALESCE_MS = 2000`), `features/telemetry/telemetryBuffer.ts` (`SEND_INTERVAL_MS = 10000`, `MAX_BATCH_EVENTS = 200`).
+  - Part 2 (R4, R5): `features/telemetry/useTelemetrySession.ts` and the `WorkspacePage` wiring (`recordEdit` from the editor change handler, `recordRun` subscribed through `useRunTests.onReportReady`; "Tracking is unavailable right now." shown as a `role="status"` notice with `--state-notice` tokens when the start fails). No other page imports `features/telemetry/`.
+  - Choices not spelled out in the spec: (1) API functions take the token first, like every other `api/` module; the hook passes it through `useProtectedRequest`. (2) The coalescer never emits an EDIT whose added and removed counts are both 0 (the server rejects it). (3) A batch rejected with a 4xx other than 408/429 is dropped instead of retried, so one bad batch cannot block every later event; network failures and 5xx keep the events with the same ids. (4) `flushNow()` keeps sending until the buffer is empty, including events added while it waited; a periodic tick during a send is skipped, not queued. (5) `close()` sends only events not already in flight and ignores later adds; responses to keepalive sends are not passed to listeners. (6) A report with `totalCount < 1` is ignored like an unavailable one (RUN needs `totalCount ≥ 1`). (7) After `pagehide` the tracker is stopped for good; a page restored from the back-forward cache stays untracked until it is reloaded. (8) Starting is aborted on unmount; a session the server created for an aborted start is resumed by the next start (Q15).
+  - Tests: `sessionsApi.test.ts` 17, `editCoalescer.test.ts` 7, `telemetryBuffer.test.ts` 14, `useTelemetrySession.test.tsx` 14, `WorkspacePage.test.tsx` +4.
+  - Local on Node 24.18.0 (2026-10-31): `npm test -- --run` 767 passed in 45 files; `npm run lint` exit 0; `npm run build` exit 0 (181 modules). Backend unchanged (334 tests on `main`).
+  - Not done: the manual DevTools network check (start, batches, end; network off for 30 s) and the TEL-01 evidence; no browser was driven in this run.
 
 ## In Progress
 
@@ -223,7 +230,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 | Spec | Blocking gate(s) | Status | Decision needed |
 |---|---|---|---|
-| 17 Activity tracking in the browser | — (Q4 Accepted) | Waits on 18 | — |
+| 17 Activity tracking in the browser | — (Q4 Accepted) | Completed | — |
 | 18 Save tracked activity on the server | — (Q4, Q5 Accepted) | Completed | — |
 | 19 SDI signal calculations | — (Q1, Q2 Accepted) | Not started | — |
 | 20 SDI score engine | — (Q1 Accepted) | Waits on 19 | — |
