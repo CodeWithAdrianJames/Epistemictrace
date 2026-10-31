@@ -1,0 +1,22 @@
+/* Temporary editor mount (spec 11 R6); spec 14 replaces it with the ui-context.md → Coding Workspace layout. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+/* The content area has no fixed height, so the editor takes the viewport height below the top bar,
+   the page padding and the heading (about 160px), and never shrinks below a usable size. */
+.editor {
+  height: calc(100vh - 160px);
+  min-height: 320px;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
