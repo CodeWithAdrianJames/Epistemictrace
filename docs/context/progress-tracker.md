@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 12 are done and merged. Spec 11 (Python code editor, IMP-11) is complete (Parts 1 and 2 on `main` as `aaed95e`, PR #37); the manual browser evidence for it is still to be attached to the IMP-11 card. Spec 12 (safe in-browser Python runner, IMP-12) is **Completed** (PR #38, `24057e1`; gates Q7 and Q14 Accepted 2026-10-31). Spec 13 (test checker, IMP-13) is **In Progress** but blocked on gates Q4 and Q8 (Proposed). Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 to 12 are done and merged. Spec 11 (Python code editor, IMP-11) is complete (Parts 1 and 2 on `main` as `aaed95e`, PR #37); the manual browser evidence for it is still to be attached to the IMP-11 card. Spec 12 (safe in-browser Python runner, IMP-12) is **Completed** (PR #38, `24057e1`; gates Q7 and Q14 Accepted 2026-10-31). Spec 13 (test checker, IMP-13) is **In Progress** on `feature/imp-13`; gates Q4, Q8 and Q14 are **Accepted**. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -190,7 +190,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## In Progress
 
-- 13 Test checker and error grouping (IMP-13) — **In Progress, blocked at the start**: gates Q4 (error signature format) and Q8 (hidden tests) are still **Proposed**; only Q14 is Accepted. Per `ai-workflow-rules.md` → Gates, no code is written until Q4 and Q8 are Accepted. Branch `feature/imp-13` created from `main`; no files yet.
+- 13 Test checker and error grouping (IMP-13) — **In Progress**, started 2026-10-31 on `feature/imp-13`. Gates Q4, Q8 and Q14 are all **Accepted** (Q4 and Q8 on 2026-10-31).
 
 ## Next Up
 
@@ -237,10 +237,10 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 |---|---|---|---|---|
 | Q1 | SDI weights, normalization, window, cooldown, level bands (`PROJECT.md` Q1) | Formula and defaults in `architecture-context.md` → SDI: `w = 0.20/0.20/0.25/0.35`, `runCap 10`, `gapCap 60 s`, `repeatCap 5`, window 5 min, cooldown 120 s, MEDIUM from 40, HIGH from threshold. Validate against seeded sequences in spec 20. | CLR-01 (Adrian) | Proposed |
 | Q2 | Is the SDI computed in the browser or on the server; which is authoritative? (`PROJECT.md` Q2) | Server only. RUN events are flushed immediately; the server scores them, updates the breaker and returns breaker state + struggle level. The browser never computes the SDI. Fail-open if the server does not answer within 5 s. | CLR-02 (Adrian) | Proposed |
-| Q4 | Telemetry batch format, send timing, error signatures (`PROJECT.md` Q4) | As in `architecture-context.md` → Telemetry: `clientEventId` for idempotency, 2 s EDIT coalescing, batches ≤ 200 events, send every 10 s + after every RUN + on page leave (`keepalive`), signature `<Type>@<line>`. | CLR-04 (Noel) | Proposed |
+| Q4 | Telemetry batch format, send timing, error signatures (`PROJECT.md` Q4) | As in `architecture-context.md` → Telemetry: `clientEventId` for idempotency, 2 s EDIT coalescing, batches ≤ 200 events, send every 10 s + after every RUN + on page leave (`keepalive`), signature `<Type>@<line>`. | CLR-04 (Noel) | Accepted |
 | Q6 | Consent text, what happens on decline, retention (`PROJECT.md` Q6) | Notice shown before the first session. Accept → `consent_accepted_at` set. Decline → student can still code and run tests, but no session, telemetry, SDI or breaker; a banner offers to accept later. Text and retention period: Jacob to write. | CLR-05 (Jacob) | Open (text, retention) / Proposed (behavior) |
 | Q7 | Execution time limit (`PROJECT.md` Q7) | 3 s per test case, excluding interpreter start-up; one named constant in the runner config. Confirm by measuring typical student programs. | CLR-06 (Adrian) | Accepted |
-| Q8 | Reflection minimum length; hidden-test display (`PROJECT.md` Q7) | Each field ≥ 20 characters after trimming, ≤ 2000 (server config `epistemictrace.reflection.*`). Hidden tests show name + status only; their data still reaches the browser, so they are not secret. | CLR-07 (Jacob) | Proposed |
+| Q8 | Reflection minimum length; hidden-test display (`PROJECT.md` Q7) | Each field ≥ 20 characters after trimming, ≤ 2000 (server config `epistemictrace.reflection.*`). Hidden tests show name + status only; their data still reaches the browser, so they are not secret. | CLR-07 (Jacob) | Accepted |
 | Q9 | Hosting and deployment (`PROJECT.md` Q8). Flyway and CI were accepted; see Architecture Decisions. | — | CLR-08 (Noel) | Open (hosting) |
 | Q10 | Term dates, MVP demo date, pilot plan (`PROJECT.md` Q9) | — | CLR-09 (Jacob) | Open |
 | Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Accepted |
@@ -286,6 +286,8 @@ Accepted from Open Questions (2026-10-31):
 
 - **Q7** (CLR-06): accepted as proposed on Adrian's instruction before starting spec 12. Execution time limit is 3 seconds per test case, excluding interpreter start-up. The value is exported as `RUN_TIMEOUT_MS = 3000` from `features/runner/runnerConfig.ts` — no other file contains it. On timeout the main thread terminates the worker, resolves `{ status: 'timeout' }` for the run, marks remaining tests `not_run`, and lazily creates a fresh worker on the next `warmUp`/`run`. "Confirm by measuring typical student programs" deferred to spec 12 Session Notes.
 - **Q14** (PLN-05): accepted as proposed on Adrian's instruction before starting spec 12. Pyodide is loaded inside a module worker from the official CDN `indexURL` for the pinned version; the version string is exported as `PYODIDE_INDEX_URL` from `features/runner/runnerConfig.ts`. Each test case runs in a fresh globals dict (no state leaks between runs); `stdin` is fed line by line, reading past the end raises `EOFError`; stdout is captured. Output comparison: convert `\r\n` to `\n`, strip trailing whitespace from each line, drop trailing empty lines, then compare exactly. The first timeout stops the run and remaining tests are marked `not_run`. The `architecture-context.md` → Code Execution Model "(Proposed — Q14)" and "(Proposed — Q7)" markers are removed.
+- **Q4** (CLR-04): accepted as proposed on Adrian's instruction (2026-10-31) before starting spec 13. Telemetry format as in `architecture-context.md` → Telemetry: `clientEventId` idempotency, 2 s EDIT coalescing, batches of at most 200 events, send every 10 s + after every RUN + on page leave (`keepalive`). Error signature is `<ExceptionType>@<line>` (`@?` when unknown, `Timeout@?` for timeouts), truncated to 200 characters; one ERROR event per run, from the first `error` or `timeout` test. The "(Proposed — Q4)" marker is removed. Specs 17 and 18 still implement the sending and storage.
+- **Q8** (CLR-07): accepted as proposed on Adrian's instruction (2026-10-31) before starting spec 13. Reflection fields are at least 20 characters after trimming and at most 2000 (server config `epistemictrace.reflection.*`, used by specs 24 and 25). Hidden tests are hidden from display only: they are processed and reported exactly like visible tests, and their data reaches the browser, so they are not secret. The "(Proposed — Q8)" marker is removed.
 
 ## Session Notes
 

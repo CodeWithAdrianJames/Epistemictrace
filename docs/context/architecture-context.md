@@ -95,11 +95,11 @@ The data model from `PROJECT.md` §7, with these additions:
 - Output comparison: convert `\r\n` to `\n`, strip trailing whitespace from each line, drop trailing empty lines, then compare exactly (Q14).
 - Time limit per test case: 3 seconds, excluding interpreter start-up (Q7). On timeout the main thread terminates the worker, marks the test `timeout`, marks remaining tests `not_run`, and creates a fresh worker for the next run.
 - Runs are sequential; a second run cannot start while one is in progress.
-- Hidden tests are hidden from **display** only. Their data must reach the browser because execution is browser-only, so "hidden" is not "secret" **(Proposed — Q8)**.
+- Hidden tests are hidden from **display** only. Their data must reach the browser because execution is browser-only, so "hidden" is not "secret" **(Accepted — Q8, 2026-10-31)**.
 
 ## Telemetry, SDI and Circuit Breaker Model
 
-### Telemetry (Proposed — Q4)
+### Telemetry (Accepted — Q4, 2026-10-31)
 
 - Event fields: `clientEventId` (UUID v4), `type` (`EDIT` / `RUN` / `ERROR`), `occurredAt` (ISO-8601 UTC, client clock), plus `charsAdded`/`charsRemoved` (EDIT), `passedCount`/`totalCount` (RUN), `errorSignature` (ERROR).
 - EDIT coalescing: Monaco emits a change on every keystroke; consecutive changes within 2 seconds become one EDIT event (sums of chars added/removed, `occurredAt` = last change).
