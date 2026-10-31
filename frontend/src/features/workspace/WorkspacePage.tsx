@@ -16,10 +16,12 @@ import CodeEditor, { type EditorChange } from './CodeEditor.tsx'
 import ProblemPanel from './ProblemPanel.tsx'
 import ResultsPanel from './ResultsPanel.tsx'
 import RunButton, { type RunButtonState } from './RunButton.tsx'
+import StruggleBadge from './StruggleBadge.tsx'
 import styles from './WorkspacePage.module.css'
 import { useDraft } from './useDraft.ts'
 import { usePythonRunner, type RunnerStatus } from './usePythonRunner.ts'
 import { useRunTests, type RunState } from './useRunTests.ts'
+import { useStruggleLevel } from './useStruggleLevel.ts'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
 
@@ -108,6 +110,8 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   // Spec 23: the server's breaker state, and the wait for the server after each run (fail-open after 5 s).
   const breaker = useBreakerState({ startResponse: telemetry.startResponse, onBatchResponse })
   const gate = useRunGate(recordRun, telemetry.sessionId !== null)
+  // Spec 28: the latest level from the server; no responses (no badge) while tracking is off.
+  const struggleLevel = useStruggleLevel(onBatchResponse)
   const { handleReport } = gate
   const { apply: applyBreaker, state: breakerState, reflectionMinLength } = breaker
   // Spec 25 R3: after a reflection unlocks the runner, focus goes back to Run tests.
@@ -152,6 +156,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
       <header className={styles.header}>
         <h1 className={styles.title}>{activity.title}</h1>
         <div className={styles.actions}>
+          <StruggleBadge level={struggleLevel} />
           {breaker.state === 'COOLDOWN' && (
             <p role="status" className={styles.cooldownNotice}>
               {COOLDOWN_NOTICE}

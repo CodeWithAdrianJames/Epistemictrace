@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../api/ApiError.ts'
@@ -265,6 +265,8 @@ describe('ActivityListPage', () => {
     const { unmount } = renderPage()
 
     await screen.findByText('Loading activities…')
+    // The loading text can render before the effect that sends the request has run.
+    await waitFor(() => expect(listActivitiesMock).toHaveBeenCalled())
     const signal = listActivitiesMock.mock.calls[0][1]
     expect(signal?.aborted).toBe(false)
 

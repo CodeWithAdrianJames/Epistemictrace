@@ -214,11 +214,11 @@ npm test                  # Vitest run (jsdom + Testing Library)
   - evidence attached to the card;
   - this file updated if anything here changed.
 
-## 10. Current status (2026-10-31)
+## 10. Current status (2026-11-01)
 
-- **Repo:** specs 01 to 16 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, the consent notice (`PUT /api/me/consent`), and the coding session API (`POST /api/sessions`, `POST /api/sessions/{id}/end`). Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
+- **Repo:** specs 01 to 28 are merged on `main`: database and JWT security setup, all tables, CI, the frontend app shell, register/login/logout API and pages, role-based access control, the activities API and instructor editor, the student activity list, the Monaco editor, the Pyodide runner (`314.0.7`, pinned), the test checker, the coding workspace page, the consent notice, the coding session API, browser telemetry and its storage, the SDI signals, engine and per-run scoring, the circuit breaker (server rules, locked Run button, reflection API and form), the session history API and pages, and the struggle level badge. Spec-by-spec detail is in `docs/context/progress-tracker.md`. No GitHub issues exist.
 - **Board:** implementation has started (list 7 · Implement). Evidence for some of the finished IMP cards is still to be attached; the tracker lists what is missing.
-  - **Next:** IMP-16 (coding session API) is merged (PR #44). Q1 and Q2 were accepted on 2026-10-31, so IMP-17 to IMP-28 are unblocked; order 18, 17, 19 to 28. See the tracker.
+  - **Next:** all MVP must-have specs and the struggle badge are merged (PRs #44–#56, opened and merged from the author's account in an autonomous run; a second team member should still read them). Manual browser evidence is still to be attached to IMP-11, 12, 15, 17, 23, 25, 26 and 27. Then write specs for IMP-29 to IMP-40; IMP-39/40 are blocked by Q9 (hosting).
 - **Dates:** no due dates are set except CW-01's, which has passed.
 
 ## 11. Open questions
