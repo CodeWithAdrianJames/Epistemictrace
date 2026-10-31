@@ -90,10 +90,10 @@ The data model from `PROJECT.md` §7, with these additions:
 ## Code Execution Model
 
 - Student code runs **only** in a browser Web Worker running Pyodide. The server never executes student code.
-- Pyodide is loaded inside the worker; how it is loaded (npm package vs CDN `indexURL`) is **(Proposed — Q14)**.
-- One test case = one execution: the program runs with the test's `input` as stdin, in a fresh global namespace, and its stdout is compared to `expected_output` **(Proposed — Q14)**.
-- Output comparison: convert `\r\n` to `\n`, strip trailing whitespace from each line, drop trailing empty lines, then compare exactly **(Proposed — Q14)**.
-- Time limit per test case: 3 seconds, excluding interpreter start-up **(Proposed — Q7)**. On timeout the main thread terminates the worker, marks the test `timeout`, marks remaining tests `not_run`, and creates a fresh worker for the next run.
+- Pyodide is loaded inside the worker from the official CDN `indexURL` for the pinned version; the version string is in `features/runner/runnerConfig.ts` (Q14).
+- One test case = one execution: the program runs with the test's `input` as stdin, in a fresh global namespace, and its stdout is compared to `expected_output` (Q14).
+- Output comparison: convert `\r\n` to `\n`, strip trailing whitespace from each line, drop trailing empty lines, then compare exactly (Q14).
+- Time limit per test case: 3 seconds, excluding interpreter start-up (Q7). On timeout the main thread terminates the worker, marks the test `timeout`, marks remaining tests `not_run`, and creates a fresh worker for the next run.
 - Runs are sequential; a second run cannot start while one is in progress.
 - Hidden tests are hidden from **display** only. Their data must reach the browser because execution is browser-only, so "hidden" is not "secret" **(Proposed — Q8)**.
 

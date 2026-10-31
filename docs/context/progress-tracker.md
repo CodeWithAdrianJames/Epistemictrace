@@ -8,7 +8,7 @@ Update this file whenever the current phase, active feature, open questions or i
 
 ## Current Goal
 
-- Specs 01 to 10 are done and merged. Spec 11 (Python code editor, IMP-11) is implemented locally in two parts (`feature/imp-11-part-1`, `feature/imp-11-part-2`), waiting for PRs, review and the manual browser evidence. Next in the Frontend lane: spec 12, safe in-browser Python runner (IMP-12), blocked until gates Q7 and Q14 (both **Proposed**) are accepted. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
+- Specs 01 to 10 are done and merged. Spec 11 (Python code editor, IMP-11) is implemented locally in two parts (`feature/imp-11-part-1`, `feature/imp-11-part-2`), waiting for PRs, review and the manual browser evidence. Gates Q7 and Q14 are now **Accepted** (2026-10-31), so spec 12 (safe in-browser Python runner, IMP-12) is unblocked. Keep accepting or revising the remaining **Open Questions** through their CLR/PLN cards.
 
 ## Completed
 
@@ -231,11 +231,11 @@ Status: **Open** (no proposal), **Proposed** (proposal written, waiting for the 
 | Q2 | Is the SDI computed in the browser or on the server; which is authoritative? (`PROJECT.md` Q2) | Server only. RUN events are flushed immediately; the server scores them, updates the breaker and returns breaker state + struggle level. The browser never computes the SDI. Fail-open if the server does not answer within 5 s. | CLR-02 (Adrian) | Proposed |
 | Q4 | Telemetry batch format, send timing, error signatures (`PROJECT.md` Q4) | As in `architecture-context.md` → Telemetry: `clientEventId` for idempotency, 2 s EDIT coalescing, batches ≤ 200 events, send every 10 s + after every RUN + on page leave (`keepalive`), signature `<Type>@<line>`. | CLR-04 (Noel) | Proposed |
 | Q6 | Consent text, what happens on decline, retention (`PROJECT.md` Q6) | Notice shown before the first session. Accept → `consent_accepted_at` set. Decline → student can still code and run tests, but no session, telemetry, SDI or breaker; a banner offers to accept later. Text and retention period: Jacob to write. | CLR-05 (Jacob) | Open (text, retention) / Proposed (behavior) |
-| Q7 | Execution time limit (`PROJECT.md` Q7) | 3 s per test case, excluding interpreter start-up; one named constant in the runner config. Confirm by measuring typical student programs. | CLR-06 (Adrian) | Proposed |
+| Q7 | Execution time limit (`PROJECT.md` Q7) | 3 s per test case, excluding interpreter start-up; one named constant in the runner config. Confirm by measuring typical student programs. | CLR-06 (Adrian) | Accepted |
 | Q8 | Reflection minimum length; hidden-test display (`PROJECT.md` Q7) | Each field ≥ 20 characters after trimming, ≤ 2000 (server config `epistemictrace.reflection.*`). Hidden tests show name + status only; their data still reaches the browser, so they are not secret. | CLR-07 (Jacob) | Proposed |
 | Q9 | Hosting and deployment (`PROJECT.md` Q8). Flyway and CI were accepted; see Architecture Decisions. | — | CLR-08 (Noel) | Open (hosting) |
 | Q10 | Term dates, MVP demo date, pilot plan (`PROJECT.md` Q9) | — | CLR-09 (Jacob) | Open |
-| Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Proposed |
+| Q14 | Pyodide loading and execution semantics | Pin one Pyodide version; load it inside a module worker from the official CDN `indexURL` for that version; each test runs in a fresh globals dict with the test input as stdin; output comparison as in `architecture-context.md`; stop the run at the first timeout. | PLN-05 (Adrian) | Accepted |
 | Q15 | Does a refresh start a new session? (needed for "lock survives refresh") | No. Opening an activity resumes the latest session if it is not ended or ended < 30 min ago. | PLN-06 (Adrian) / SPC-04 (Noel) | Proposed |
 | Q18 | How do `.env` values reach the backend? Spring Boot does not read `.env` files, so spec 01's check "the app starts with `.env` values" only works if the variables are exported in the shell first. | Either document "export the `.env` variables before `./mvnw spring-boot:run`", or add `spring.config.import=optional:file:../.env[.properties]` to `application.properties`. | Spec 01 owner (Noel) | Open |
 
@@ -273,6 +273,11 @@ Accepted from Open Questions (2026-10-30):
 Accepted from Open Questions (2026-10-31):
 
 - **Q16** (SPC-02): accepted as proposed on Adrian's instruction when starting spec 08 Part 1. Status rules: DRAFT → PUBLISHED (needs ≥ 1 test case); DRAFT or PUBLISHED → ARCHIVED; ARCHIVED is read-only; no un-archive in the MVP. Limits: title 1–120 characters after trimming, problem statement 1–20 000, starter code 0–20 000, test input 0–10 000, expected output 1–10 000, at most 50 test cases per activity; violations are `400` with an `errors` map. The answer matches spec 08 R2/R3, so the spec is unchanged; the rules are recorded in `PROJECT.md` §5 → Activities.
+
+Accepted from Open Questions (2026-10-31):
+
+- **Q7** (CLR-06): accepted as proposed on Adrian's instruction before starting spec 12. Execution time limit is 3 seconds per test case, excluding interpreter start-up. The value is exported as `RUN_TIMEOUT_MS = 3000` from `features/runner/runnerConfig.ts` — no other file contains it. On timeout the main thread terminates the worker, resolves `{ status: 'timeout' }` for the run, marks remaining tests `not_run`, and lazily creates a fresh worker on the next `warmUp`/`run`. "Confirm by measuring typical student programs" deferred to spec 12 Session Notes.
+- **Q14** (PLN-05): accepted as proposed on Adrian's instruction before starting spec 12. Pyodide is loaded inside a module worker from the official CDN `indexURL` for the pinned version; the version string is exported as `PYODIDE_INDEX_URL` from `features/runner/runnerConfig.ts`. Each test case runs in a fresh globals dict (no state leaks between runs); `stdin` is fed line by line, reading past the end raises `EOFError`; stdout is captured. Output comparison: convert `\r\n` to `\n`, strip trailing whitespace from each line, drop trailing empty lines, then compare exactly. The first timeout stops the run and remaining tests are marked `not_run`. The `architecture-context.md` → Code Execution Model "(Proposed — Q14)" and "(Proposed — Q7)" markers are removed.
 
 ## Session Notes
 
