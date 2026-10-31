@@ -1,5 +1,5 @@
 import Editor, { type EditorProps, type OnChange } from '@monaco-editor/react'
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
@@ -8,6 +8,7 @@ import { me, type User } from '../../api/authApi.ts'
 import RequireRole from '../../app/RequireRole.tsx'
 import { AuthProvider } from '../../auth/AuthProvider.tsx'
 import { setToken } from '../../auth/tokenStore.ts'
+import { createPythonRunner, type ExecutionResult, type PythonRunner } from '../runner/pythonRunner.ts'
 import type { EditorChange } from './CodeEditor.tsx'
 import WorkspacePage from './WorkspacePage.tsx'
 
@@ -27,6 +28,12 @@ vi.mock('@monaco-editor/react', () => ({
   default: vi.fn(() => <div data-testid="monaco-editor" />),
 }))
 
+// The real runner starts a Web Worker, which jsdom does not have; the page only needs its three methods.
+vi.mock('../runner/pythonRunner.ts', () => ({
+  createPythonRunner: vi.fn(),
+}))
+
+const createRunnerMock = vi.mocked(createPythonRunner)
 const meMock = vi.mocked(me)
 const getActivityMock = vi.mocked(getActivity)
 const EditorMock = vi.mocked(Editor)
@@ -83,10 +90,35 @@ interface RenderOptions {
   onEditorChange?: (value: string, change: EditorChange) => void
 }
 
+type FakeRunner = { [K in keyof PythonRunner]: ReturnType<typeof vi.fn<PythonRunner[K]>> }
+
+let runner: FakeRunner
+let finishWarmUp: { resolve: () => void; reject: (error: Error) => void }
+
+// Warm-up stays pending until a test calls warmUpDone(); runs answer '7' by default.
+function installRunner(): void {
+  runner = {
+    warmUp: vi.fn(
+      () =>
+        new Promise<void>((resolve, reject) => {
+          finishWarmUp = { resolve, reject }
+        }),
+    ),
+    run: vi.fn(async (): Promise<ExecutionResult> => ({ status: 'ok', stdout: '7\n' })),
+    dispose: vi.fn(),
+  }
+  createRunnerMock.mockReturnValue(runner)
+}
+
+async function warmUpDone(): Promise<void> {
+  await act(async () => finishWarmUp.resolve())
+}
+
 // The page sits behind RequireRole in the app router, so it only mounts once the stored token is confirmed.
 function renderAt(path: string, { onEditorChange }: RenderOptions = {}) {
   setToken('token-7', FUTURE)
   meMock.mockResolvedValue(STUDENT)
+  installRunner()
   const router = createMemoryRouter(
     [
       {
@@ -292,5 +324,102 @@ describe('WorkspacePage editor', () => {
     expect(lastProps().value).toBe('x = 1')
     getItem.mockRestore()
     setItem.mockRestore()
+  })
+})
+
+describe('WorkspacePage runner', () => {
+  it('warms up one runner when the activity has loaded, and shows Preparing Python… until then', async () => {
+    await renderLoaded()
+
+    expect(createRunnerMock).toHaveBeenCalledTimes(1)
+    expect(runner.warmUp).toHaveBeenCalledTimes(1)
+    const button = screen.getByRole('button', { name: 'Preparing Python…' })
+    expect(button).toBeDisabled()
+    expect(button).toHaveAttribute('aria-disabled', 'true')
+  })
+
+  it('does not start Python while the activity is loading or not available', async () => {
+    getActivityMock.mockRejectedValue(notFound())
+    renderAt('/student/activities/42')
+    await screen.findByText("This activity isn't available.")
+
+    expect(runner.warmUp).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', { name: /Run tests|Preparing Python/ })).not.toBeInTheDocument()
+  })
+
+  it('enables Run tests once Python is ready', async () => {
+    await renderLoaded()
+
+    await warmUpDone()
+
+    expect(screen.getByRole('button', { name: 'Run tests' })).toBeEnabled()
+  })
+
+  it('says Python could not start when warm-up fails, and keeps the button disabled', async () => {
+    await renderLoaded()
+
+    await act(async () => finishWarmUp.reject(new Error('CDN unreachable')))
+
+    expect(screen.getByRole('alert')).toHaveTextContent("Python couldn't start. Refresh the page to try again.")
+    expect(screen.getByRole('button', { name: 'Run tests' })).toBeDisabled()
+  })
+
+  it('runs the current code against every test case, hidden ones included', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    type('print(7)', 'print(7)')
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+    })
+
+    expect(runner.run.mock.calls).toEqual([
+      ['print(7)', '3\n4'],
+      ['print(7)', '10\n-2'],
+    ])
+  })
+
+  it('shows Running… and disables the button during a run, and keeps the editor editable', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    let finish: (result: ExecutionResult) => void = () => {}
+    runner.run.mockReturnValueOnce(new Promise<ExecutionResult>((resolve) => (finish = resolve)))
+
+    fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+
+    const button = screen.getByRole('button', { name: 'Running…' })
+    expect(button).toBeDisabled()
+    expect(lastProps().options?.readOnly).not.toBe(true)
+    type('edited while running', 'edited while running')
+    expect(lastProps().value).toBe('edited while running')
+
+    await act(async () => finish({ status: 'ok', stdout: '7' }))
+
+    expect(screen.getByRole('button', { name: 'Run tests' })).toBeEnabled()
+  })
+
+  it('runs again after a timeout', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    runner.run.mockResolvedValueOnce({ status: 'timeout' })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+    })
+    expect(runner.run).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+    })
+    expect(runner.run).toHaveBeenCalledTimes(3)
+  })
+
+  it('disposes the runner when the page unmounts', async () => {
+    const view = await renderLoaded()
+    expect(runner.dispose).not.toHaveBeenCalled()
+
+    view.unmount()
+
+    expect(runner.dispose).toHaveBeenCalledTimes(1)
   })
 })

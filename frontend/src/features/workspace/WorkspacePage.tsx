@@ -6,8 +6,11 @@ import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import CodeEditor, { type EditorChange } from './CodeEditor.tsx'
 import ProblemPanel from './ProblemPanel.tsx'
+import RunButton, { type RunButtonState } from './RunButton.tsx'
 import styles from './WorkspacePage.module.css'
 import { useDraft } from './useDraft.ts'
+import { usePythonRunner, type RunnerStatus } from './usePythonRunner.ts'
+import { useRunTests, type RunState } from './useRunTests.ts'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
 
@@ -83,6 +86,8 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   const { user } = useAuth()
   // RequireRole only renders this page for a signed-in student, so 'local' is a fallback only.
   const [code, setCode] = useDraft(user ? user.id : 'local', activity.id, activity.starterCode)
+  const { runner, status: runnerStatus } = usePythonRunner()
+  const { state: runState, run } = useRunTests(code, activity.testCases, runner)
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
@@ -96,6 +101,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
     <div className={styles.page}>
       <header className={styles.header}>
         <h1 className={styles.title}>{activity.title}</h1>
+        <RunButton state={runButtonState(runnerStatus, runState)} onRun={() => void run()} />
       </header>
       <div className={styles.regions}>
         <div className={styles.problem}>
@@ -110,6 +116,12 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
       </div>
     </div>
   )
+}
+
+function runButtonState(runnerStatus: RunnerStatus, runState: RunState): RunButtonState {
+  if (runnerStatus === 'failed') return 'failed'
+  if (runnerStatus === 'warming') return 'preparing'
+  return runState === 'running' ? 'running' : 'ready'
 }
 
 function NotAvailable() {
