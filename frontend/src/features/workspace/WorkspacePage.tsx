@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import CodeEditor, { type EditorChange } from './CodeEditor.tsx'
 import ProblemPanel from './ProblemPanel.tsx'
+import ResultsPanel from './ResultsPanel.tsx'
 import RunButton, { type RunButtonState } from './RunButton.tsx'
 import styles from './WorkspacePage.module.css'
 import { useDraft } from './useDraft.ts'
@@ -87,7 +88,7 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   // RequireRole only renders this page for a signed-in student, so 'local' is a fallback only.
   const [code, setCode] = useDraft(user ? user.id : 'local', activity.id, activity.starterCode)
   const { runner, status: runnerStatus } = usePythonRunner()
-  const { state: runState, run } = useRunTests(code, activity.testCases, runner)
+  const { state: runState, lastReport, run } = useRunTests(code, activity.testCases, runner)
 
   const handleChange = useCallback(
     (value: string, change: EditorChange) => {
@@ -110,9 +111,9 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
         <section className={styles.editor} aria-label="Editor">
           <CodeEditor value={code} onChange={handleChange} />
         </section>
-        <section className={styles.results} aria-label="Test results">
-          <p className={styles.message}>Run your code to see test results here.</p>
-        </section>
+        <div className={styles.results}>
+          <ResultsPanel report={lastReport} testCases={activity.testCases} />
+        </div>
       </div>
     </div>
   )

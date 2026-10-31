@@ -1,5 +1,5 @@
 import Editor, { type EditorProps, type OnChange } from '@monaco-editor/react'
-import { act, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
@@ -114,6 +114,14 @@ async function warmUpDone(): Promise<void> {
   await act(async () => finishWarmUp.resolve())
 }
 
+// Clicks Run tests and waits until the run has finished (the button reads Run tests again), so
+// assertions do not depend on how many microtasks runTests needs.
+async function runTestsAndWait(): Promise<void> {
+  fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
+  expect(screen.getByRole('button', { name: 'Running…' })).toBeDisabled()
+  await screen.findByRole('button', { name: 'Run tests' })
+}
+
 // The page sits behind RequireRole in the app router, so it only mounts once the stored token is confirmed.
 function renderAt(path: string, { onEditorChange }: RenderOptions = {}) {
   setToken('token-7', FUTURE)
@@ -146,6 +154,8 @@ async function renderLoaded(activity: ActivityDetail = ACTIVITY, options: Render
   getActivityMock.mockResolvedValue(activity)
   const view = renderAt(`/student/activities/${activity.id}`, options)
   await screen.findByTestId('monaco-editor')
+  // findBy* polls outside act, so the editor can be in the DOM before the effect that warms up runs.
+  await waitFor(() => expect(runner.warmUp).toHaveBeenCalled())
   return view
 }
 
@@ -369,9 +379,7 @@ describe('WorkspacePage runner', () => {
     await warmUpDone()
     type('print(7)', 'print(7)')
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
-    })
+    await runTestsAndWait()
 
     expect(runner.run.mock.calls).toEqual([
       ['print(7)', '3\n4'],
@@ -403,14 +411,10 @@ describe('WorkspacePage runner', () => {
     await warmUpDone()
     runner.run.mockResolvedValueOnce({ status: 'timeout' })
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
-    })
+    await runTestsAndWait()
     expect(runner.run).toHaveBeenCalledTimes(1)
 
-    await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: 'Run tests' }))
-    })
+    await runTestsAndWait()
     expect(runner.run).toHaveBeenCalledTimes(3)
   })
 
@@ -421,5 +425,75 @@ describe('WorkspacePage runner', () => {
     view.unmount()
 
     expect(runner.dispose).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('WorkspacePage results', () => {
+  it('shows the placeholder before the first run', async () => {
+    await renderLoaded()
+
+    const results = screen.getByRole('region', { name: 'Test results' })
+    expect(within(results).getByText('Run your code to see test results here.')).toBeInTheDocument()
+  })
+
+  it('updates the results panel after each run', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    runner.run.mockResolvedValueOnce({ status: 'ok', stdout: '7\n' }).mockResolvedValueOnce({ status: 'ok', stdout: '0\n' })
+
+    await runTestsAndWait()
+    const results = screen.getByRole('region', { name: 'Test results' })
+    expect(within(results).getByText('1 of 2 tests passed')).toBeInTheDocument()
+
+    runner.run.mockResolvedValueOnce({ status: 'ok', stdout: '7\n' }).mockResolvedValueOnce({ status: 'ok', stdout: '8\n' })
+    await runTestsAndWait()
+    expect(within(results).getByText('2 of 2 tests passed')).toBeInTheDocument()
+    expect(within(results).queryByText('1 of 2 tests passed')).not.toBeInTheDocument()
+  })
+
+  it('shows a visible failure in full and a hidden failure as name and status only', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    runner.run
+      .mockResolvedValueOnce({ status: 'ok', stdout: 'six\n' })
+      .mockResolvedValueOnce({ status: 'ok', stdout: 'hidden actual\n' })
+
+    await runTestsAndWait()
+
+    const results = screen.getByRole('region', { name: 'Test results' })
+    expect(within(results).getByText('0 of 2 tests passed')).toBeInTheDocument()
+    expect(within(results).getByText('Test 1')).toBeInTheDocument()
+    expect(within(results).getByText((_, element) => element?.tagName === 'PRE' && element.textContent === 'six\n')).toBeInTheDocument()
+    expect(within(results).getByText('Hidden test 2')).toBeInTheDocument()
+    expect(within(results).queryByText(/hidden actual/)).not.toBeInTheDocument()
+    expect(within(results).queryByText('10\n-2')).not.toBeInTheDocument()
+  })
+
+  it('shows a runtime error with its type, line and message', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    runner.run.mockResolvedValue({
+      status: 'error',
+      stdout: '',
+      error: { type: 'ZeroDivisionError', message: 'division by zero', line: 2 },
+    })
+
+    await runTestsAndWait()
+
+    expect(screen.getByText('ZeroDivisionError on line 2')).toBeInTheDocument()
+    expect(screen.getByText('division by zero')).toBeInTheDocument()
+  })
+
+  it('shows the timeout message, and the next run replaces it', async () => {
+    await renderLoaded()
+    await warmUpDone()
+    runner.run.mockResolvedValueOnce({ status: 'timeout' })
+
+    await runTestsAndWait()
+    expect(screen.getByText(/Your code ran longer than 3 seconds and was stopped\./)).toBeInTheDocument()
+
+    await runTestsAndWait()
+    expect(screen.queryByText(/Your code ran longer than/)).not.toBeInTheDocument()
+    expect(screen.getByText('1 of 2 tests passed')).toBeInTheDocument()
   })
 })

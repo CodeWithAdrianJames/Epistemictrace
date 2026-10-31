@@ -1,11 +1,16 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter, RouterProvider } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { listActivities as listStudentActivities } from '../api/activitiesApi.ts'
+import {
+  getActivity as getStudentActivity,
+  listActivities as listStudentActivities,
+  type ActivityDetail as StudentActivityDetail,
+} from '../api/activitiesApi.ts'
 import { me, type User } from '../api/authApi.ts'
 import { getActivity, listActivities, type ActivityDetail } from '../api/instructorActivitiesApi.ts'
 import { AuthProvider } from '../auth/AuthProvider.tsx'
 import { setToken } from '../auth/tokenStore.ts'
+import { createPythonRunner } from '../features/runner/pythonRunner.ts'
 import styles from './AppLayout.module.css'
 import { routes } from './router.tsx'
 
@@ -32,8 +37,15 @@ vi.mock('@monaco-editor/react', () => ({
   default: () => <div data-testid="monaco-editor" />,
 }))
 
+// The workspace also warms up the Python runner, whose Web Worker jsdom does not have.
+vi.mock('../features/runner/pythonRunner.ts', () => ({
+  createPythonRunner: vi.fn(),
+}))
+
 const meMock = vi.mocked(me)
 const listStudentActivitiesMock = vi.mocked(listStudentActivities)
+const getStudentActivityMock = vi.mocked(getStudentActivity)
+const createRunnerMock = vi.mocked(createPythonRunner)
 const listActivitiesMock = vi.mocked(listActivities)
 const getActivityMock = vi.mocked(getActivity)
 
@@ -66,10 +78,14 @@ const ACTIVITY: ActivityDetail = {
   updatedAt: '2026-10-21T08:00:00Z',
 }
 
+const PUBLISHED_ACTIVITY: StudentActivityDetail = { ...ACTIVITY, title: 'Double a number', status: 'PUBLISHED' }
+
 // Without a user there is no stored token, so AuthProvider starts anonymous and never calls the API.
 function renderAt(path: string, user?: User) {
   // The student and instructor list/edit pages load on mount; mocked responses keep these routing tests offline.
   listStudentActivitiesMock.mockResolvedValue([])
+  getStudentActivityMock.mockResolvedValue(PUBLISHED_ACTIVITY)
+  createRunnerMock.mockReturnValue({ warmUp: vi.fn(async () => {}), run: vi.fn(), dispose: vi.fn() })
   listActivitiesMock.mockResolvedValue([])
   getActivityMock.mockResolvedValue(ACTIVITY)
   if (user) {
@@ -105,7 +121,7 @@ describe('router', () => {
 
   it.each([
     ['/student/activities', 'Activities'],
-    ['/student/activities/42', 'Activity workspace'],
+    ['/student/activities/42', 'Double a number'],
     ['/student/history', 'My history'],
     ['/student/history/7', 'Session details'],
   ])('renders %s for a student with the heading "%s"', async (path, title) => {
@@ -242,16 +258,17 @@ describe('router', () => {
   it('uses the full width for the activity workspace', async () => {
     renderAt('/student/activities/42', STUDENT)
 
-    await screen.findByRole('heading', { level: 1, name: 'Activity workspace' })
+    await screen.findByRole('heading', { level: 1, name: 'Double a number' })
     const main = screen.getByRole('main')
     expect(main).toHaveClass(styles.contentFull)
     expect(main).not.toHaveClass(styles.contentContained)
   })
 
-  it('mounts the code editor on the activity workspace', async () => {
+  it('mounts the code editor on the activity workspace for the id in the URL', async () => {
     renderAt('/student/activities/42', STUDENT)
 
     expect(await screen.findByTestId('monaco-editor')).toBeInTheDocument()
+    expect(getStudentActivityMock).toHaveBeenCalledExactlyOnceWith('token-7', 42, expect.any(AbortSignal))
   })
 
   it.each([
