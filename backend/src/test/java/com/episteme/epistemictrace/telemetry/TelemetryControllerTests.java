@@ -141,7 +141,7 @@ class TelemetryControllerTests {
 			.getResponse()
 			.getContentAsString();
 
-		assertThat(this.objectMapper.readTree(body).size()).isEqualTo(3);
+		assertThat(this.objectMapper.readTree(body).size()).isEqualTo(4);
 		List<TelemetryEvent> stored = this.telemetryEventRepository
 			.findBySessionIdOrderByOccurredAtAscIdAsc(this.session.getId());
 		assertThat(stored).extracting(TelemetryEvent::getType)

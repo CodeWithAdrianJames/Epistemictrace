@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.episteme.epistemictrace.activity.ActivityNotFoundException;
 import com.episteme.epistemictrace.activity.ActivityService;
 import com.episteme.epistemictrace.auth.UnknownTokenUserException;
+import com.episteme.epistemictrace.breaker.BreakerService;
 import com.episteme.epistemictrace.user.User;
 import com.episteme.epistemictrace.user.UserRepository;
 
@@ -32,14 +33,18 @@ public class SessionService {
 
 	private final SessionProperties sessionProperties;
 
+	private final BreakerService breakerService;
+
 	private final Clock clock;
 
 	public SessionService(CodingSessionRepository codingSessionRepository, ActivityService activityService,
-			UserRepository userRepository, SessionProperties sessionProperties, Clock clock) {
+			UserRepository userRepository, SessionProperties sessionProperties, BreakerService breakerService,
+			Clock clock) {
 		this.codingSessionRepository = codingSessionRepository;
 		this.activityService = activityService;
 		this.userRepository = userRepository;
 		this.sessionProperties = sessionProperties;
+		this.breakerService = breakerService;
 		this.clock = clock;
 	}
 
@@ -64,10 +69,10 @@ public class SessionService {
 		if (resumable.isPresent()) {
 			CodingSession session = resumable.get();
 			session.resume();
-			return new SessionStart(session, true);
+			return new SessionStart(session, true, this.breakerService.payload(session));
 		}
-		return new SessionStart(this.codingSessionRepository.save(new CodingSession(studentId, activityId, now)),
-				false);
+		CodingSession session = this.codingSessionRepository.save(new CodingSession(studentId, activityId, now));
+		return new SessionStart(session, false, this.breakerService.payload(session));
 	}
 
 	/** Sets the end of the student's own session to now, replacing an earlier end. */

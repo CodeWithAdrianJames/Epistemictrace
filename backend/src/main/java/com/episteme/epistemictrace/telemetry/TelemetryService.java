@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.episteme.epistemictrace.breaker.BreakerService;
 import com.episteme.epistemictrace.sdi.SdiScoringService;
 import com.episteme.epistemictrace.sdi.SdiScoringService.ScoredBatch;
 import com.episteme.epistemictrace.session.CodingSession;
@@ -25,8 +26,8 @@ import com.episteme.epistemictrace.session.SessionNotFoundException;
 import com.episteme.epistemictrace.session.SessionService;
 
 /**
- * Stores telemetry batches (spec 18 R2–R7) and scores their new RUN events (spec 21). A batch is stored and scored in
- * one transaction; events whose client id the session already has are skipped, counted as duplicates and not
+ * Stores telemetry batches (spec 18 R2–R7), scores their new RUN events (spec 21) and applies the circuit breaker to
+ * each score (spec 22 R6). A batch is stored, scored and the breaker updated in one transaction; events whose client id the session already has are skipped, counted as duplicates and not
  * re-scored.
  */
 @Service
@@ -45,15 +46,19 @@ public class TelemetryService {
 
 	private final SdiScoringService sdiScoringService;
 
+	private final BreakerService breakerService;
+
 	private final TransactionTemplate transactionTemplate;
 
 	private final Clock clock;
 
 	public TelemetryService(TelemetryEventRepository telemetryEventRepository, SessionService sessionService,
-			SdiScoringService sdiScoringService, PlatformTransactionManager transactionManager, Clock clock) {
+			SdiScoringService sdiScoringService, BreakerService breakerService, PlatformTransactionManager transactionManager,
+			Clock clock) {
 		this.telemetryEventRepository = telemetryEventRepository;
 		this.sessionService = sessionService;
 		this.sdiScoringService = sdiScoringService;
+		this.breakerService = breakerService;
 		this.transactionTemplate = new TransactionTemplate(transactionManager);
 		this.clock = clock;
 	}
@@ -92,7 +97,12 @@ public class TelemetryService {
 			.sorted(BY_OCCURRED_AT)
 			.toList();
 		ScoredBatch scored = this.sdiScoringService.score(session, runs);
-		return new StoredBatch(saved.size(), events.size() - saved.size(), runs, scored.struggleLevel());
+		// Runs that arrive while locked are scored but cannot change the state (BreakerRules R2).
+		for (int sdi : scored.scores()) {
+			this.breakerService.onRunScored(session, sdi, scored.config().getThreshold());
+		}
+		return new StoredBatch(saved.size(), events.size() - saved.size(), runs, scored.struggleLevel(),
+				this.breakerService.payload(session));
 	}
 
 	private static void checkOccurredAt(List<TelemetryEventRequest> events, Instant startedAt, Instant now) {
