@@ -1,6 +1,7 @@
 import { Outlet, type RouteObject } from 'react-router'
 import LoginPage from '../auth/LoginPage.tsx'
 import RegisterPage from '../auth/RegisterPage.tsx'
+import ActivityListPage from '../features/activities/ActivityListPage.tsx'
 import AppLayout from './AppLayout.tsx'
 import GuestOnly from './GuestOnly.tsx'
 import HomeRedirect from './HomeRedirect.tsx'
@@ -55,7 +56,7 @@ export const routes: RouteObject[] = [
           </RequireRole>
         ),
         children: [
-          { path: 'instructor/activities', element: <PlaceholderPage title="My activities" /> },
+          { path: 'instructor/activities', element: <ActivityListPage /> },
           { path: 'instructor/activities/new', element: <PlaceholderPage title="New activity" /> },
           { path: 'instructor/activities/:activityId', element: <PlaceholderPage title="Edit activity" /> },
         ],

@@ -1,0 +1,139 @@
+/* ui-context.md → Layout Patterns → Lists: a panel per item with title and secondary text; an empty state when none. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.newActivity {
+  padding: var(--space-2) var(--space-4);
+  background: var(--accent);
+  border-radius: var(--radius-sm);
+  color: var(--bg-surface);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.newActivity:hover {
+  background: var(--accent-hover);
+}
+
+.message,
+.empty {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.empty {
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-default);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+/* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */
+.pageError {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--state-fail-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-fail);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.rowText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.125rem;
+  overflow-wrap: anywhere;
+}
+
+.details {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+/* Status always carries its text label; color is only a second cue. Pass/fail colors stay reserved for tests. */
+.status {
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+}
+
+.DRAFT {
+  background: var(--bg-subtle);
+  color: var(--text-secondary);
+}
+
+.PUBLISHED {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.ARCHIVED {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}
+
+.edit {
+  flex-shrink: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.edit:hover {
+  background: var(--bg-subtle);
+}
+
+.newActivity:focus-visible,
+.edit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
