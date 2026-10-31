@@ -1,0 +1,153 @@
+/* ui-context.md → Layout Patterns: a panel per item, inline loading text, errors at the top. */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.heading {
+  margin: 0;
+  font-size: 1.5rem;
+  overflow-wrap: anywhere;
+}
+
+.subheading {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.message {
+  margin: 0;
+  color: var(--text-secondary);
+}
+
+.pageError {
+  margin: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--state-fail-soft);
+  border-radius: var(--radius-sm);
+  color: var(--state-fail);
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.list,
+.reflections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.rowLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rowLink:hover .rowTitle {
+  color: var(--accent);
+}
+
+.rowLink:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-md);
+}
+
+.rowTitle {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.rowMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.pager {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.pagerButton {
+  padding: var(--space-2) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.pagerButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.back {
+  align-self: flex-start;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.facts dt {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.facts dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.reflection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+}
+
+.reflectionTime {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.reflectionLabel {
+  margin: var(--space-2) 0 0;
+  font-size: 0.9375rem;
+}
+
+/* R5: plain text with the student's line breaks kept. */
+.reflectionText {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

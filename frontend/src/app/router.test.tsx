@@ -7,6 +7,7 @@ import {
   type ActivityDetail as StudentActivityDetail,
 } from '../api/activitiesApi.ts'
 import { me, type User } from '../api/authApi.ts'
+import { getSession, listSessions } from '../api/historyApi.ts'
 import { getActivity, listActivities, type ActivityDetail } from '../api/instructorActivitiesApi.ts'
 import { AuthProvider } from '../auth/AuthProvider.tsx'
 import { setToken } from '../auth/tokenStore.ts'
@@ -23,6 +24,11 @@ vi.mock('../api/authApi.ts', () => ({
 vi.mock('../api/activitiesApi.ts', () => ({
   listActivities: vi.fn(),
   getActivity: vi.fn(),
+}))
+
+vi.mock('../api/historyApi.ts', () => ({
+  listSessions: vi.fn(),
+  getSession: vi.fn(),
 }))
 
 vi.mock('../api/instructorActivitiesApi.ts', () => ({
@@ -46,6 +52,8 @@ const meMock = vi.mocked(me)
 const listStudentActivitiesMock = vi.mocked(listStudentActivities)
 const getStudentActivityMock = vi.mocked(getStudentActivity)
 const createRunnerMock = vi.mocked(createPythonRunner)
+const listSessionsMock = vi.mocked(listSessions)
+const getSessionMock = vi.mocked(getSession)
 const listActivitiesMock = vi.mocked(listActivities)
 const getActivityMock = vi.mocked(getActivity)
 
@@ -88,6 +96,18 @@ function renderAt(path: string, user?: User) {
   createRunnerMock.mockReturnValue({ warmUp: vi.fn(async () => {}), run: vi.fn(), dispose: vi.fn() })
   listActivitiesMock.mockResolvedValue([])
   getActivityMock.mockResolvedValue(ACTIVITY)
+  listSessionsMock.mockResolvedValue({ items: [], page: 0, size: 20, totalItems: 0 })
+  getSessionMock.mockResolvedValue({
+    sessionId: 7,
+    activityId: 42,
+    activityTitle: 'Loops',
+    startedAt: '2026-11-03T02:15:00Z',
+    endedAt: null,
+    durationSeconds: null,
+    runCount: 0,
+    reflectionCount: 0,
+    reflections: [],
+  })
   if (user) {
     setToken(`token-${user.id}`, FUTURE)
     meMock.mockResolvedValue(user)
@@ -123,7 +143,7 @@ describe('router', () => {
     ['/student/activities', 'Activities'],
     ['/student/activities/42', 'Double a number'],
     ['/student/history', 'My history'],
-    ['/student/history/7', 'Session details'],
+    ['/student/history/7', 'Loops'],
   ])('renders %s for a student with the heading "%s"', async (path, title) => {
     const router = renderAt(path, STUDENT)
 
