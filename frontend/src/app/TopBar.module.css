@@ -1,22 +1,26 @@
+/* ui-context.md → Layout Patterns: a dark navigation bar over the light page content. */
 .topBar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-5);
-  padding: var(--space-3) var(--space-5);
-  background: var(--bg-surface);
-  border-bottom: 1px solid var(--border-default);
+  gap: var(--space-2) var(--space-5);
+  min-height: var(--topbar-height);
+  padding: var(--space-2) var(--space-5);
+  background: var(--nav-bg);
+  color: var(--nav-text);
 }
 
 .productName {
-  color: var(--text-primary);
-  font-size: 1.125rem;
-  font-weight: 600;
+  color: var(--nav-text);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
   text-decoration: none;
 }
 
 .navList {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -24,21 +28,23 @@
 
 .navLink {
   display: block;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-sm);
-  color: var(--text-secondary);
+  color: var(--nav-text-muted);
+  font-size: var(--text-sm);
+  font-weight: 600;
   text-decoration: none;
 }
 
 .navLink:hover {
-  background: var(--bg-subtle);
-  color: var(--text-primary);
+  background: var(--nav-hover);
+  color: var(--nav-text);
 }
 
 .navLinkActive,
 .navLinkActive:hover {
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--nav-active);
+  color: var(--nav-text);
 }
 
 /* User name and Log out sit at the right end of the bar. */
@@ -50,26 +56,29 @@
 }
 
 .userName {
-  color: var(--text-secondary);
+  color: var(--nav-text-muted);
+  font-size: var(--text-sm);
 }
 
 .logout {
-  padding: var(--space-1) var(--space-3);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
+  padding: var(--space-2) var(--space-3);
+  background: transparent;
+  border: 1px solid var(--nav-border);
   border-radius: var(--radius-sm);
-  color: var(--text-primary);
+  color: var(--nav-text);
   font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
 }
 
 .logout:hover {
-  background: var(--bg-subtle);
+  background: var(--nav-hover);
 }
 
 .productName:focus-visible,
 .navLink:focus-visible,
 .logout:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--nav-focus);
   outline-offset: 2px;
 }

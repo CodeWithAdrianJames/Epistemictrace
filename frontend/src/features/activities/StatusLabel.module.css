@@ -1,8 +1,8 @@
 /* Status always carries its text label; color is only a second cue. Pass/fail colors stay reserved for tests. */
 .status {
   padding: 0 var(--space-2);
-  border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-sm);
   font-weight: 600;
 }
 

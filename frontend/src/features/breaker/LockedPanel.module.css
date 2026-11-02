@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
-  padding: var(--space-4);
+  padding: var(--space-5);
   background: var(--state-pause-soft);
   border-radius: var(--radius-lg);
   color: var(--text-primary);
@@ -11,7 +11,7 @@
 
 .heading {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
   color: var(--state-pause);
 }
 

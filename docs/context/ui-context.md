@@ -4,33 +4,52 @@
 
 ## Theme
 
-Light only for the MVP. The visual language is a calm study tool: white and soft-grey surfaces, one blue accent for actions, and no alarming colors for struggle. Students may already be frustrated when the runner locks; the interface should feel like a pause, not a punishment.
+Light only for the MVP. The visual language is a calm study tool modelled on the light product theme of mimo.org: cool off-white and white surfaces, navy ink, one purple accent for actions, a navy navigation bar, rounded cards and pill-shaped status chips, and no alarming colors for struggle. Students may already be frustrated when the runner locks; the interface should feel like a pause, not a punishment.
 
 All colors are CSS custom properties defined in `frontend/src/styles/tokens.css` and used through `var(--token)` in CSS Modules (`*.module.css`). Components must use these tokens — no hard-coded hex values in component styles.
 
 | Role               | CSS Variable          | Value      |
 | ------------------ | --------------------- | ---------- |
-| Page background    | `--bg-page`           | `#f6f7f9`  |
+| Page background    | `--bg-page`           | `#f6f7fb`  |
 | Surface (panels)   | `--bg-surface`        | `#ffffff`  |
-| Subtle surface     | `--bg-subtle`         | `#eef0f3`  |
-| Default border     | `--border-default`    | `#d9dde3`  |
-| Strong border      | `--border-strong`     | `#b8bec7`  |
-| Primary text       | `--text-primary`      | `#1b1f24`  |
-| Secondary text     | `--text-secondary`    | `#4a525c`  |
-| Muted text         | `--text-muted`        | `#6b7480`  |
-| Accent (actions)   | `--accent`            | `#2f5bd3`  |
-| Accent hover       | `--accent-hover`      | `#2449ad`  |
-| Accent soft        | `--accent-soft`       | `#e6ecfb`  |
-| Pass               | `--state-pass`        | `#1f7a4d`  |
-| Pass soft          | `--state-pass-soft`   | `#e3f3ea`  |
-| Fail               | `--state-fail`        | `#b3412f`  |
-| Fail soft          | `--state-fail-soft`   | `#fbe9e5`  |
+| Subtle surface     | `--bg-subtle`         | `#edeef6`  |
+| Dialog backdrop    | `--bg-overlay`        | `rgba(25, 27, 51, 0.6)` |
+| Default border     | `--border-default`    | `#e4e6f1`  |
+| Strong border      | `--border-strong`     | `#b9bbd2`  |
+| Primary text       | `--text-primary`      | `#252746`  |
+| Secondary text     | `--text-secondary`    | `#4a4d85`  |
+| Muted text         | `--text-muted`        | `#626596`  |
+| Accent (actions)   | `--accent`            | `#7e4bde`  |
+| Accent hover       | `--accent-hover`      | `#6a3bc6`  |
+| Accent soft        | `--accent-soft`       | `#f3eefd`  |
+| Pass               | `--state-pass`        | `#1e7a3c`  |
+| Pass soft          | `--state-pass-soft`   | `#e8f7e5`  |
+| Fail               | `--state-fail`        | `#b52f45`  |
+| Fail soft          | `--state-fail-soft`   | `#fdecee`  |
 | Notice             | `--state-notice`      | `#8a5a00`  |
-| Notice soft        | `--state-notice-soft` | `#fdf3dc`  |
-| Pause (breaker)    | `--state-pause`       | `#5b4bb7`  |
-| Pause soft         | `--state-pause-soft`  | `#eeebfb`  |
+| Notice soft        | `--state-notice-soft` | `#fdf5d7`  |
+| Pause (breaker)    | `--state-pause`       | `#1d5fa8`  |
+| Pause soft         | `--state-pause-soft`  | `#eaf5ff`  |
 
-Pass/fail colors are for **test results only**. They are never used for the struggle level or the locked runner.
+Pass/fail colors are for **test results only**. They are never used for the struggle level or the locked runner. The pause color is a calm blue so that the locked runner and the HIGH struggle badge never read as the purple accent (an action or the active link).
+
+Every text/background pair above meets WCAG AA (4.5:1) for body text: for example `--accent` under white button text is 5.3:1, `--accent` on `--accent-soft` is 4.7:1 and `--text-muted` on `--bg-subtle` is 4.7:1. Re-check contrast when changing a value.
+
+### Navigation Bar
+
+The app top bar is a dark surface above the light page.
+
+| Role               | CSS Variable        | Value     |
+| ------------------ | ------------------- | --------- |
+| Bar background     | `--nav-bg`          | `#252746` |
+| Link hover         | `--nav-hover`       | `#333661` |
+| Active link        | `--nav-active`      | `#3f4273` |
+| Outlined button    | `--nav-border`      | `#4a4d85` |
+| Text               | `--nav-text`        | `#ffffff` |
+| Secondary text     | `--nav-text-muted`  | `#d3d4da` |
+| Focus ring         | `--nav-focus`       | `#b89ced` |
+
+The bar is at least `--topbar-height` (64px) tall; the workspace height on desktop is computed from it.
 
 ## Typography
 
@@ -41,16 +60,33 @@ No web-font dependency. System stacks defined as tokens:
 | UI text   | `--font-ui`   | `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` |
 | Code/mono | `--font-mono` | `ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace` |
 
-Base size 16px, line height 1.5. Problem statements, test input/output and error messages that show code use `--font-mono`. Monaco uses its own font settings with the light `vs` theme.
+Base size 16px, line height 1.5. Problem statements, test input/output and error messages that show code use `--font-mono`. Monaco uses its own font settings with the light `vs` theme on a white `--bg-surface` container.
 
-## Spacing and Radius
+The reference site's typeface (Aeonik) is a licensed commercial font and is not used; the system stack stands in for it. Headings (`h1`–`h4`) are weight 600 with `--tracking-tight` (`-0.02em`) and line height 1.25.
+
+| Token          | Value      | Use |
+| -------------- | ---------- | --- |
+| `--text-sm`    | 0.875rem   | Badges, metadata, field errors, nav links |
+| `--text-base`  | 1rem       | Body text, small headings |
+| `--text-lg`    | 1.125rem   | Panel and card headings |
+| `--text-xl`    | 1.25rem    | Dialog titles, product name |
+| `--text-2xl`   | 1.5rem     | Workspace title, auth card heading |
+| `--text-3xl`   | 2rem       | Page headings |
+
+## Spacing, Radius and Elevation
 
 | Token            | Value  | Use |
 | ---------------- | ------ | --- |
 | `--space-1`..`--space-6` | 4, 8, 12, 16, 24, 32 px | Padding and gaps |
-| `--radius-sm`    | 6px    | Inputs, buttons, badges |
-| `--radius-md`    | 10px   | Panels and cards |
-| `--radius-lg`    | 14px   | Dialogs and the breaker panel |
+| `--radius-sm`    | 10px   | Inputs, buttons, inline messages |
+| `--radius-md`    | 16px   | Panels and cards |
+| `--radius-lg`    | 24px   | Dialogs, the auth card and the breaker panel |
+| `--radius-pill`  | 9999px | Status chips and the struggle badge |
+| `--shadow-sm`    | `0 1px 4px rgba(47, 49, 82, 0.2)` | Auth card; clickable cards on hover |
+| `--shadow-lg`    | `0 4px 48px rgba(0, 0, 0, 0.16)`  | Dialogs |
+| `--transition-fast` | `0.15s cubic-bezier(0.4, 0, 0.2, 1)` | Hover and focus color changes |
+
+Clickable cards (student activity rows, history rows) show an `--accent` border and `--shadow-sm` on hover.
 
 ## Coding Workspace
 

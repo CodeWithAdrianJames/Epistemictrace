@@ -32,7 +32,7 @@ textarea.input {
 /* Spec 09 Out of Scope: no Monaco here, a mono textarea is enough for starter code. */
 .code {
   font-family: var(--font-mono);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
   white-space: pre;
   tab-size: 4;
 }
@@ -50,7 +50,7 @@ textarea.input {
 .fieldError {
   margin: 0;
   color: var(--state-fail);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .submit {

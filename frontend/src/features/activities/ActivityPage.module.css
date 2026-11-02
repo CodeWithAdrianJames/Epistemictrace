@@ -15,7 +15,7 @@
 
 .heading {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-3xl);
 }
 
 .panel {
@@ -30,7 +30,7 @@
 
 .sectionHeading {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
 .message {

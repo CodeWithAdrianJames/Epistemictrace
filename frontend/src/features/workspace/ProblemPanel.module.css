@@ -13,7 +13,7 @@
 
 .heading {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
 }
 
 /* Spec 14 R3: plain text with the instructor's line breaks and spacing kept. */
@@ -26,7 +26,7 @@
 
 .subheading {
   margin: var(--space-2) 0 0;
-  font-size: 1rem;
+  font-size: var(--text-base);
 }
 
 .examples {
@@ -46,7 +46,7 @@
 
 .exampleName {
   margin: 0 0 var(--space-2);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .values {
@@ -55,7 +55,7 @@
   gap: var(--space-1);
   margin: 0;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 .values dd {

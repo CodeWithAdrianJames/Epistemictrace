@@ -7,7 +7,7 @@
 
 .heading {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-3xl);
 }
 
 .message,
@@ -48,6 +48,12 @@
   border-radius: var(--radius-md);
 }
 
+/* Hover: the accent outline marks the card as clickable. */
+.row:hover {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-sm);
+}
+
 /* Spec 10 R2: the whole row is the link to the activity workspace. */
 .rowLink {
   display: flex;
@@ -55,12 +61,9 @@
   justify-content: space-between;
   gap: var(--space-4);
   padding: var(--space-4) var(--space-5);
+  border-radius: inherit;
   color: var(--text-primary);
   text-decoration: none;
-}
-
-.rowLink:hover {
-  background: var(--bg-subtle);
 }
 
 .rowLink:focus-visible {
@@ -70,12 +73,12 @@
 
 .title {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: var(--text-lg);
   overflow-wrap: anywhere;
 }
 
 .count {
   flex-shrink: 0;
   color: var(--text-secondary);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }

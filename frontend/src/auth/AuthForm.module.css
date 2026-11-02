@@ -5,15 +5,16 @@
 }
 
 .panel {
-  padding: var(--space-5);
+  padding: var(--space-6);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .heading {
   margin: 0 0 var(--space-4);
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
 }
 
 .form {
@@ -50,7 +51,7 @@
 .formError {
   margin: 0;
   color: var(--state-fail);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 /* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */

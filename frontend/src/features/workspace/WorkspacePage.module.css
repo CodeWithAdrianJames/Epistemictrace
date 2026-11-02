@@ -15,7 +15,7 @@
 
 .title {
   margin: 0;
-  font-size: 1.5rem;
+  font-size: var(--text-2xl);
   overflow-wrap: anywhere;
 }
 
@@ -59,17 +59,17 @@
   margin: 0;
   padding: var(--space-1) var(--space-3);
   background: var(--state-pause-soft);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-pill);
   color: var(--state-pause);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }
 
 /* Desktop: problem left (35%), editor top-right (60%), results bottom-right (40%). The page fills
-   the viewport below the app top bar and the content padding (about 110px), so a 1280×800 screen
-   shows all three regions without scrolling the page. */
+   the viewport below the app top bar and the content padding, so a 1280×800 screen shows all three
+   regions without scrolling the page. */
 @media (min-width: 1024px) {
   .page {
-    height: calc(100vh - 110px);
+    height: calc(100vh - var(--topbar-height) - 2 * var(--space-5));
     min-height: 560px;
   }
 
@@ -132,5 +132,5 @@
   background: var(--state-notice-soft);
   border-radius: var(--radius-sm);
   color: var(--state-notice);
-  font-size: 0.875rem;
+  font-size: var(--text-sm);
 }

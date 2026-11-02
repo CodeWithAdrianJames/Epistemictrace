@@ -1,29 +1,46 @@
 /* Design tokens from docs/context/ui-context.md. Components use these through var(--token); no hex values elsewhere. */
 :root {
   /* Colors */
-  --bg-page: #f6f7f9;
+  --bg-page: #f6f7fb;
   --bg-surface: #ffffff;
-  --bg-subtle: #eef0f3;
-  --border-default: #d9dde3;
-  --border-strong: #b8bec7;
-  --text-primary: #1b1f24;
-  --text-secondary: #4a525c;
-  --text-muted: #6b7480;
-  --accent: #2f5bd3;
-  --accent-hover: #2449ad;
-  --accent-soft: #e6ecfb;
-  --state-pass: #1f7a4d;
-  --state-pass-soft: #e3f3ea;
-  --state-fail: #b3412f;
-  --state-fail-soft: #fbe9e5;
+  --bg-subtle: #edeef6;
+  --bg-overlay: rgba(25, 27, 51, 0.6);
+  --border-default: #e4e6f1;
+  --border-strong: #b9bbd2;
+  --text-primary: #252746;
+  --text-secondary: #4a4d85;
+  --text-muted: #626596;
+  --accent: #7e4bde;
+  --accent-hover: #6a3bc6;
+  --accent-soft: #f3eefd;
+  --state-pass: #1e7a3c;
+  --state-pass-soft: #e8f7e5;
+  --state-fail: #b52f45;
+  --state-fail-soft: #fdecee;
   --state-notice: #8a5a00;
-  --state-notice-soft: #fdf3dc;
-  --state-pause: #5b4bb7;
-  --state-pause-soft: #eeebfb;
+  --state-notice-soft: #fdf5d7;
+  --state-pause: #1d5fa8;
+  --state-pause-soft: #eaf5ff;
+
+  /* Navigation bar (dark surface above the light page) */
+  --nav-bg: #252746;
+  --nav-hover: #333661;
+  --nav-active: #3f4273;
+  --nav-border: #4a4d85;
+  --nav-text: #ffffff;
+  --nav-text-muted: #d3d4da;
+  --nav-focus: #b89ced;
 
   /* Typography */
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 2rem;
+  --tracking-tight: -0.02em;
 
   /* Spacing */
   --space-1: 4px;
@@ -34,7 +51,16 @@
   --space-6: 32px;
 
   /* Radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-pill: 9999px;
+
+  /* Elevation */
+  --shadow-sm: 0 1px 4px rgba(47, 49, 82, 0.2);
+  --shadow-lg: 0 4px 48px rgba(0, 0, 0, 0.16);
+
+  /* Layout */
+  --topbar-height: 64px;
+  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
 }

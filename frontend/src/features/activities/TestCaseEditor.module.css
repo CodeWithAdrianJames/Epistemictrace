@@ -28,7 +28,7 @@
 
 .testCaseHeading {
   margin: 0;
-  font-size: 1rem;
+  font-size: var(--text-base);
 }
 
 .checkbox {
