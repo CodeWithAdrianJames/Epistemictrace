@@ -68,6 +68,7 @@ Automated tests to write; manual checks where automation is not possible.
 | [26](26-session-history-api.md) | IMP-26 | STU-01 / M8 | Noel → Jacob | 24 | — |
 | [27](27-session-history-page.md) | IMP-27 | STU-01 / M8 | Jacob → Noel | 26 | — |
 | [28](28-struggle-level-indicator.md) | IMP-28 | STU-02 (Should) | Jacob → Adrian | 14, 17, 21 | Q1 |
+| [29](29-instructor-analytics-api.md) | IMP-29 | INS-01 (Should) | Adrian → Noel | 08, 21, 22, 24, 26 | — |
 
 ## Parallel Lanes
 
