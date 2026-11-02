@@ -14,7 +14,11 @@
 
 /* Primary action: the accent fill, like the instructor form's submit button. */
 .button {
-  padding: var(--space-2) var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-height);
+  padding: 0 var(--space-4);
   background: var(--accent);
   border: none;
   border-radius: var(--radius-sm);
@@ -22,14 +26,20 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-button);
 }
 
 .button:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
+.button:active:not(:disabled) {
+  box-shadow: var(--shadow-button-active);
+}
+
 .button:disabled {
   opacity: 0.6;
+  box-shadow: none;
   cursor: not-allowed;
 }
 

@@ -17,9 +17,9 @@
 }
 
 .empty {
-  padding: var(--space-5);
+  padding: var(--space-6) var(--space-5);
   background: var(--bg-surface);
-  border: 1px dashed var(--border-default);
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius-md);
   text-align: center;
 }
@@ -48,10 +48,16 @@
   border-radius: var(--radius-md);
 }
 
-/* Hover: the accent outline marks the card as clickable. */
+/* Hover: a lighter fill and a stronger outline mark the card as clickable. */
+.row {
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
 .row:hover {
-  border-color: var(--accent);
-  box-shadow: var(--shadow);
+  background: var(--bg-surface-hover);
+  border-color: var(--border-strong);
 }
 
 /* Spec 10 R2: the whole row is the link to the activity workspace. */
@@ -60,7 +66,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-5);
+  padding: var(--space-5);
   border-radius: inherit;
   color: var(--text-primary);
   text-decoration: none;

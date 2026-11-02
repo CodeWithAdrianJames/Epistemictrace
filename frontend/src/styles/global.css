@@ -6,6 +6,7 @@
 
 :root {
   color-scheme: dark;
+  scrollbar-color: var(--border-strong) transparent;
 }
 
 body {
@@ -33,7 +34,9 @@ a {
 }
 
 a,
-button {
+button,
+input,
+textarea {
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast),
@@ -44,6 +47,11 @@ button {
 ::placeholder {
   color: var(--text-placeholder);
   opacity: 1;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--text-on-accent);
 }
 
 code,

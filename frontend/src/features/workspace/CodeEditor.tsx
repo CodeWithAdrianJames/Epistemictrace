@@ -1,6 +1,7 @@
 import Editor, { type EditorProps, type OnChange } from '@monaco-editor/react'
 import { useCallback, useMemo } from 'react'
 import { countChange } from './changeAccounting.ts'
+import { defineEditorTheme, EDITOR_THEME } from './editorTheme.ts'
 
 // at is Date.now() when Monaco reported the change.
 export interface EditorChange {
@@ -44,7 +45,8 @@ function CodeEditor({ value, onChange, ariaLabel = 'Code editor' }: CodeEditorPr
     <Editor
       height="100%"
       language="python"
-      theme="vs-dark"
+      theme={EDITOR_THEME}
+      beforeMount={defineEditorTheme}
       value={value}
       onChange={handleChange}
       loading="Loading editor…"

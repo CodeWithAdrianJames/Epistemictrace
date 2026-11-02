@@ -52,17 +52,23 @@
   border-radius: var(--radius-md);
 }
 
-/* Hover: the accent outline marks the card as clickable. */
+/* Hover: a lighter fill and a stronger outline mark the card as clickable. */
+.row {
+  transition:
+    background-color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
 .row:hover {
-  border-color: var(--accent);
-  box-shadow: var(--shadow);
+  background: var(--bg-surface-hover);
+  border-color: var(--border-strong);
 }
 
 .rowLink {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   color: inherit;
   text-decoration: none;
 }
@@ -96,18 +102,36 @@
 }
 
 .pagerButton {
-  padding: var(--space-2) var(--space-4);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-height);
+  padding: 0 var(--space-4);
+  background: transparent;
+  border: 2px solid var(--border-highlight);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;
+  font-weight: 600;
   cursor: pointer;
+}
+
+.pagerButton:hover:not(:disabled) {
+  background: var(--bg-hover);
+}
+
+.pagerButton:active:not(:disabled) {
+  background: var(--bg-pressed);
 }
 
 .pagerButton:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+}
+
+.pagerButton:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .back {
@@ -135,7 +159,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);

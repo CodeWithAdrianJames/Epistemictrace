@@ -10,8 +10,8 @@
 
 .item {
   padding: var(--space-4);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
 }
 
 .testCase {
@@ -23,7 +23,7 @@
 .newTestCase {
   padding: var(--space-4);
   background: var(--bg-subtle);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
 }
 
 .testCaseHeading {

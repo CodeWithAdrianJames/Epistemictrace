@@ -1,30 +1,35 @@
 /* Design tokens from docs/context/ui-context.md. Components use these through var(--token); no hex values elsewhere. */
 :root {
   /* Surfaces */
-  --bg-page: #151833;
-  --bg-surface: #23274d;
-  --bg-subtle: #1c1f3f;
-  --bg-input: #2a2e59;
-  --bg-overlay: rgba(10, 12, 26, 0.75);
+  --bg-page: #252746;
+  --bg-surface: #333661;
+  --bg-surface-hover: #3f4273;
+  --bg-subtle: #191b33;
+  --bg-input: #3f4273;
+  --bg-hover: rgba(252, 252, 253, 0.09);
+  --bg-pressed: rgba(8, 10, 43, 0.16);
+  --bg-overlay: rgba(15, 16, 36, 0.45);
 
   /* Lines */
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-strong: #3d437a;
+  --border-default: #3f4273;
+  --border-strong: #4a4d85;
+  --border-highlight: #626596;
 
   /* Text */
   --text-primary: #ffffff;
-  --text-secondary: #8f94c2;
-  --text-muted: #8f94c2;
-  --text-placeholder: #6c729c;
+  --text-secondary: #ced0e2;
+  --text-muted: #b9bbd2;
+  --text-placeholder: rgba(255, 255, 255, 0.6);
   --text-on-accent: #ffffff;
 
   /* Accents */
-  --accent: #7952f5;
-  --accent-hover: #683fe0;
-  --accent-soft: rgba(121, 82, 245, 0.2);
+  --accent: #7e4bde;
+  --accent-hover: #8d60e2;
+  --accent-soft: rgba(141, 96, 226, 0.2);
   --accent-text: #b89ced;
-  --highlight: #ffc72c;
-  --highlight-text: #151833;
+  --accent-soft-text: #cebbf3;
+  --highlight: #f8e08e;
+  --highlight-text: #252746;
   --danger: #f05a6e;
   --focus-ring: #b89ced;
 
@@ -37,26 +42,28 @@
   /* Struggle level and breaker */
   --state-steady: #22c55e;
   --state-steady-soft: rgba(34, 197, 94, 0.14);
-  --state-notice: #facc15;
-  --state-notice-soft: rgba(250, 204, 21, 0.14);
-  --state-pause: #c084fc;
-  --state-pause-border: #a855f7;
-  --state-pause-soft: rgba(168, 85, 247, 0.16);
+  --state-notice: #f8e08e;
+  --state-notice-soft: rgba(248, 224, 142, 0.14);
+  --state-pause: #cebbf3;
+  --state-pause-border: #8d60e2;
+  --state-pause-soft: rgba(141, 96, 226, 0.16);
 
   /* Navigation bar */
-  --nav-bg: #1c1f3f;
-  --nav-border: #2e3363;
+  --nav-bg: #252746;
+  --nav-border: #3f4273;
 
   /* Typography */
   --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-brand: ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', Nunito, system-ui, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+  --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.125rem;
   --text-xl: 1.25rem;
   --text-2xl: 1.5rem;
   --text-3xl: 2rem;
+  --text-4xl: 2.5rem;
   --tracking-tight: -0.02em;
 
   /* Spacing */
@@ -66,20 +73,30 @@
   --space-4: 16px;
   --space-5: 24px;
   --space-6: 32px;
+  --space-7: 56px;
 
   /* Radius */
+  --radius-control: 10px;
   --radius-sm: 12px;
+  --radius-button: 14px;
   --radius-md: 16px;
   --radius-lg: 24px;
   --radius-pill: 9999px;
 
   /* Elevation */
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  --glow-accent: 0 0 12px rgba(121, 82, 245, 0.4);
-  --glow-accent-strong: 0 0 20px rgba(121, 82, 245, 0.65);
+  --shadow-button:
+    0 0 0 2px rgba(252, 252, 253, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  --shadow-button-active:
+    0 0 0 4px rgba(252, 252, 253, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  --glow-accent: 0 0 12px rgba(126, 75, 222, 0.4);
+  --glow-accent-strong: 0 0 20px rgba(126, 75, 222, 0.65);
 
   /* Motion and layout */
   --topbar-height: 64px;
+  --control-height: 32px;
+  --button-height: 40px;
+  --field-height: 48px;
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }

@@ -1,9 +1,12 @@
-/* ui-context.md → Layout Patterns: the animated logo, pill links and an outlined Log out on the secondary surface. */
+/* ui-context.md → Navigation Bar: a 64px bar on the page canvas with ghost links and a ghost Log out. */
 .topBar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2) var(--space-5);
+  gap: var(--space-2) var(--space-6);
   min-height: var(--topbar-height);
   padding: var(--space-2) var(--space-5);
   background: var(--nav-bg);
@@ -12,36 +15,46 @@
 
 .productName {
   display: inline-flex;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-control);
   text-decoration: none;
 }
 
 .navList {
   display: flex;
-  gap: var(--space-1);
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.navLink {
-  display: block;
-  padding: var(--space-2) var(--space-4);
-  border-radius: var(--radius-pill);
-  color: var(--text-secondary);
+/* Ghost controls: 32px tall, 10px radius, white text, a translucent fill on hover. */
+.navLink,
+.logout {
+  display: inline-flex;
+  align-items: center;
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   font-size: var(--text-sm);
   font-weight: 600;
+  line-height: 1.25rem;
   text-decoration: none;
 }
 
-.navLink:hover {
-  background: var(--bg-surface);
-  color: var(--text-primary);
+.navLink:hover,
+.logout:hover {
+  background: var(--bg-hover);
+}
+
+.navLink:active,
+.logout:active {
+  background: var(--bg-pressed);
 }
 
 .navLinkActive,
 .navLinkActive:hover {
-  background: var(--accent-soft);
+  background: var(--bg-surface);
   color: var(--text-primary);
 }
 
@@ -49,7 +62,7 @@
 .account {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   margin-left: auto;
 }
 
@@ -59,19 +72,10 @@
 }
 
 .logout {
-  padding: var(--space-2) var(--space-4);
   background: transparent;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--text-sm);
-  font-weight: 600;
+  border: none;
+  font-family: inherit;
   cursor: pointer;
-}
-
-.logout:hover {
-  background: var(--bg-surface);
 }
 
 .productName:focus-visible,

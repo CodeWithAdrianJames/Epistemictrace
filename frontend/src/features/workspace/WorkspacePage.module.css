@@ -34,8 +34,8 @@
 .editor {
   height: 420px;
   overflow: hidden;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-strong);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
 }
 

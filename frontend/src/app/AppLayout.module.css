@@ -11,9 +11,9 @@
   padding: var(--space-5);
 }
 
-/* ui-context.md → Layout Patterns: 1200px max content width, except the workspace. */
+/* ui-context.md → Layout Patterns: 1280px max content width, except the workspace. */
 .contentContained {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
   padding-top: var(--space-6);
 }

@@ -1,7 +1,8 @@
-import Editor, { type EditorProps, type OnChange } from '@monaco-editor/react'
+import Editor, { type EditorProps, type Monaco, type OnChange } from '@monaco-editor/react'
 import { render } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import CodeEditor from './CodeEditor.tsx'
+import { EDITOR_THEME } from './editorTheme.ts'
 
 // Monaco needs a real browser (and loads from a CDN), so the wrapper is replaced by a spy on its props.
 vi.mock('@monaco-editor/react', () => ({
@@ -45,10 +46,26 @@ afterEach(() => {
 })
 
 describe('CodeEditor', () => {
-  it('renders a Python editor with the dark vs-dark theme', () => {
+  it('renders a Python editor with the navy theme built on vs-dark', () => {
     render(<CodeEditor value="" onChange={vi.fn()} />)
 
-    expect(lastProps()).toMatchObject({ language: 'python', theme: 'vs-dark' })
+    expect(lastProps()).toMatchObject({ language: 'python', theme: EDITOR_THEME })
+
+    const defineTheme = vi.fn()
+    const beforeMount = lastProps().beforeMount
+    if (!beforeMount) {
+      throw new Error('Editor has no beforeMount')
+    }
+    beforeMount({ editor: { defineTheme } } as unknown as Monaco)
+
+    expect(defineTheme).toHaveBeenCalledWith(
+      EDITOR_THEME,
+      expect.objectContaining({
+        base: 'vs-dark',
+        inherit: true,
+        colors: expect.objectContaining({ 'editor.background': '#191b33' }),
+      }),
+    )
   })
 
   it('passes the value through to Monaco', () => {

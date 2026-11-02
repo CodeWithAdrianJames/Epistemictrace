@@ -1,27 +1,31 @@
-/* ui-context.md → Layout Patterns → Forms: one column, labels above fields, errors under the field, submit bottom-left. */
+/* ui-context.md → Auth Pages: no card; a centred 440px column on the canvas with the logo, a large
+   centred heading, 48px fields and a full-width primary button. */
 .page {
-  max-width: 440px;
-  margin: var(--space-6) auto 0;
+  display: flex;
+  justify-content: center;
+  padding: var(--space-6) 0;
 }
 
 .panel {
-  padding: var(--space-6);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: 100%;
+  max-width: 440px;
 }
 
 /* The animated logo sits centred above the page heading. */
 .brand {
   display: flex;
   justify-content: center;
-  margin: 0 0 var(--space-5);
 }
 
 .heading {
-  margin: 0 0 var(--space-4);
-  font-size: var(--text-2xl);
+  margin: 0;
+  font-size: var(--text-4xl);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .form {
@@ -33,70 +37,88 @@
 .field {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .label {
   color: var(--text-primary);
+  font-size: var(--text-xs);
   font-weight: 600;
 }
 
 .input {
-  padding: var(--space-3) var(--space-4);
+  height: var(--field-height);
+  padding: 0 var(--space-4);
   background: var(--bg-input);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--bg-input);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;
+}
+
+.input:hover {
+  border-color: var(--accent);
 }
 
 .input[aria-invalid='true'] {
   border-color: var(--danger);
 }
 
-/* Focus: a 2px accent border (1px border plus 1px ring) with a soft glow. */
+/* Focus: a 2px accent border (1px border plus a 1px ring). */
 .input:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    var(--glow-accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .fieldError,
 .formError {
   margin: 0;
   color: var(--state-fail);
-  font-size: var(--text-sm);
+  font-size: var(--text-xs);
+}
+
+.formError {
+  text-align: center;
 }
 
 /* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */
 .pageError {
-  margin: 0 0 var(--space-4);
+  margin: 0;
   padding: var(--space-3) var(--space-4);
   background: var(--state-fail-soft);
   border-radius: var(--radius-sm);
   color: var(--state-fail);
 }
 
+/* Large primary button: 48px, 14px radius, an elevation ring and a light top edge. */
 .submit {
-  align-self: flex-start;
-  padding: var(--space-3) var(--space-5);
+  width: 100%;
+  height: var(--field-height);
+  margin-top: var(--space-2);
+  padding: 0 var(--space-5);
   background: var(--accent);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-button);
   color: var(--text-on-accent);
   font: inherit;
-  font-weight: 700;
+  font-size: var(--text-lg);
+  font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-button);
 }
 
 .submit:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
+.submit:active:not(:disabled) {
+  box-shadow: var(--shadow-button-active);
+}
+
 .submit:disabled {
   opacity: 0.6;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
@@ -107,10 +129,12 @@
 }
 
 .switch {
-  margin: var(--space-4) 0 0;
+  margin: 0;
   color: var(--text-secondary);
+  text-align: center;
 }
 
 .switchLink {
   color: var(--accent-text);
+  font-weight: 600;
 }

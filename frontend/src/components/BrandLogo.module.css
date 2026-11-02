@@ -25,7 +25,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: linear-gradient(135deg, var(--accent), var(--state-pause-border));
+  background: linear-gradient(135deg, var(--accent-hover), var(--accent));
   border-radius: 10px;
   color: var(--text-on-accent);
   box-shadow: var(--glow-accent);
@@ -66,8 +66,17 @@
   white-space: nowrap;
 }
 
+/* Gradient text from the light to the mid purple; the solid color is the fallback without background-clip. */
 .accent {
-  color: var(--accent);
+  color: var(--accent-text);
+}
+
+@supports (background-clip: text) {
+  .accent {
+    background: linear-gradient(to right, var(--accent-soft-text), var(--accent-hover));
+    background-clip: text;
+    color: transparent;
+  }
 }
 
 .lg {

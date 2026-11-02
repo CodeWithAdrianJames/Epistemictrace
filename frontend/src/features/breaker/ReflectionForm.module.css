@@ -12,27 +12,30 @@
 }
 
 .label {
+  font-size: var(--text-sm);
   font-weight: 600;
   color: var(--text-primary);
 }
 
 .textarea {
-  padding: var(--space-3);
+  padding: var(--space-3) var(--space-4);
   background: var(--bg-input);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--bg-input);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;
   resize: vertical;
 }
 
-/* Focus: a 2px accent border (1px border plus 1px ring) with a soft glow. */
+.textarea:hover {
+  border-color: var(--accent);
+}
+
+/* Focus: a 2px accent border (1px border plus a 1px ring). */
 .textarea:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow:
-    0 0 0 1px var(--accent),
-    var(--glow-accent);
+  box-shadow: 0 0 0 1px var(--accent);
 }
 
 .counter {
@@ -50,7 +53,11 @@
 
 .submit {
   align-self: flex-start;
-  padding: var(--space-2) var(--space-4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--button-height);
+  padding: 0 var(--space-4);
   background: var(--accent);
   border: none;
   border-radius: var(--radius-sm);
@@ -58,14 +65,20 @@
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+  box-shadow: var(--shadow-button);
 }
 
 .submit:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
+.submit:active:not(:disabled) {
+  box-shadow: var(--shadow-button-active);
+}
+
 .submit:disabled {
   opacity: 0.6;
+  box-shadow: none;
   cursor: not-allowed;
 }
 
