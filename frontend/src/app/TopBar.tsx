@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from 'react-router'
 import type { Role } from '../api/authApi.ts'
 import { useAuth } from '../auth/AuthProvider.tsx'
+import BrandLogo from '../components/BrandLogo.tsx'
 import styles from './TopBar.module.css'
 
 interface NavItem {
@@ -32,7 +33,7 @@ function TopBar() {
   return (
     <header className={styles.topBar}>
       <Link to="/" className={styles.productName}>
-        EpistemicTrace
+        <BrandLogo />
       </Link>
       {user && (
         <>

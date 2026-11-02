@@ -45,10 +45,10 @@ afterEach(() => {
 })
 
 describe('CodeEditor', () => {
-  it('renders a Python editor with the light vs theme', () => {
+  it('renders a Python editor with the dark vs-dark theme', () => {
     render(<CodeEditor value="" onChange={vi.fn()} />)
 
-    expect(lastProps()).toMatchObject({ language: 'python', theme: 'vs' })
+    expect(lastProps()).toMatchObject({ language: 'python', theme: 'vs-dark' })
   })
 
   it('passes the value through to Monaco', () => {

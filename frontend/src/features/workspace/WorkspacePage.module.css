@@ -35,7 +35,7 @@
   height: 420px;
   overflow: hidden;
   background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-md);
 }
 
@@ -129,8 +129,8 @@
 .trackingNotice {
   margin: 0;
   padding: var(--space-2) var(--space-3);
-  background: var(--state-notice-soft);
+  background: var(--highlight);
   border-radius: var(--radius-sm);
-  color: var(--state-notice);
+  color: var(--highlight-text);
   font-size: var(--text-sm);
 }

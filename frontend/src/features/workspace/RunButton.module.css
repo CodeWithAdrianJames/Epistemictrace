@@ -18,7 +18,7 @@
   background: var(--accent);
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--bg-surface);
+  color: var(--text-on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -34,6 +34,6 @@
 }
 
 .button:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

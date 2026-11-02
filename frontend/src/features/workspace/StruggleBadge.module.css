@@ -1,18 +1,19 @@
-/* ui-context.md → Struggle Level Badge: gentle colors, never the pass/fail ones. */
+/* ui-context.md → Struggle Level Badge: gamified pills with their own tokens, never the test pass/fail ones. */
 .region {
   display: inline-flex;
 }
 
 .badge {
   padding: var(--space-1) var(--space-3);
+  border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font-size: var(--text-sm);
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .low {
-  background: var(--bg-subtle);
-  color: var(--text-secondary);
+  background: var(--state-steady-soft);
+  color: var(--state-steady);
 }
 
 .medium {
@@ -22,5 +23,6 @@
 
 .high {
   background: var(--state-pause-soft);
+  border-color: var(--state-pause-border);
   color: var(--state-pause);
 }

@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../api/ApiError.ts'
+import BrandLogo from '../components/BrandLogo.tsx'
 import { useAuth } from './AuthProvider.tsx'
 import styles from './AuthForm.module.css'
 import {
@@ -64,6 +65,9 @@ function RegisterPage() {
   return (
     <div className={styles.page}>
       <section className={styles.panel}>
+        <div className={styles.brand}>
+          <BrandLogo size="lg" />
+        </div>
         <h1 className={styles.heading}>Create an account</h1>
         {pageError && (
           <p role="alert" className={styles.pageError}>

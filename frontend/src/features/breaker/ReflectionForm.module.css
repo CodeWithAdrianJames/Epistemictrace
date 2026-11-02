@@ -17,8 +17,8 @@
 }
 
 .textarea {
-  padding: var(--space-2);
-  background: var(--bg-surface);
+  padding: var(--space-3);
+  background: var(--bg-input);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
@@ -26,9 +26,13 @@
   resize: vertical;
 }
 
+/* Focus: a 2px accent border (1px border plus 1px ring) with a soft glow. */
 .textarea:focus-visible {
-  outline: 2px solid var(--state-pause);
-  outline-offset: 1px;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow:
+    0 0 0 1px var(--accent),
+    var(--glow-accent);
 }
 
 .counter {
@@ -47,13 +51,17 @@
 .submit {
   align-self: flex-start;
   padding: var(--space-2) var(--space-4);
-  background: var(--state-pause);
+  background: var(--accent);
   border: none;
   border-radius: var(--radius-sm);
-  color: var(--bg-surface);
+  color: var(--text-on-accent);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
+}
+
+.submit:hover:not(:disabled) {
+  background: var(--accent-hover);
 }
 
 .submit:disabled {
@@ -62,6 +70,6 @@
 }
 
 .submit:focus-visible {
-  outline: 2px solid var(--state-pause);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

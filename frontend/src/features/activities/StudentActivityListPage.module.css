@@ -51,7 +51,7 @@
 /* Hover: the accent outline marks the card as clickable. */
 .row:hover {
   border-color: var(--accent);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow);
 }
 
 /* Spec 10 R2: the whole row is the link to the activity workspace. */
@@ -67,7 +67,7 @@
 }
 
 .rowLink:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

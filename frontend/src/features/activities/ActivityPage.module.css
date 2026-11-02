@@ -53,5 +53,5 @@
   padding: var(--space-3) var(--space-4);
   background: var(--accent-soft);
   border-radius: var(--radius-sm);
-  color: var(--accent);
+  color: var(--accent-text);
 }

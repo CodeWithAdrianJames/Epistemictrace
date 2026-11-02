@@ -44,7 +44,7 @@ function CodeEditor({ value, onChange, ariaLabel = 'Code editor' }: CodeEditorPr
     <Editor
       height="100%"
       language="python"
-      theme="vs"
+      theme="vs-dark"
       value={value}
       onChange={handleChange}
       loading="Loading editor…"

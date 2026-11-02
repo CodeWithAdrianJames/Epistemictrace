@@ -21,7 +21,7 @@
   padding: var(--space-2) var(--space-4);
   background: var(--accent);
   border-radius: var(--radius-sm);
-  color: var(--bg-surface);
+  color: var(--text-on-accent);
   font-weight: 600;
   text-decoration: none;
 }
@@ -112,6 +112,6 @@
 
 .newActivity:focus-visible,
 .edit:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

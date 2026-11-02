@@ -1,0 +1,124 @@
+/* ui-context.md → Brand Logo: a rounded wordmark with a floating, glowing circuit-trace emblem. */
+.logo {
+  display: inline-flex;
+  align-items: center;
+  transition: transform 0.25s var(--ease-bounce);
+}
+
+.md {
+  gap: var(--space-2);
+}
+
+/* The hover lift is a quick bounce; the emblem tilts with it. */
+.logo:hover {
+  transform: scale(1.06);
+}
+
+.logo:hover .emblem {
+  transform: rotate(-8deg);
+}
+
+.emblem {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  background: linear-gradient(135deg, var(--accent), var(--state-pause-border));
+  border-radius: 10px;
+  color: var(--text-on-accent);
+  box-shadow: var(--glow-accent);
+  transition: transform 0.25s var(--ease-bounce);
+  animation: glow 3s ease-in-out infinite;
+}
+
+.glyph {
+  width: 70%;
+  height: 70%;
+  overflow: visible;
+  animation: float 3s ease-in-out infinite;
+}
+
+.trace {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.node {
+  fill: currentColor;
+}
+
+.spark {
+  fill: var(--highlight);
+}
+
+.wordmark {
+  color: var(--text-primary);
+  font-family: var(--font-brand);
+  font-size: var(--text-xl);
+  font-weight: 800;
+  letter-spacing: var(--tracking-tight);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.accent {
+  color: var(--accent);
+}
+
+.lg {
+  gap: var(--space-3);
+}
+
+.lg .emblem {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+}
+
+.lg .wordmark {
+  font-size: 1.75rem;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    box-shadow: var(--glow-accent);
+  }
+
+  50% {
+    box-shadow: var(--glow-accent-strong);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .logo,
+  .emblem {
+    transition: none;
+  }
+
+  .emblem,
+  .glyph {
+    animation: none;
+  }
+
+  .logo:hover,
+  .logo:hover .emblem {
+    transform: none;
+  }
+}

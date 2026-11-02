@@ -22,7 +22,7 @@
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow);
 }
 
 .dialog:focus {
@@ -71,7 +71,7 @@
 .primary {
   background: var(--accent);
   border: 1px solid var(--accent);
-  color: var(--bg-surface);
+  color: var(--text-on-accent);
 }
 
 .primary:hover:not(:disabled) {
@@ -79,13 +79,13 @@
 }
 
 .secondary {
-  background: var(--bg-surface);
+  background: transparent;
   border: 1px solid var(--border-strong);
   color: var(--text-primary);
 }
 
 .secondary:hover:not(:disabled) {
-  background: var(--bg-subtle);
+  background: var(--bg-input);
 }
 
 .primary:disabled,
@@ -95,22 +95,21 @@
 }
 
 .primary:focus-visible,
-.secondary:focus-visible,
-.bannerAction:focus-visible {
-  outline: 2px solid var(--accent);
+.secondary:focus-visible {
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
-/* The banner sits above the three workspace regions; --state-notice marks it as information. */
+/* The banner sits above the three workspace regions as a highlight callout. */
 .banner {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2) var(--space-3);
   padding: var(--space-3) var(--space-4);
-  background: var(--state-notice-soft);
+  background: var(--highlight);
   border-radius: var(--radius-sm);
-  color: var(--state-notice);
+  color: var(--highlight-text);
 }
 
 .bannerText {
@@ -121,7 +120,7 @@
   padding: 0;
   background: none;
   border: none;
-  color: var(--accent);
+  color: var(--highlight-text);
   font: inherit;
   font-weight: 600;
   text-decoration: underline;
@@ -129,5 +128,11 @@
 }
 
 .bannerAction:hover {
-  color: var(--accent-hover);
+  text-decoration-thickness: 2px;
+}
+
+/* The focus ring uses the banner's text color; the light focus ring would vanish on the highlight fill. */
+.bannerAction:focus-visible {
+  outline: 2px solid var(--highlight-text);
+  outline-offset: 2px;
 }

@@ -1,11 +1,13 @@
-/* ui-context.md → Breaker Panel: a pause, not a punishment. */
+/* ui-context.md → Breaker Panel: a pause, not a punishment. An inline elevated panel, never a modal. */
 .panel {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-5);
-  background: var(--state-pause-soft);
+  background: var(--bg-surface);
+  border: 1px solid var(--state-pause-border);
   border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
   color: var(--text-primary);
 }
 

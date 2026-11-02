@@ -1,4 +1,4 @@
-/* ui-context.md → Layout Patterns: a dark navigation bar over the light page content. */
+/* ui-context.md → Layout Patterns: the animated logo, pill links and an outlined Log out on the secondary surface. */
 .topBar {
   display: flex;
   flex-wrap: wrap;
@@ -7,14 +7,12 @@
   min-height: var(--topbar-height);
   padding: var(--space-2) var(--space-5);
   background: var(--nav-bg);
-  color: var(--nav-text);
+  border-bottom: 1px solid var(--nav-border);
 }
 
 .productName {
-  color: var(--nav-text);
-  font-size: var(--text-xl);
-  font-weight: 700;
-  letter-spacing: var(--tracking-tight);
+  display: inline-flex;
+  border-radius: var(--radius-sm);
   text-decoration: none;
 }
 
@@ -28,23 +26,23 @@
 
 .navLink {
   display: block;
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
-  color: var(--nav-text-muted);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
 }
 
 .navLink:hover {
-  background: var(--nav-hover);
-  color: var(--nav-text);
+  background: var(--bg-surface);
+  color: var(--text-primary);
 }
 
 .navLinkActive,
 .navLinkActive:hover {
-  background: var(--nav-active);
-  color: var(--nav-text);
+  background: var(--accent-soft);
+  color: var(--text-primary);
 }
 
 /* User name and Log out sit at the right end of the bar. */
@@ -56,16 +54,16 @@
 }
 
 .userName {
-  color: var(--nav-text-muted);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
 .logout {
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   background: transparent;
-  border: 1px solid var(--nav-border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
-  color: var(--nav-text);
+  color: var(--text-primary);
   font: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
@@ -73,12 +71,12 @@
 }
 
 .logout:hover {
-  background: var(--nav-hover);
+  background: var(--bg-surface);
 }
 
 .productName:focus-visible,
 .navLink:focus-visible,
 .logout:focus-visible {
-  outline: 2px solid var(--nav-focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

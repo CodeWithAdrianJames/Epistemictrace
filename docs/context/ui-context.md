@@ -4,72 +4,92 @@
 
 ## Theme
 
-Light only for the MVP. The visual language is a calm study tool modelled on the light product theme of mimo.org: cool off-white and white surfaces, navy ink, one purple accent for actions, a navy navigation bar, rounded cards and pill-shaped status chips, and no alarming colors for struggle. Students may already be frustrated when the runner locks; the interface should feel like a pause, not a punishment.
+Dark only for the MVP, modelled on mimo.org's deep navy / indigo product theme: a midnight-navy canvas, indigo cards, white headings, periwinkle secondary text, one purple accent for actions, a golden highlight for callouts, rounded components and gamified pill badges. Students may already be frustrated when the runner locks; the interface should feel like a pause, not a punishment, so no struggle color is red.
 
-All colors are CSS custom properties defined in `frontend/src/styles/tokens.css` and used through `var(--token)` in CSS Modules (`*.module.css`). Components must use these tokens — no hard-coded hex values in component styles.
+All colors are CSS custom properties defined in `frontend/src/styles/tokens.css` and used through `var(--token)` in CSS Modules (`*.module.css`). Components must use these tokens — no hard-coded hex values in component styles. `global.css` sets `color-scheme: dark` so native controls and scrollbars match.
 
-| Role               | CSS Variable          | Value      |
-| ------------------ | --------------------- | ---------- |
-| Page background    | `--bg-page`           | `#f6f7fb`  |
-| Surface (panels)   | `--bg-surface`        | `#ffffff`  |
-| Subtle surface     | `--bg-subtle`         | `#edeef6`  |
-| Dialog backdrop    | `--bg-overlay`        | `rgba(25, 27, 51, 0.6)` |
-| Default border     | `--border-default`    | `#e4e6f1`  |
-| Strong border      | `--border-strong`     | `#b9bbd2`  |
-| Primary text       | `--text-primary`      | `#252746`  |
-| Secondary text     | `--text-secondary`    | `#4a4d85`  |
-| Muted text         | `--text-muted`        | `#626596`  |
-| Accent (actions)   | `--accent`            | `#7e4bde`  |
-| Accent hover       | `--accent-hover`      | `#6a3bc6`  |
-| Accent soft        | `--accent-soft`       | `#f3eefd`  |
-| Pass               | `--state-pass`        | `#1e7a3c`  |
-| Pass soft          | `--state-pass-soft`   | `#e8f7e5`  |
-| Fail               | `--state-fail`        | `#b52f45`  |
-| Fail soft          | `--state-fail-soft`   | `#fdecee`  |
-| Notice             | `--state-notice`      | `#8a5a00`  |
-| Notice soft        | `--state-notice-soft` | `#fdf5d7`  |
-| Pause (breaker)    | `--state-pause`       | `#1d5fa8`  |
-| Pause soft         | `--state-pause-soft`  | `#eaf5ff`  |
+| Role                  | CSS Variable           | Value      |
+| --------------------- | ---------------------- | ---------- |
+| Page canvas           | `--bg-page`            | `#151833`  |
+| Card / panel surface  | `--bg-surface`         | `#23274d`  |
+| Secondary surface (top bar, inset blocks) | `--bg-subtle` | `#1c1f3f` |
+| Form field fill       | `--bg-input`           | `#2a2e59`  |
+| Dialog backdrop       | `--bg-overlay`         | `rgba(10, 12, 26, 0.75)` |
+| Card border / divider | `--border-default`     | `rgba(255, 255, 255, 0.08)` |
+| Field / outlined-button border | `--border-strong` | `#3d437a` |
+| Primary text          | `--text-primary`       | `#ffffff`  |
+| Secondary / meta text | `--text-secondary`, `--text-muted` | `#8f94c2` |
+| Placeholder           | `--text-placeholder`   | `#6c729c`  |
+| Text on accent fill   | `--text-on-accent`     | `#ffffff`  |
+| Accent (actions)      | `--accent`             | `#7952f5`  |
+| Accent hover          | `--accent-hover`       | `#683fe0`  |
+| Accent soft           | `--accent-soft`        | `rgba(121, 82, 245, 0.2)` |
+| Accent as text        | `--accent-text`        | `#b89ced`  |
+| Highlight callout     | `--highlight`          | `#ffc72c`  |
+| Text on highlight     | `--highlight-text`     | `#151833`  |
+| Danger (invalid field border) | `--danger`     | `#f05a6e`  |
+| Focus ring            | `--focus-ring`         | `#b89ced`  |
+| Pass                  | `--state-pass`         | `#a4e59b`  |
+| Pass soft             | `--state-pass-soft`    | `rgba(164, 229, 155, 0.14)` |
+| Fail (text)           | `--state-fail`         | `#f6a0ac`  |
+| Fail soft             | `--state-fail-soft`    | `rgba(240, 90, 110, 0.14)` |
+| Steady                | `--state-steady`       | `#22c55e`  |
+| Steady soft           | `--state-steady-soft`  | `rgba(34, 197, 94, 0.14)` |
+| Notice                | `--state-notice`       | `#facc15`  |
+| Notice soft           | `--state-notice-soft`  | `rgba(250, 204, 21, 0.14)` |
+| Pause (breaker)       | `--state-pause`        | `#c084fc`  |
+| Pause border          | `--state-pause-border` | `#a855f7`  |
+| Pause soft            | `--state-pause-soft`   | `rgba(168, 85, 247, 0.16)` |
 
-Pass/fail colors are for **test results only**. They are never used for the struggle level or the locked runner. The pause color is a calm blue so that the locked runner and the HIGH struggle badge never read as the purple accent (an action or the active link).
+Pass/fail tokens are for **test results only**; the struggle level and the locked runner use their own tokens (`--state-steady`, `--state-notice`, `--state-pause`). Both the Steady pill and a passed test are green by design decision (2026-11-02); they stay separate tokens with different values (`#22c55e` vs `#a4e59b`) so either can change alone.
 
-Every text/background pair above meets WCAG AA (4.5:1) for body text: for example `--accent` under white button text is 5.3:1, `--accent` on `--accent-soft` is 4.7:1 and `--text-muted` on `--bg-subtle` is 4.7:1. Re-check contrast when changing a value.
+Contrast (WCAG AA, 4.5:1 for body text) drives four values that differ from the raw reference palette:
+
+- `#7952f5` as text on `--bg-surface` is 2.95:1, so purple text (links, "Published", the saved message) uses `--accent-text` (6.1:1). `--accent` stays the button fill (white text on it: 4.8:1).
+- `#f05a6e` as text on the fail-soft fill is 3.7:1, so error text uses `--state-fail` `#f6a0ac` (mimo's dark-mode error tone, 6.1:1); `#f05a6e` is kept as `--danger` for invalid-field borders.
+- `#a855f7` as pill text is 3.0–3.6:1, so the HIGH pill text uses `--state-pause` `#c084fc` (5.4:1) and `#a855f7` becomes its outline.
+- `#6c729c` is 3.1:1 on cards, so it is used only for placeholders; meta text uses `#8f94c2` (4.9:1 on cards, 5.9:1 on the canvas).
+
+Re-check contrast when changing a value.
 
 ### Navigation Bar
 
-The app top bar is a dark surface above the light page.
+| Role              | CSS Variable   | Value     |
+| ----------------- | -------------- | --------- |
+| Bar background    | `--nav-bg`     | `#1c1f3f` |
+| Bar bottom border | `--nav-border` | `#2e3363` |
 
-| Role               | CSS Variable        | Value     |
-| ------------------ | ------------------- | --------- |
-| Bar background     | `--nav-bg`          | `#252746` |
-| Link hover         | `--nav-hover`       | `#333661` |
-| Active link        | `--nav-active`      | `#3f4273` |
-| Outlined button    | `--nav-border`      | `#4a4d85` |
-| Text               | `--nav-text`        | `#ffffff` |
-| Secondary text     | `--nav-text-muted`  | `#d3d4da` |
-| Focus ring         | `--nav-focus`       | `#b89ced` |
+The bar holds the animated logo (a link to `/`), pill navigation links (`--radius-pill`; hover `--bg-surface`, active `--accent-soft` with white text) and an outlined **Log out** button (`--border-strong`). It is at least `--topbar-height` (64px) tall; the workspace height on desktop is computed from it.
 
-The bar is at least `--topbar-height` (64px) tall; the workspace height on desktop is computed from it.
+### Brand Logo
+
+`frontend/src/components/BrandLogo.tsx`, used in the top bar (`md`) and above the heading on the Log in and Create an account cards (`lg`).
+
+- Wordmark: "Epistemic" in `--text-primary` and "Trace" in `--accent`, `--font-brand` at weight 800. Both sizes count as large text, so 3:1 applies; "Trace" on the top bar is 3.3:1.
+- Emblem: a rounded badge with an `--accent` → `--state-pause-border` gradient and an inline SVG circuit trace whose end node is a `--highlight` spark. It is `aria-hidden`, so the accessible name of the logo is exactly "EpistemicTrace".
+- Motion (pure CSS): the glyph floats 2px up and down every 3s; the emblem's glow pulses between `--glow-accent` and `--glow-accent-strong`; on hover the logo scales to 1.06 and the emblem tilts −8°, with a 0.25s `--ease-bounce` transition.
+- `@media (prefers-reduced-motion: reduce)` turns off the float, the glow pulse and the hover transform.
 
 ## Typography
 
 No web-font dependency. System stacks defined as tokens:
 
-| Role      | CSS Variable  | Value |
-| --------- | ------------- | ----- |
-| UI text   | `--font-ui`   | `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` |
-| Code/mono | `--font-mono` | `ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace` |
+| Role      | CSS Variable   | Value |
+| --------- | -------------- | ----- |
+| UI text   | `--font-ui`    | `system-ui, -apple-system, "Segoe UI", Roboto, sans-serif` |
+| Brand     | `--font-brand` | `ui-rounded, "SF Pro Rounded", "Arial Rounded MT Bold", Nunito, system-ui, sans-serif` |
+| Code/mono | `--font-mono`  | `ui-monospace, "Cascadia Code", Consolas, "Liberation Mono", monospace` |
 
-Base size 16px, line height 1.5. Problem statements, test input/output and error messages that show code use `--font-mono`. Monaco uses its own font settings with the light `vs` theme on a white `--bg-surface` container.
+Base size 16px, line height 1.5. Problem statements, test input/output and error messages that show code use `--font-mono`. Monaco uses its own font settings with the dark `vs-dark` theme inside a `--bg-surface` container with a `--border-strong` frame.
 
-The reference site's typeface (Aeonik) is a licensed commercial font and is not used; the system stack stands in for it. Headings (`h1`–`h4`) are weight 600 with `--tracking-tight` (`-0.02em`) and line height 1.25.
+The reference site's typeface (Aeonik) is a licensed commercial font and is not used; `--font-brand` uses a rounded system face where the platform has one. Headings (`h1`–`h4`) are weight 600 with `--tracking-tight` (`-0.02em`) and line height 1.25.
 
 | Token          | Value      | Use |
 | -------------- | ---------- | --- |
 | `--text-sm`    | 0.875rem   | Badges, metadata, field errors, nav links |
 | `--text-base`  | 1rem       | Body text, small headings |
 | `--text-lg`    | 1.125rem   | Panel and card headings |
-| `--text-xl`    | 1.25rem    | Dialog titles, product name |
+| `--text-xl`    | 1.25rem    | Dialog titles, top-bar wordmark |
 | `--text-2xl`   | 1.5rem     | Workspace title, auth card heading |
 | `--text-3xl`   | 2rem       | Page headings |
 
@@ -78,15 +98,16 @@ The reference site's typeface (Aeonik) is a licensed commercial font and is not 
 | Token            | Value  | Use |
 | ---------------- | ------ | --- |
 | `--space-1`..`--space-6` | 4, 8, 12, 16, 24, 32 px | Padding and gaps |
-| `--radius-sm`    | 10px   | Inputs, buttons, inline messages |
+| `--radius-sm`    | 12px   | Inputs, buttons, inline messages |
 | `--radius-md`    | 16px   | Panels and cards |
 | `--radius-lg`    | 24px   | Dialogs, the auth card and the breaker panel |
-| `--radius-pill`  | 9999px | Status chips and the struggle badge |
-| `--shadow-sm`    | `0 1px 4px rgba(47, 49, 82, 0.2)` | Auth card; clickable cards on hover |
-| `--shadow-lg`    | `0 4px 48px rgba(0, 0, 0, 0.16)`  | Dialogs |
+| `--radius-pill`  | 9999px | Status chips, nav links and the struggle badge |
+| `--shadow`       | `0 4px 20px rgba(0, 0, 0, 0.25)` | Auth card, dialogs, breaker panel, clickable cards on hover |
+| `--glow-accent`, `--glow-accent-strong` | `0 0 12px rgba(121, 82, 245, 0.4)`, `0 0 20px rgba(121, 82, 245, 0.65)` | Logo emblem; focused fields |
 | `--transition-fast` | `0.15s cubic-bezier(0.4, 0, 0.2, 1)` | Hover and focus color changes |
+| `--ease-bounce`  | `cubic-bezier(0.34, 1.56, 0.64, 1)` | Logo hover |
 
-Clickable cards (student activity rows, history rows) show an `--accent` border and `--shadow-sm` on hover.
+Form fields are `--bg-input` with a 1px `--border-strong` border; on focus the border becomes a 2px `--accent` line (1px border plus a 1px ring) with `--glow-accent`. Buttons and links show a 2px `--focus-ring` outline. Callouts (the consent banner and the "not tracked" notice) are `--highlight` with `--highlight-text`. Clickable cards (student activity rows, history rows) show an `--accent` border and `--shadow` on hover.
 
 ## Coding Workspace
 
@@ -121,7 +142,7 @@ Clickable cards (student activity rows, history rows) show an `--accent` border 
 
 ### Breaker Panel (Locked Runner)
 
-- Appears above the results panel when the state is `LOCKED`. Uses `--state-pause` / `--state-pause-soft` and `--radius-lg`. It is **not** a modal: the editor and problem statement stay visible and editable.
+- Appears above the results panel when the state is `LOCKED`. An elevated `--bg-surface` panel with a `--state-pause-border` outline, `--shadow` and `--radius-lg`; the heading uses `--state-pause`, the reflection fields use `--bg-input` and **Continue** is the `--accent` primary button. It is **not** a modal and has no backdrop: the editor and problem statement stay visible and editable.
 - Contains the heading, a short explanation, the two reflection fields and the submit button (spec 25).
 - During cooldown, a small notice in the top bar: "Tests are running again. Keep going step by step."
 
@@ -129,9 +150,9 @@ Clickable cards (student activity rows, history rows) show an `--accent` border 
 
 | Level | Text | Colors |
 | --- | --- | --- |
-| LOW | Steady | `--text-secondary` on `--bg-subtle` |
-| MEDIUM | Take a moment | `--state-notice` on `--state-notice-soft` |
-| HIGH | Time to pause and plan | `--state-pause` on `--state-pause-soft` |
+| LOW | Steady | `--state-steady` on `--state-steady-soft` (green pill) |
+| MEDIUM | Take a moment | `--state-notice` on `--state-notice-soft` (amber pill) |
+| HIGH | Time to pause and plan | `--state-pause` on `--state-pause-soft`, `--state-pause-border` outline (purple pill) |
 
 Never show a number, a percentage, a progress bar toward the threshold, or the word "SDI" to students.
 
@@ -154,7 +175,7 @@ Locked panel copy:
 
 ## Component Library
 
-None. Shared components live in `frontend/src/components/` and are built on plain HTML elements with CSS Modules: `Button`, `TextField`, `TextArea`, `Panel`, `Badge`, `PageHeader`, `EmptyState`, `ErrorMessage`. Build a shared component only when a second feature needs it.
+None. Shared components live in `frontend/src/components/` and are built on plain HTML elements with CSS Modules: `Button`, `TextField`, `TextArea`, `Panel`, `Badge`, `PageHeader`, `EmptyState`, `ErrorMessage`. Build a shared component only when a second feature needs it. `BrandLogo` (used by the app top bar and the auth pages) is the first one built.
 
 ## Layout Patterns
 
