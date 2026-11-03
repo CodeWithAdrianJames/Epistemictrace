@@ -12,17 +12,17 @@
 }
 
 .label {
-  color: var(--text-primary);
+  color: var(--text-secondary);
   font-size: var(--text-sm);
   font-weight: 600;
 }
 
-/* ui-context.md → Fields: the field fill doubles as its border until hover or focus. */
+/* ui-context.md → Fields: the sign-up reference's field, a raised fill with a visible border. */
 .input {
   min-height: var(--field-height);
   padding: var(--space-3) var(--space-4);
-  background: var(--bg-input);
-  border: 1px solid var(--bg-input);
+  background: var(--bg-surface-hover);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;
@@ -38,6 +38,9 @@ textarea.input {
 
 /* Spec 09 Out of Scope: no Monaco here, a mono textarea is enough for starter code. */
 .code {
+  background: var(--bg-subtle);
+  border-color: var(--border-default);
+  color: var(--text-code);
   font-family: var(--font-mono);
   font-size: var(--text-sm);
   white-space: pre;
@@ -47,7 +50,7 @@ textarea.input {
 /* Spec 09 R5: archived activities are read-only; a muted fill tells them apart from editable fields. */
 .input[readonly] {
   background: var(--bg-subtle);
-  border-color: var(--border-default);
+  border-color: var(--border-subtle);
   color: var(--text-secondary);
 }
 
@@ -68,7 +71,7 @@ textarea.input {
   justify-content: center;
   min-height: var(--button-height);
   padding: 0 var(--space-4);
-  background: var(--accent);
+  background: var(--accent-fill);
   border: none;
   border-radius: var(--radius-sm);
   color: var(--text-on-accent);
@@ -79,7 +82,7 @@ textarea.input {
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
 }
 
 .submit:active:not(:disabled) {
@@ -92,7 +95,7 @@ textarea.input {
   cursor: not-allowed;
 }
 
-/* Secondary actions (Delete, Archive): outlined, never the accent fill. */
+/* Secondary actions (Delete, Archive): outlined like the reference's View solution button, never the accent fill. */
 .secondary {
   display: inline-flex;
   align-items: center;
@@ -100,7 +103,7 @@ textarea.input {
   min-height: var(--button-height);
   padding: 0 var(--space-4);
   background: transparent;
-  border: 2px solid var(--border-highlight);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;

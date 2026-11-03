@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useId, useState } from 'react'
-import { useParams } from 'react-router'
+import { Link, useParams } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { getActivity, updateActivity, type ActivityDetail } from '../../api/instructorActivitiesApi.ts'
 import { formErrorsFrom, hasErrors, type FieldErrors } from '../../auth/authForms.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import Icon from '../../components/Icon.tsx'
+import PageHeader from '../../components/PageHeader.tsx'
 import ActivityForm from './ActivityForm.tsx'
 import styles from './ActivityPage.module.css'
 import ActivityStatusActions from './ActivityStatusActions.tsx'
@@ -93,10 +95,16 @@ interface EditLayoutProps {
 function EditLayout({ state, onActivityChange, onTestCasesChange }: EditLayoutProps) {
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.heading}>Edit activity</h1>
-        {state.status === 'loaded' && <StatusLabel status={state.activity.status} />}
-      </div>
+      <PageHeader
+        title="Edit activity"
+        subtitle={state.status === 'loaded' && <StatusLabel status={state.activity.status} />}
+        actions={
+          <Link to="/instructor/activities" className={styles.back}>
+            <Icon name="arrowLeft" className={styles.backIcon} />
+            Back to My activities
+          </Link>
+        }
+      />
       {state.status === 'loading' && <p className={styles.message}>Loading activity…</p>}
       {state.status === 'error' && (
         <p role="alert" className={styles.pageError}>

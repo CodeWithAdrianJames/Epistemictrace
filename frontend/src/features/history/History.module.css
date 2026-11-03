@@ -1,19 +1,14 @@
-/* ui-context.md → Layout Patterns: a panel per item, inline loading text, errors at the top. */
+/* The dashboard reference's patterns for the student's history: a panel of rows, stat cards for the
+   session facts and the reflect card from the workspace reference for each reflection. */
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.heading {
-  margin: 0;
-  font-size: var(--text-3xl);
-  overflow-wrap: anywhere;
+  gap: var(--space-5);
 }
 
 .subheading {
-  margin: 0;
-  font-size: var(--text-lg);
+  margin: var(--space-3) 0 0;
+  font-size: var(--text-2xl);
 }
 
 .message {
@@ -25,6 +20,7 @@
   margin: 0;
   padding: var(--space-3) var(--space-4);
   background: var(--state-fail-soft);
+  border: 1px solid var(--state-fail-border);
   border-radius: var(--radius-sm);
   color: var(--state-fail);
 }
@@ -34,90 +30,148 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--space-2);
+  padding: var(--space-6) var(--space-5);
+  background: var(--bg-surface);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-5) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.panelTitle {
+  margin: 0 var(--space-1);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
 }
 
 .list,
 .reflections {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-1);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.row {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+.list {
+  padding-top: var(--space-3);
 }
 
-/* Hover: a lighter fill and a stronger outline mark the card as clickable. */
 .row {
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
   transition:
     background-color var(--transition-fast),
     border-color var(--transition-fast);
 }
 
+/* Hover: a lighter fill and an outline mark the row as clickable. */
 .row:hover {
-  background: var(--bg-surface-hover);
-  border-color: var(--border-strong);
+  background: var(--bg-surface-raised);
+  border-color: var(--border-default);
 }
 
 .rowLink {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border-radius: inherit;
   color: inherit;
   text-decoration: none;
-}
-
-.rowLink:hover .rowTitle {
-  color: var(--accent-text);
 }
 
 .rowLink:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: var(--radius-md);
+}
+
+.rowIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--tile-purple-bg);
+  border-radius: var(--radius-sm);
+  color: var(--tile-purple);
+  font-size: 1.25rem;
+}
+
+.rowText {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .rowTitle {
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
 .rowMeta {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
-  color: var(--text-secondary);
+  gap: var(--space-1) var(--space-4);
+  color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+.rowArrow {
+  color: var(--text-faint);
+  transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.row:hover .rowArrow {
+  color: var(--accent-text);
+  transform: translateX(3px);
 }
 
 .pager {
   display: flex;
-  gap: var(--space-2);
+  justify-content: center;
+  gap: var(--space-3);
 }
 
 .pagerButton {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--space-1);
   min-height: var(--button-height);
   padding: 0 var(--space-4);
-  background: transparent;
-  border: 2px solid var(--border-highlight);
-  border-radius: var(--radius-sm);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-pill);
   color: var(--text-primary);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 }
 
+.pagerIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
 .pagerButton:hover:not(:disabled) {
-  background: var(--bg-hover);
+  background: var(--bg-surface-hover);
 }
 
 .pagerButton:active:not(:disabled) {
@@ -125,7 +179,7 @@
 }
 
 .pagerButton:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -135,39 +189,128 @@
 }
 
 .back {
+  display: inline-flex;
+  align-items: center;
   align-self: flex-start;
+  gap: var(--space-2);
+  color: var(--text-secondary);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.backIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.back:hover {
+  color: var(--text-primary);
+}
+
+.back:focus-visible {
+  border-radius: var(--radius-chip);
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .facts {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
   gap: var(--space-5);
   margin: 0;
 }
 
-.facts dt {
+.fact {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.factIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  font-size: 1.375rem;
+}
+
+.purple {
+  background: var(--tile-purple-bg);
+  color: var(--tile-purple);
+}
+
+.blue {
+  background: var(--tile-blue-bg);
+  color: var(--tile-blue);
+}
+
+.green {
+  background: var(--tile-green-bg);
+  color: var(--tile-green);
+}
+
+.factText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.factText dt {
   color: var(--text-secondary);
   font-size: var(--text-sm);
 }
 
-.facts dd {
+.factText dd {
   margin: 0;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
+.reflections {
+  gap: var(--space-3);
+}
+
+/* The reflect card from the workspace reference: purple gradient, mascot on the left. */
 .reflection {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  padding: var(--space-4) var(--space-5);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  display: grid;
+  grid-template-columns: 56px 1fr;
+  column-gap: var(--space-4);
+  row-gap: var(--space-1);
+  padding: var(--space-5);
+  background: var(--bg-reflect);
+  border: 1px solid var(--border-reflect);
+  border-radius: var(--radius-button);
+}
+
+.reflection > :not(.reflectionMascot) {
+  grid-column: 2;
+}
+
+.reflectionMascot {
+  grid-row: 1 / span 5;
+  grid-column: 1;
+}
+
+.reflectionMascotArt {
+  width: 56px;
+  height: 55px;
 }
 
 .reflectionTime {
-  color: var(--text-muted);
+  color: var(--accent-text);
   font-size: var(--text-sm);
+  font-weight: 600;
 }
 
 .reflectionLabel {
@@ -178,6 +321,22 @@
 /* R5: plain text with the student's line breaks kept. */
 .reflectionText {
   margin: 0;
+  color: var(--text-secondary);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 519px) {
+  .panel {
+    padding: var(--space-4) var(--space-2) var(--space-2);
+  }
+
+  .rowLink {
+    gap: var(--space-3);
+    padding: var(--space-3);
+  }
+
+  .rowIcon {
+    display: none;
+  }
 }

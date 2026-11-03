@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../api/ApiError.ts'
-import BrandLogo from '../components/BrandLogo.tsx'
+import Icon from '../components/Icon.tsx'
 import { useAuth } from './AuthProvider.tsx'
 import styles from './AuthForm.module.css'
 import {
@@ -14,6 +14,7 @@ import {
   type RegisterValues,
 } from './authForms.ts'
 import FormField from './FormField.tsx'
+import HeroIllustration from './HeroIllustration.tsx'
 import { homePathFor } from './homePath.ts'
 
 const EMPTY: RegisterValues = { name: '', email: '', password: '', confirmPassword: '' }
@@ -62,66 +63,105 @@ function RegisterPage() {
     void submit(values.name.trim(), values.email.trim(), values.password)
   }
 
+  // ui-context.md → Auth Pages: the sign-up hero from ui/main screens/epistemictrace-signup.png.
   return (
-    <div className={styles.page}>
-      <section className={styles.panel}>
-        <div className={styles.brand}>
-          <BrandLogo size="lg" />
-        </div>
-        <h1 className={styles.heading}>Create an account</h1>
-        {pageError && (
-          <p role="alert" className={styles.pageError}>
-            {pageError}
-          </p>
-        )}
-        <form className={styles.form} noValidate onSubmit={handleSubmit}>
-          <FormField
-            label="Name"
-            name="name"
-            type="text"
-            autoComplete="name"
-            value={values.name}
-            error={fieldErrors.name}
-            onChange={setField('name')}
-          />
-          <FormField
-            label="Email"
-            name="email"
-            type="email"
-            autoComplete="email"
-            value={values.email}
-            error={fieldErrors.email}
-            onChange={setField('email')}
-          />
-          <FormField
-            label="Password"
-            name="password"
-            type="password"
-            autoComplete="new-password"
-            value={values.password}
-            error={fieldErrors.password}
-            onChange={setField('password')}
-          />
-          <FormField
-            label="Confirm password"
-            name="confirmPassword"
-            type="password"
-            autoComplete="new-password"
-            value={values.confirmPassword}
-            error={fieldErrors.confirmPassword}
-            onChange={setField('confirmPassword')}
-          />
-          <button type="submit" className={styles.submit} disabled={submitting}>
-            Create account
-          </button>
-        </form>
-        <p className={styles.switch}>
-          Already have an account?{' '}
-          <Link to="/login" className={styles.switchLink}>
-            Log in
-          </Link>
+    <div className={styles.hero}>
+      <section className={styles.heroMain}>
+        <p className={styles.tagline}>
+          <span className={styles.taglineLead}>Learn Python</span>
+          <span className={styles.taglineRest}>one struggle at a time</span>
         </p>
+        <p className={styles.lede}>
+          Write real Python in your browser, reflect on where you got stuck, and turn every struggle into steady
+          progress.
+        </p>
+        <div className={styles.heroForm}>
+          <h1 className={styles.formHeading}>Create an account</h1>
+          {pageError && (
+            <p role="alert" className={styles.pageError}>
+              {pageError}
+            </p>
+          )}
+          <form className={styles.form} noValidate onSubmit={handleSubmit}>
+            <FormField
+              label="Name"
+              name="name"
+              type="text"
+              autoComplete="name"
+              placeholder="Your name"
+              value={values.name}
+              error={fieldErrors.name}
+              onChange={setField('name')}
+            />
+            <FormField
+              label="Email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              placeholder="Your email"
+              value={values.email}
+              error={fieldErrors.email}
+              onChange={setField('email')}
+            />
+            <FormField
+              label="Password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Your password"
+              value={values.password}
+              error={fieldErrors.password}
+              onChange={setField('password')}
+            />
+            <FormField
+              label="Confirm password"
+              name="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              placeholder="Type it again"
+              value={values.confirmPassword}
+              error={fieldErrors.confirmPassword}
+              onChange={setField('confirmPassword')}
+            />
+            <button type="submit" className={`${styles.submit} ${styles.submitCompact}`} disabled={submitting}>
+              Create account
+            </button>
+          </form>
+          <p className={`${styles.switch} ${styles.switchStart}`}>
+            Already have an account?{' '}
+            <Link to="/login" className={styles.switchLink}>
+              Log in
+            </Link>
+          </p>
+        </div>
       </section>
+      <div className={styles.heroArt}>
+        <HeroIllustration />
+      </div>
+      <div className={styles.factsRow}>
+        <p className={styles.motto}>
+          <span className={styles.mottoIcons} aria-hidden="true">
+            <Icon name="code" />
+            <Icon name="chart" />
+            <Icon name="star" />
+          </span>
+          Code. Reflect. Grow.
+        </p>
+        <dl className={styles.facts}>
+          <div className={styles.fact}>
+            <dt>Language</dt>
+            <dd>Python 3</dd>
+          </div>
+          <div className={styles.fact}>
+            <dt>Practice</dt>
+            <dd>Real problems</dd>
+          </div>
+          <div className={styles.fact}>
+            <dt>Insights</dt>
+            <dd>Struggle tracking</dd>
+          </div>
+        </dl>
+      </div>
     </div>
   )
 }

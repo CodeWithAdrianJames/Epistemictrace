@@ -1,57 +1,45 @@
-/* ui-context.md → Layout Patterns → Lists: a panel per item with title and secondary text; an empty state when none. */
+/* ui/main screens/epistemictrace-instructor-dashboard.png: gradient heading, four stat cards, then one
+   panel listing the activities with dividers between rows. */
 .page {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.heading {
-  margin: 0;
-  font-size: var(--text-3xl);
+  gap: var(--space-6);
 }
 
 .newActivity {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--button-height);
-  padding: 0 var(--space-4);
-  background: var(--accent);
+  gap: var(--space-2);
+  min-height: var(--action-height);
+  padding: 0 var(--space-6);
+  background: var(--accent-fill);
   border-radius: var(--radius-sm);
   color: var(--text-on-accent);
+  font-size: var(--text-lg);
   font-weight: 600;
   cursor: pointer;
   box-shadow: var(--shadow-button);
   text-decoration: none;
 }
 
+.newActivityIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 2.4;
+}
+
 .newActivity:hover {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
 }
 
 .newActivity:active {
   box-shadow: var(--shadow-button-active);
 }
 
-.message,
-.empty {
+.message {
   margin: 0;
   color: var(--text-secondary);
-}
-
-.empty {
-  padding: var(--space-6) var(--space-5);
-  background: var(--bg-surface);
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-md);
-  text-align: center;
 }
 
 /* ui-context.md: errors from the API appear at the top of the page with the ProblemDetail detail. */
@@ -59,14 +47,110 @@
   margin: 0;
   padding: var(--space-3) var(--space-4);
   background: var(--state-fail-soft);
+  border: 1px solid var(--state-fail-border);
   border-radius: var(--radius-sm);
   color: var(--state-fail);
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(200px, 100%), 1fr));
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+  min-height: 160px;
+  padding: var(--space-5) var(--space-6);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.statIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-sm);
+  font-size: 1.5rem;
+}
+
+.purple {
+  background: var(--tile-purple-bg);
+  color: var(--tile-purple);
+}
+
+.green {
+  background: var(--tile-green-bg);
+  color: var(--tile-green);
+}
+
+.blue {
+  background: var(--tile-blue-bg);
+  color: var(--tile-blue);
+}
+
+.orange {
+  background: var(--tile-orange-bg);
+  color: var(--tile-orange);
+}
+
+.statText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.statLabel {
+  color: var(--text-secondary);
+}
+
+.statValue {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-5xl);
+  font-weight: 700;
+  line-height: 1;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-5) var(--space-6) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow);
+}
+
+.panelTitle {
+  margin: 0;
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: var(--tracking-tight);
+}
+
+.empty {
+  margin: var(--space-5) 0 var(--space-3);
+  padding: var(--space-6) var(--space-5);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  text-align: center;
 }
 
 .list {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -75,16 +159,30 @@
 .row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-5);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
+  gap: var(--space-5);
+  padding: var(--space-6) 0;
+}
+
+.row + .row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.rowIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 1.75rem;
 }
 
 .rowText {
   display: flex;
+  flex: 1;
   flex-direction: column;
   gap: var(--space-1);
   min-width: 0;
@@ -92,7 +190,7 @@
 
 .title {
   margin: 0;
-  font-size: var(--text-lg);
+  font-size: var(--text-xl);
   overflow-wrap: anywhere;
 }
 
@@ -100,20 +198,31 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2) var(--space-3);
   margin: 0;
-  color: var(--text-secondary);
+  color: var(--text-muted);
   font-size: var(--text-sm);
+}
+
+.separator {
+  color: var(--text-faint);
+}
+
+.count {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  font-size: var(--text-lg);
 }
 
 .edit {
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  min-height: var(--control-height);
-  padding: 0 var(--space-3);
-  background: transparent;
-  border: 2px solid var(--border-highlight);
+  gap: var(--space-2);
+  min-height: var(--button-height);
+  padding: 0 var(--space-4);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-control);
   color: var(--text-primary);
   font-size: var(--text-sm);
@@ -121,12 +230,48 @@
   text-decoration: none;
 }
 
+.editIcon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--accent-text);
+}
+
 .edit:hover {
-  background: var(--bg-hover);
+  background: var(--bg-surface-hover);
+  border-color: var(--border-strong);
 }
 
 .edit:active {
   background: var(--bg-pressed);
+}
+
+@media (max-width: 719px) {
+  .row {
+    flex-wrap: wrap;
+    gap: var(--space-3) var(--space-4);
+  }
+
+  .rowText {
+    flex-basis: calc(100% - 64px - var(--space-4));
+  }
+
+  .count {
+    margin-left: calc(64px + var(--space-4));
+  }
+
+  .stat {
+    min-height: 0;
+    padding: var(--space-4);
+  }
+
+  .statIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .statValue {
+    font-size: var(--text-3xl);
+  }
 }
 
 .newActivity:focus-visible,

@@ -1,4 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react'
+import Mascot from '../../components/Mascot.tsx'
 import styles from './LockedPanel.module.css'
 
 export const LOCKED_HEADING = "Let's pause and plan"
@@ -21,10 +22,17 @@ function LockedPanel({ children }: LockedPanelProps) {
 
   return (
     <section className={styles.panel} aria-labelledby="locked-panel-heading">
-      <h2 id="locked-panel-heading" ref={headingRef} tabIndex={-1} className={styles.heading}>
-        {LOCKED_HEADING}
-      </h2>
-      <p className={styles.body}>{LOCKED_BODY}</p>
+      <div className={styles.intro}>
+        <span className={styles.mascot} aria-hidden="true">
+          <Mascot className={styles.mascotArt} />
+        </span>
+        <div className={styles.introText}>
+          <h2 id="locked-panel-heading" ref={headingRef} tabIndex={-1} className={styles.heading}>
+            {LOCKED_HEADING}
+          </h2>
+          <p className={styles.body}>{LOCKED_BODY}</p>
+        </div>
+      </div>
       {children}
     </section>
   )

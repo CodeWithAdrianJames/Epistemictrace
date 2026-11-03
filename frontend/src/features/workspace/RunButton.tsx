@@ -1,4 +1,5 @@
 import type { Ref } from 'react'
+import Icon from '../../components/Icon.tsx'
 import styles from './RunButton.module.css'
 
 export type RunButtonState = 'preparing' | 'ready' | 'running' | 'waiting' | 'locked' | 'failed'
@@ -34,6 +35,13 @@ function RunButton({ state, onRun, ref }: RunButtonProps) {
         </p>
       )}
       <button ref={ref} type="button" className={styles.button} disabled={disabled} aria-disabled={disabled} onClick={onRun}>
+        {state === 'ready' || state === 'failed' ? (
+          <Icon name="play" className={styles.icon} />
+        ) : state === 'locked' ? (
+          <Icon name="lock" className={styles.icon} />
+        ) : (
+          <span className={styles.spinner} aria-hidden="true" />
+        )}
         {LABELS[state]}
       </button>
     </div>

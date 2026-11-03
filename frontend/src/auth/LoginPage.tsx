@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../api/ApiError.ts'
 import BrandLogo from '../components/BrandLogo.tsx'
+import Mascot from '../components/Mascot.tsx'
 import { useAuth } from './AuthProvider.tsx'
 import styles from './AuthForm.module.css'
 import {
@@ -82,6 +83,7 @@ function LoginPage() {
             name="email"
             type="email"
             autoComplete="email"
+            placeholder="Your e-mail"
             value={values.email}
             error={fieldErrors.email}
             onChange={setField('email')}
@@ -91,6 +93,7 @@ function LoginPage() {
             name="password"
             type="password"
             autoComplete="current-password"
+            placeholder="Your password"
             value={values.password}
             error={fieldErrors.password}
             onChange={setField('password')}
@@ -111,6 +114,9 @@ function LoginPage() {
           </Link>
         </p>
       </section>
+      <div className={styles.cornerMascot} aria-hidden="true">
+        <Mascot className={styles.cornerMascotArt} />
+      </div>
     </div>
   )
 }

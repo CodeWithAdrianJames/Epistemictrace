@@ -1,9 +1,8 @@
+/* The reference's Run code button: full width under the editor, 56px, the accent gradient and glow. */
 .wrapper {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--space-3);
+  flex-direction: column;
+  gap: var(--space-2);
 }
 
 .reason {
@@ -12,25 +11,42 @@
   font-size: var(--text-sm);
 }
 
-/* Primary action: the accent fill, like the instructor form's submit button. */
 .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--button-height);
-  padding: 0 var(--space-4);
-  background: var(--accent);
+  gap: var(--space-3);
+  width: 100%;
+  min-height: var(--action-height);
+  padding: 0 var(--space-5);
+  background: var(--accent-fill);
   border: none;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-button);
   color: var(--text-on-accent);
   font: inherit;
-  font-weight: 600;
+  font-size: var(--text-lg);
+  font-weight: 700;
   cursor: pointer;
   box-shadow: var(--shadow-button);
 }
 
+.icon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* Busy states (preparing, running, waiting) spin quietly; the label carries the reason. */
+.spinner {
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: var(--radius-pill);
+  animation: spin 0.8s linear infinite;
+}
+
 .button:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
 }
 
 .button:active:not(:disabled) {
@@ -46,4 +62,16 @@
 .button:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+  }
 }

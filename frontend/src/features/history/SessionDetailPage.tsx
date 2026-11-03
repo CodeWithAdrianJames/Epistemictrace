@@ -3,6 +3,9 @@ import { Link, useParams } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { getSession, type SessionDetail } from '../../api/historyApi.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import Icon from '../../components/Icon.tsx'
+import Mascot from '../../components/Mascot.tsx'
+import PageHeader from '../../components/PageHeader.tsx'
 import styles from './History.module.css'
 import { formatDateTime } from './formatDateTime.ts'
 import { formatDuration } from './formatDuration.ts'
@@ -67,23 +70,39 @@ function Detail({ session }: { session: SessionDetail }) {
   return (
     <div className={styles.page}>
       <Link to="/student/history" className={styles.back}>
+        <Icon name="arrowLeft" className={styles.backIcon} />
         Back to My history
       </Link>
-      <h1 className={styles.heading}>{session.activityTitle}</h1>
+      <PageHeader title={session.activityTitle} />
       <dl className={styles.facts}>
-        <div>
-          <dt>Started</dt>
-          <dd>
-            <time dateTime={session.startedAt}>{formatDateTime(session.startedAt)}</time>
-          </dd>
+        <div className={styles.fact}>
+          <span className={`${styles.factIcon} ${styles.purple}`} aria-hidden="true">
+            <Icon name="calendar" />
+          </span>
+          <div className={styles.factText}>
+            <dt>Started</dt>
+            <dd>
+              <time dateTime={session.startedAt}>{formatDateTime(session.startedAt)}</time>
+            </dd>
+          </div>
         </div>
-        <div>
-          <dt>Duration</dt>
-          <dd>{formatDuration(session.durationSeconds)}</dd>
+        <div className={styles.fact}>
+          <span className={`${styles.factIcon} ${styles.blue}`} aria-hidden="true">
+            <Icon name="clock" />
+          </span>
+          <div className={styles.factText}>
+            <dt>Duration</dt>
+            <dd>{formatDuration(session.durationSeconds)}</dd>
+          </div>
         </div>
-        <div>
-          <dt>Test runs</dt>
-          <dd>{session.runCount}</dd>
+        <div className={styles.fact}>
+          <span className={`${styles.factIcon} ${styles.green}`} aria-hidden="true">
+            <Icon name="play" />
+          </span>
+          <div className={styles.factText}>
+            <dt>Test runs</dt>
+            <dd>{session.runCount}</dd>
+          </div>
         </div>
       </dl>
       <h2 className={styles.subheading}>Reflections</h2>
@@ -93,6 +112,9 @@ function Detail({ session }: { session: SessionDetail }) {
         <ul aria-label="Reflections" className={styles.reflections}>
           {session.reflections.map((reflection, index) => (
             <li key={`${reflection.submittedAt}-${index}`} className={styles.reflection}>
+              <span className={styles.reflectionMascot} aria-hidden="true">
+                <Mascot className={styles.reflectionMascotArt} />
+              </span>
               <time dateTime={reflection.submittedAt} className={styles.reflectionTime}>
                 {formatDateTime(reflection.submittedAt)}
               </time>

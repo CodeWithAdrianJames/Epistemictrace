@@ -1,0 +1,31 @@
+.mascot {
+  display: block;
+  overflow: visible;
+}
+
+.outline {
+  fill: var(--mascot-outline);
+}
+
+.body {
+  fill: var(--mascot-body);
+}
+
+.face {
+  fill: var(--mascot-face);
+}
+
+.eye {
+  fill: var(--mascot-eyes);
+}
+
+.ring {
+  fill: none;
+  stroke: var(--mascot-ring);
+  stroke-width: 5.8;
+  stroke-linecap: round;
+}
+
+.spark {
+  fill: var(--mascot-spark);
+}

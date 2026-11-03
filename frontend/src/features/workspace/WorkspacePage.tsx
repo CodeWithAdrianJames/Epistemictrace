@@ -5,6 +5,8 @@ import { getActivity, type ActivityDetail } from '../../api/activitiesApi.ts'
 import { useAuth } from '../../auth/AuthProvider.tsx'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
 import type { Breaker, BreakerStatus } from '../../api/sessionsApi.ts'
+import Icon from '../../components/Icon.tsx'
+import PythonMark from '../../components/PythonMark.tsx'
 import LockedPanel from '../breaker/LockedPanel.tsx'
 import ReflectionForm from '../breaker/ReflectionForm.tsx'
 import { useBreakerState } from '../breaker/useBreakerState.ts'
@@ -154,6 +156,11 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
   return (
     <div className={styles.page}>
       <header className={styles.header}>
+        <Link to="/student/activities" className={styles.back}>
+          <Icon name="arrowLeft" className={styles.backIcon} />
+          Back to Activities
+        </Link>
+        <span className={styles.divider} aria-hidden="true" />
         <h1 className={styles.title}>{activity.title}</h1>
         <div className={styles.actions}>
           <StruggleBadge level={struggleLevel} />
@@ -162,11 +169,6 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
               {COOLDOWN_NOTICE}
             </p>
           )}
-          <RunButton
-            ref={runButtonRef}
-            state={runButtonState(runnerStatus, runState, gate.waiting, breaker.state)}
-            onRun={() => void run()}
-          />
         </div>
       </header>
       <ConsentNotice consent={consent} />
@@ -184,9 +186,30 @@ function Workspace({ activity, onEditorChange }: { activity: ActivityDetail } & 
         <div className={styles.problem}>
           <ProblemPanel problemStatement={activity.problemStatement} testCases={activity.testCases} />
         </div>
-        <section className={styles.editor} aria-label="Editor">
-          <CodeEditor value={code} onChange={handleChange} />
-        </section>
+        <div className={styles.editorColumn}>
+          <section className={styles.editor} aria-label="Editor">
+            <div className={styles.editorTabs}>
+              <span className={styles.fileTab}>
+                <PythonMark />
+                script.py
+              </span>
+              <span className={styles.languageChip}>
+                <PythonMark />
+                Python 3
+              </span>
+            </div>
+            <div className={styles.editorBody}>
+              <CodeEditor value={code} onChange={handleChange} />
+            </div>
+          </section>
+          <div className={styles.runBar}>
+            <RunButton
+              ref={runButtonRef}
+              state={runButtonState(runnerStatus, runState, gate.waiting, breaker.state)}
+              onRun={() => void run()}
+            />
+          </div>
+        </div>
         <div className={styles.results}>
           {breaker.state === 'LOCKED' && telemetry.sessionId !== null && (
             <LockedPanel>

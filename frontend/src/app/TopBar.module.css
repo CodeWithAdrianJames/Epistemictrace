@@ -1,22 +1,34 @@
-/* ui-context.md → Navigation Bar: a 64px bar on the page canvas with ghost links and a ghost Log out. */
+/* ui-context.md → Navigation: one component, two shapes. The sidebar (signed-in pages) follows the
+   instructor dashboard reference; the slim bar (guests, the workspace) follows the workspace reference. */
 .topBar {
-  position: sticky;
-  top: 0;
   z-index: 50;
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2) var(--space-6);
-  min-height: var(--topbar-height);
-  padding: var(--space-2) var(--space-5);
   background: var(--nav-bg);
-  border-bottom: 1px solid var(--nav-border);
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .productName {
   display: inline-flex;
+  align-self: flex-start;
   border-radius: var(--radius-control);
   text-decoration: none;
+}
+
+.roleCaption {
+  padding-left: 44px;
+  color: var(--accent-text);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.nav {
+  min-width: 0;
 }
 
 .navList {
@@ -27,55 +39,278 @@
   list-style: none;
 }
 
-/* Ghost controls: 32px tall, 10px radius, white text, a translucent fill on hover. */
-.navLink,
-.logout {
-  display: inline-flex;
+.navLink {
+  position: relative;
+  display: flex;
   align-items: center;
-  height: var(--control-height);
-  padding: 0 var(--space-3);
-  border-radius: var(--radius-control);
-  color: var(--text-primary);
-  font-size: var(--text-sm);
+  gap: var(--space-3);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
   font-weight: 600;
-  line-height: 1.25rem;
   text-decoration: none;
 }
 
-.navLink:hover,
-.logout:hover {
-  background: var(--bg-hover);
+.navIcon {
+  color: var(--text-muted);
 }
 
-.navLink:active,
-.logout:active {
+.navLink:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.navLink:active {
   background: var(--bg-pressed);
 }
 
 .navLinkActive,
 .navLinkActive:hover {
-  background: var(--bg-surface);
+  background: var(--bg-nav-active);
+  border-color: var(--border-reflect);
   color: var(--text-primary);
 }
 
-/* User name and Log out sit at the right end of the bar. */
+.navLinkActive .navIcon {
+  color: var(--text-primary);
+}
+
 .account {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  margin-left: auto;
+  gap: var(--space-3);
+}
+
+.avatar {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: var(--mascot-face);
+  border-radius: var(--radius-sm);
+}
+
+.avatarMascot {
+  width: 34px;
+  height: 34px;
+}
+
+.accountText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .userName {
-  color: var(--text-secondary);
+  overflow: hidden;
+  color: var(--text-primary);
   font-size: var(--text-sm);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.userRole {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
 }
 
 .logout {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-3);
   background: transparent;
-  border: none;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-control);
+  color: var(--text-primary);
   font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
   cursor: pointer;
+}
+
+.logoutIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.logout:hover {
+  background: var(--bg-hover);
+}
+
+.logout:active {
+  background: var(--bg-pressed);
+}
+
+/* Slim bar: 64px, logo left, links after it, the account at the right end. */
+.bar {
+  position: sticky;
+  top: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-6);
+  min-height: var(--topbar-height);
+  padding: var(--space-2) var(--space-5);
+  border-bottom: 1px solid var(--nav-border);
+}
+
+.bar .navLink {
+  height: var(--control-height);
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-control);
+  font-size: var(--text-sm);
+}
+
+.bar .navIcon {
+  width: 1rem;
+  height: 1rem;
+}
+
+.bar .account {
+  margin-left: auto;
+}
+
+.bar .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(135deg, var(--accent-edge), var(--accent));
+}
+
+.bar .avatarMascot {
+  width: 26px;
+  height: 26px;
+}
+
+.bar .userRole {
+  display: none;
+}
+
+/* Sidebar: full height, logo on top, stacked links, the account card at the bottom. */
+.sidebar {
+  position: sticky;
+  top: 0;
+  flex-direction: column;
+  gap: var(--space-6);
+  width: var(--sidebar-width);
+  height: 100vh;
+  padding: var(--space-6) var(--space-4) var(--space-4);
+  overflow-y: auto;
+  border-right: 1px solid var(--border-subtle);
+}
+
+.sidebar .brand {
+  padding: 0 var(--space-1);
+}
+
+.sidebar .nav {
+  flex: 1;
+}
+
+.sidebar .navList {
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.sidebar .navLink {
+  min-height: 56px;
+  padding: 0 var(--space-5);
+  font-size: var(--text-lg);
+  font-weight: 500;
+}
+
+.sidebar .navLinkActive {
+  font-weight: 600;
+}
+
+/* The accent rail at the left edge marks the current section. */
+.sidebar .navLinkActive::before {
+  position: absolute;
+  top: 50%;
+  left: calc(-1 * var(--space-4) - 1px);
+  width: 4px;
+  height: 32px;
+  background: var(--accent);
+  border-radius: 0 4px 4px 0;
+  content: '';
+  transform: translateY(-50%);
+}
+
+.sidebar .account {
+  flex-wrap: wrap;
+  padding: var(--space-4);
+  background: var(--bg-reflect);
+  border: 1px solid var(--border-reflect);
+  border-radius: var(--radius-md);
+}
+
+.sidebar .accountText {
+  flex: 1;
+}
+
+.sidebar .logout {
+  width: 100%;
+  justify-content: center;
+}
+
+/* Below 900px the sidebar becomes a bar across the top. */
+@media (max-width: 899px) {
+  .sidebar {
+    position: sticky;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-5);
+    width: 100%;
+    height: auto;
+    padding: var(--space-3) var(--space-4);
+    border-right: none;
+    border-bottom: 1px solid var(--nav-border);
+  }
+
+  .sidebar .nav {
+    flex: 0 1 auto;
+  }
+
+  .sidebar .navList {
+    flex-direction: row;
+  }
+
+  .sidebar .navLink {
+    min-height: var(--button-height);
+    padding: 0 var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  .sidebar .navLinkActive::before {
+    display: none;
+  }
+
+  .sidebar .roleCaption {
+    display: none;
+  }
+
+  .sidebar .account {
+    flex-wrap: nowrap;
+    margin-left: auto;
+    padding: 0;
+    background: none;
+    border: none;
+  }
+
+  .sidebar .avatar,
+  .sidebar .userRole {
+    display: none;
+  }
+
+  .sidebar .logout {
+    width: auto;
+  }
 }
 
 .productName:focus-visible,

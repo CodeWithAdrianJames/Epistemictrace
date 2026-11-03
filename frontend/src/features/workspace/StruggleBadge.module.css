@@ -1,23 +1,39 @@
-/* ui-context.md → Struggle Level Badge: gamified pills with their own tokens, never the test pass/fail ones. */
+/* ui-context.md → Struggle Level Badge: the reference's Pace pill, with its own tokens, never the test
+   pass/fail ones. The dot is decoration; the text is the level. */
 .region {
   display: inline-flex;
 }
 
 .badge {
-  padding: var(--space-1) var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-height);
+  padding: 0 var(--space-4);
   border: 1px solid transparent;
   border-radius: var(--radius-pill);
   font-size: var(--text-sm);
   font-weight: 700;
 }
 
+.badge::before {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: var(--radius-pill);
+  box-shadow: 0 0 0 4px var(--bg-hover);
+  content: '';
+}
+
 .low {
   background: var(--state-steady-soft);
+  border-color: var(--border-default);
   color: var(--state-steady);
 }
 
 .medium {
   background: var(--state-notice-soft);
+  border-color: var(--border-default);
   color: var(--state-notice);
 }
 

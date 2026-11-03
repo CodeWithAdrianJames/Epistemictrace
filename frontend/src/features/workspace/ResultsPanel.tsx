@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import type { TestCase } from '../../api/activitiesApi.ts'
+import Icon, { type IconName } from '../../components/Icon.tsx'
 import { RUN_TIMEOUT_MS } from '../runner/runnerConfig.ts'
 import type { PythonError } from '../runner/runnerProtocol.ts'
 import type { RunReport, TestResult, TestStatus } from '../runner/runTests.ts'
@@ -16,6 +17,14 @@ const STATUS_LABELS: Record<TestStatus, string> = {
   error: 'Error',
   timeout: 'Timed out',
   not_run: 'Not run',
+}
+
+const STATUS_ICONS: Record<TestStatus, IconName> = {
+  passed: 'checkCircle',
+  failed: 'xCircle',
+  error: 'alertCircle',
+  timeout: 'clock',
+  not_run: 'minusCircle',
 }
 
 const TIMEOUT_MESSAGE = `Your code ran longer than ${RUN_TIMEOUT_MS / 1000} seconds and was stopped. Check for a loop that never ends.`
@@ -35,11 +44,17 @@ function ResultsPanel({ report, testCases }: ResultsPanelProps) {
       <h2 id={headingId} className={styles.heading}>
         Test results
       </h2>
-      <div aria-live="polite">
+      <div aria-live="polite" className={styles.summaryRow}>
+        {!report && <Icon name="terminal" className={styles.placeholderIcon} />}
         <p className={report ? styles.summary : styles.placeholder}>
           {report ? summary(report) : 'Run your code to see test results here.'}
         </p>
       </div>
+      {report && report.totalCount > 0 && (
+        <div className={styles.progress} aria-hidden="true">
+          <span className={styles.progressFill} style={{ width: `${(report.passedCount / report.totalCount) * 100}%` }} />
+        </div>
+      )}
       {report?.status === 'unavailable' && (
         <p role="alert" className={styles.errorBlock}>
           {report.message}
@@ -81,6 +96,7 @@ function ResultRow({ result, number, testCase }: { result: TestResult; number: n
   return (
     <li className={styles.row}>
       <div className={styles.rowHeader}>
+        <Icon name={STATUS_ICONS[result.status]} className={`${styles.statusIcon} ${styles[`${result.status}Icon`]}`} />
         <h3 className={styles.name}>{result.hidden ? `Hidden test ${number}` : `Test ${number}`}</h3>
         <span className={`${styles.status} ${styles[result.status]}`}>{STATUS_LABELS[result.status]}</span>
       </div>

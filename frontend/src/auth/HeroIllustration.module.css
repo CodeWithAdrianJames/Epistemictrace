@@ -1,0 +1,171 @@
+.art {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.glowCore {
+  stop-color: var(--accent);
+  stop-opacity: 0.35;
+}
+
+.glowEdge {
+  stop-color: var(--accent);
+  stop-opacity: 0;
+}
+
+.dot {
+  fill: var(--border-default);
+}
+
+.board,
+.screen {
+  fill: var(--bg-subtle);
+  stroke: var(--border-strong);
+  stroke-width: 3;
+}
+
+.boardEdge {
+  fill: var(--bg-surface-raised);
+}
+
+.trail {
+  fill: none;
+  stroke: var(--accent-edge);
+  stroke-width: 3;
+  stroke-linejoin: round;
+}
+
+.tile {
+  fill: var(--accent);
+  stroke: var(--accent-edge);
+  stroke-width: 2;
+}
+
+.tileEdge {
+  fill: var(--mascot-eyes);
+}
+
+.tick {
+  fill: none;
+  stroke: var(--text-on-accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.lineAccent,
+.lineCyan,
+.lineMuted,
+.linePink,
+.lineYellow {
+  opacity: 0.9;
+}
+
+.lineAccent {
+  fill: var(--accent-edge);
+}
+
+.lineCyan {
+  fill: var(--accent-cyan);
+}
+
+.lineMuted {
+  fill: var(--border-highlight);
+}
+
+.linePink {
+  fill: var(--state-fail);
+}
+
+.lineYellow {
+  fill: var(--mascot-spark);
+}
+
+.play {
+  fill: var(--border-strong);
+}
+
+.playEdge {
+  fill: var(--bg-surface-raised);
+}
+
+.playIcon {
+  fill: var(--text-primary);
+}
+
+.outlineTile {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3;
+}
+
+.shield {
+  fill: var(--tile-orange);
+}
+
+.shieldEdge {
+  fill: var(--tile-orange-bg);
+}
+
+.shieldText {
+  fill: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 30px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.hexOuter {
+  fill: var(--text-secondary);
+}
+
+.hexInner {
+  fill: var(--bg-surface-raised);
+}
+
+.spark {
+  fill: var(--text-primary);
+}
+
+.badgeOuter {
+  fill: var(--mascot-spark);
+}
+
+.badgeInner {
+  fill: var(--bg-surface);
+}
+
+.badgeTick {
+  fill: none;
+  stroke: var(--text-primary);
+  stroke-width: 6;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+}
+
+.badgeStar {
+  fill: var(--mascot-spark);
+}
+
+.mascot {
+  animation: hover 4s ease-in-out infinite;
+}
+
+@keyframes hover {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot {
+    animation: none;
+  }
+}

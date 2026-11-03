@@ -1,7 +1,7 @@
 import Editor, { type EditorProps, type OnChange } from '@monaco-editor/react'
 import { useCallback, useMemo } from 'react'
 import { countChange } from './changeAccounting.ts'
-import { defineEditorTheme, EDITOR_THEME } from './editorTheme.ts'
+import { defineEditorTheme, EDITOR_FONT_FAMILY, EDITOR_THEME } from './editorTheme.ts'
 
 // at is Date.now() when Monaco reported the change.
 export interface EditorChange {
@@ -26,6 +26,9 @@ function CodeEditor({ value, onChange, ariaLabel = 'Code editor' }: CodeEditorPr
       minimap: { enabled: false },
       wordWrap: 'on',
       fontSize: 14,
+      fontFamily: EDITOR_FONT_FAMILY,
+      lineHeight: 24,
+      padding: { top: 12, bottom: 12 },
       tabSize: 4,
       insertSpaces: true,
       detectIndentation: false,

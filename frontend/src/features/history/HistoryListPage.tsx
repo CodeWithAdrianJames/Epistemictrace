@@ -3,6 +3,8 @@ import { Link } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { listSessions, type HistoryItem, type HistoryPage } from '../../api/historyApi.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import Icon from '../../components/Icon.tsx'
+import PageHeader from '../../components/PageHeader.tsx'
 import styles from './History.module.css'
 import { formatDateTime } from './formatDateTime.ts'
 import { formatDuration } from './formatDuration.ts'
@@ -44,7 +46,7 @@ function HistoryListPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.heading}>My history</h1>
+      <PageHeader title="My history" subtitle="Your past coding sessions and the reflections you wrote." />
       {state.status === 'loading' && <p className={styles.message}>Loading your sessions…</p>}
       {state.status === 'error' && (
         <p role="alert" className={styles.pageError}>
@@ -70,18 +72,25 @@ function Loaded({ page, onPage }: { page: HistoryPage; onPage: (page: number) =>
 
   return (
     <>
-      <ul aria-label="Sessions" className={styles.list}>
-        {page.items.map((item) => (
-          <SessionRow key={item.sessionId} item={item} />
-        ))}
-      </ul>
+      <section className={styles.panel} aria-labelledby="history-list-title">
+        <p id="history-list-title" className={styles.panelTitle}>
+          Sessions
+        </p>
+        <ul aria-label="Sessions" className={styles.list}>
+          {page.items.map((item) => (
+            <SessionRow key={item.sessionId} item={item} />
+          ))}
+        </ul>
+      </section>
       {(hasPrevious || hasNext) && (
         <nav aria-label="Pages" className={styles.pager}>
           <button type="button" className={styles.pagerButton} disabled={!hasPrevious} onClick={() => onPage(page.page - 1)}>
+            <Icon name="chevronLeft" className={styles.pagerIcon} />
             Previous
           </button>
           <button type="button" className={styles.pagerButton} disabled={!hasNext} onClick={() => onPage(page.page + 1)}>
             Next
+            <Icon name="chevronRight" className={styles.pagerIcon} />
           </button>
         </nav>
       )}
@@ -93,12 +102,18 @@ function SessionRow({ item }: { item: HistoryItem }) {
   return (
     <li className={styles.row}>
       <Link to={`/student/history/${item.sessionId}`} className={styles.rowLink}>
-        <span className={styles.rowTitle}>{item.activityTitle}</span>
-        <span className={styles.rowMeta}>
-          <time dateTime={item.startedAt}>{formatDateTime(item.startedAt)}</time>
-          <span>{formatDuration(item.durationSeconds)}</span>
-          <span>{reflectionsLabel(item.reflectionCount)}</span>
+        <span className={styles.rowIcon} aria-hidden="true">
+          <Icon name="history" />
         </span>
+        <span className={styles.rowText}>
+          <span className={styles.rowTitle}>{item.activityTitle}</span>
+          <span className={styles.rowMeta}>
+            <time dateTime={item.startedAt}>{formatDateTime(item.startedAt)}</time>
+            <span>{formatDuration(item.durationSeconds)}</span>
+            <span>{reflectionsLabel(item.reflectionCount)}</span>
+          </span>
+        </span>
+        <Icon name="arrowRight" className={styles.rowArrow} />
       </Link>
     </li>
   )

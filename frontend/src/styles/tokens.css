@@ -1,61 +1,105 @@
 /* Design tokens from docs/context/ui-context.md. Components use these through var(--token); no hex values elsewhere. */
 :root {
   /* Surfaces */
-  --bg-page: #252746;
-  --bg-surface: #333661;
-  --bg-surface-hover: #3f4273;
-  --bg-subtle: #191b33;
+  --bg-page: #1b1d3a;
+  --bg-auth: #252746;
+  --bg-surface: #252746;
+  --bg-surface-raised: #2d305a;
+  --bg-surface-hover: #333661;
+  --bg-subtle: #1d1f3d;
+  --bg-console: #191b36;
   --bg-input: #3f4273;
-  --bg-hover: rgba(252, 252, 253, 0.09);
-  --bg-pressed: rgba(8, 10, 43, 0.16);
-  --bg-overlay: rgba(15, 16, 36, 0.45);
+  --bg-hover: rgba(252, 252, 253, 0.07);
+  --bg-pressed: rgba(8, 10, 43, 0.2);
+  --bg-overlay: rgba(11, 12, 31, 0.6);
+  --bg-reflect: linear-gradient(135deg, #3a2f7a, #2d305a);
+  --bg-nav-active: linear-gradient(90deg, rgba(126, 75, 222, 0.42), rgba(126, 75, 222, 0.16));
+  --glow-page: radial-gradient(ellipse 520px 260px at 88% 0, rgba(126, 75, 222, 0.28), rgba(126, 75, 222, 0));
+  --line-progress: linear-gradient(90deg, #7e4bde, #b79def 70%, #67e8f9);
 
   /* Lines */
-  --border-default: #3f4273;
+  --border-subtle: #2f3260;
+  --border-default: #3b3e70;
   --border-strong: #4a4d85;
   --border-highlight: #626596;
+  --border-reflect: #5b46b8;
 
   /* Text */
-  --text-primary: #ffffff;
-  --text-secondary: #ced0e2;
-  --text-muted: #b9bbd2;
-  --text-placeholder: rgba(255, 255, 255, 0.6);
+  --text-primary: #fcfcfc;
+  --text-secondary: #cfd0ea;
+  --text-muted: #a9aac8;
+  --text-faint: #6d70a5;
+  --text-code: #e6e7f7;
+  --text-placeholder: #a2a4c9;
   --text-on-accent: #ffffff;
+  --text-title: linear-gradient(90deg, #d9c9f8, #a581e8);
 
   /* Accents */
   --accent: #7e4bde;
-  --accent-hover: #8d60e2;
-  --accent-soft: rgba(141, 96, 226, 0.2);
-  --accent-text: #b89ced;
+  --accent-hover: #8d5ff0;
+  --accent-fill: linear-gradient(180deg, #8d5ff0, #7e4bde);
+  --accent-fill-hover: linear-gradient(180deg, #9a70f3, #8655e7);
+  --accent-edge: #a581e8;
+  --accent-soft: rgba(126, 75, 222, 0.22);
+  --accent-text: #b79def;
   --accent-soft-text: #cebbf3;
+  --accent-link: #c4a8ff;
+  --accent-cyan: #67e8f9;
   --highlight: #f8e08e;
   --highlight-text: #252746;
   --danger: #f05a6e;
-  --focus-ring: #b89ced;
+  --focus-ring: #b79def;
+
+  /* Tinted icon tiles (dashboard stat cards and list icons) */
+  --tile-purple-bg: #392d68;
+  --tile-purple: #a581e8;
+  --tile-blue-bg: #383f68;
+  --tile-blue: #8ab4ff;
+  --tile-green-bg: #31414a;
+  --tile-green: #66bc5a;
+  --tile-orange-bg: #4c3444;
+  --tile-orange: #e76f38;
+
+  /* Mascot (components/Mascot.tsx) */
+  --mascot-outline: #7250ec;
+  --mascot-body: #151b35;
+  --mascot-face: #eae8fd;
+  --mascot-eyes: #2c2664;
+  --mascot-ring: #36cfd7;
+  --mascot-spark: #fac342;
+
+  /* Python mark (list and editor icons) */
+  --python-blue: #3b7bc8;
+  --python-yellow: #ffc83d;
 
   /* Test results only */
-  --state-pass: #a4e59b;
-  --state-pass-soft: rgba(164, 229, 155, 0.14);
+  --state-pass: #8fd47f;
+  --state-pass-strong: #66bc5a;
+  --state-pass-soft: rgba(102, 188, 90, 0.16);
+  --state-pass-border: rgba(102, 188, 90, 0.45);
+  --state-pass-fill: linear-gradient(180deg, #6fc762, #4fa84a);
   --state-fail: #f6a0ac;
   --state-fail-soft: rgba(240, 90, 110, 0.14);
+  --state-fail-border: rgba(240, 90, 110, 0.45);
 
   /* Struggle level and breaker */
-  --state-steady: #22c55e;
-  --state-steady-soft: rgba(34, 197, 94, 0.14);
+  --state-steady: #67e8f9;
+  --state-steady-soft: rgba(103, 232, 249, 0.12);
   --state-notice: #f8e08e;
   --state-notice-soft: rgba(248, 224, 142, 0.14);
   --state-pause: #cebbf3;
-  --state-pause-border: #8d60e2;
-  --state-pause-soft: rgba(141, 96, 226, 0.16);
+  --state-pause-border: #a581e8;
+  --state-pause-soft: rgba(126, 75, 222, 0.22);
 
-  /* Navigation bar */
+  /* Navigation */
   --nav-bg: #252746;
-  --nav-border: #3f4273;
+  --nav-border: #3b3e70;
+  --sidebar-width: 300px;
 
   /* Typography */
-  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-brand: ui-rounded, 'SF Pro Rounded', 'Arial Rounded MT Bold', Nunito, system-ui, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
+  --font-ui: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Mono', 'JetBrains Mono', 'Cascadia Code', ui-monospace, Consolas, monospace;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, 'Cascadia Code', Consolas, 'Liberation Mono', monospace;
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;
   --text-base: 1rem;
@@ -64,6 +108,7 @@
   --text-2xl: 1.5rem;
   --text-3xl: 2rem;
   --text-4xl: 2.5rem;
+  --text-5xl: 3rem;
   --tracking-tight: -0.02em;
 
   /* Spacing */
@@ -76,6 +121,7 @@
   --space-7: 56px;
 
   /* Radius */
+  --radius-chip: 7px;
   --radius-control: 10px;
   --radius-sm: 12px;
   --radius-button: 14px;
@@ -84,19 +130,23 @@
   --radius-pill: 9999px;
 
   /* Elevation */
-  --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  --shadow: 0 8px 20px rgba(11, 12, 31, 0.45);
   --shadow-button:
-    0 0 0 2px rgba(252, 252, 253, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 10px 18px -6px rgba(126, 75, 222, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 0 1px rgba(165, 129, 232, 0.55);
   --shadow-button-active:
-    0 0 0 4px rgba(252, 252, 253, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.3), inset 0 -1px 0 rgba(0, 0, 0, 0.1);
-  --glow-accent: 0 0 12px rgba(126, 75, 222, 0.4);
-  --glow-accent-strong: 0 0 20px rgba(126, 75, 222, 0.65);
+    0 4px 10px -4px rgba(126, 75, 222, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 0 1px rgba(165, 129, 232, 0.55);
+  --shadow-button-pass:
+    0 10px 18px -6px rgba(79, 168, 74, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25), inset 0 0 0 1px rgba(159, 220, 149, 0.5);
+  --glow-accent: drop-shadow(0 0 6px rgba(126, 75, 222, 0.45));
+  --glow-accent-strong: drop-shadow(0 0 12px rgba(126, 75, 222, 0.75));
+  --glow-mascot: radial-gradient(circle, rgba(126, 75, 222, 0.32), rgba(126, 75, 222, 0) 70%);
 
   /* Motion and layout */
   --topbar-height: 64px;
   --control-height: 32px;
   --button-height: 40px;
   --field-height: 48px;
+  --action-height: 56px;
   --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
   --ease-bounce: cubic-bezier(0.34, 1.56, 0.64, 1);
 }

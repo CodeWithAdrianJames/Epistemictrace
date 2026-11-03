@@ -3,6 +3,9 @@ import { Link } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { listActivities, type ActivitySummary } from '../../api/activitiesApi.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import Icon from '../../components/Icon.tsx'
+import PageHeader from '../../components/PageHeader.tsx'
+import PythonMark from '../../components/PythonMark.tsx'
 import styles from './StudentActivityListPage.module.css'
 
 const FALLBACK_DETAIL = 'Something went wrong. Please try again.'
@@ -36,7 +39,7 @@ function StudentActivityListPage() {
 
   return (
     <div className={styles.page}>
-      <h1 className={styles.heading}>Activities</h1>
+      <PageHeader title="Activities" subtitle="Pick an activity and start coding." />
       {state.status === 'loading' && <p className={styles.message}>Loading activities…</p>}
       {state.status === 'error' && (
         <p role="alert" className={styles.pageError}>
@@ -47,11 +50,16 @@ function StudentActivityListPage() {
         (state.activities.length === 0 ? (
           <p className={styles.empty}>No activities are available yet. Check back later.</p>
         ) : (
-          <ul aria-label="Activities" className={styles.list}>
-            {state.activities.map((activity) => (
-              <ActivityRow key={activity.id} activity={activity} />
-            ))}
-          </ul>
+          <section className={styles.panel} aria-labelledby="student-activity-list-title">
+            <p id="student-activity-list-title" className={styles.panelTitle}>
+              Your activities
+            </p>
+            <ul aria-label="Activities" className={styles.list}>
+              {state.activities.map((activity) => (
+                <ActivityRow key={activity.id} activity={activity} />
+              ))}
+            </ul>
+          </section>
         ))}
     </div>
   )
@@ -61,8 +69,15 @@ function ActivityRow({ activity }: { activity: ActivitySummary }) {
   return (
     <li className={styles.row}>
       <Link to={`/student/activities/${activity.id}`} className={styles.rowLink}>
-        <h2 className={styles.title}>{activity.title}</h2>
+        <span className={styles.rowIcon} aria-hidden="true">
+          <PythonMark />
+        </span>
+        <div className={styles.rowText}>
+          <h2 className={styles.title}>{activity.title}</h2>
+          <span className={styles.language}>Python</span>
+        </div>
         <span className={styles.count}>{testCountLabel(activity.testCaseCount)}</span>
+        <Icon name="arrowRight" className={styles.arrow} />
       </Link>
     </li>
   )

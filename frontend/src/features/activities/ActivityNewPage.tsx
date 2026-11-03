@@ -1,9 +1,11 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { ApiError } from '../../api/ApiError.ts'
 import { createActivity } from '../../api/instructorActivitiesApi.ts'
 import { formErrorsFrom, hasErrors, type FieldErrors } from '../../auth/authForms.ts'
 import { useProtectedRequest } from '../../auth/useProtectedRequest.ts'
+import Icon from '../../components/Icon.tsx'
+import PageHeader from '../../components/PageHeader.tsx'
 import ActivityForm from './ActivityForm.tsx'
 import styles from './ActivityPage.module.css'
 import {
@@ -61,9 +63,16 @@ function ActivityNewPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.header}>
-        <h1 className={styles.heading}>New activity</h1>
-      </div>
+      <PageHeader
+        title="New activity"
+        subtitle="Write the problem, add starter code, then add test cases after you create it."
+        actions={
+          <Link to="/instructor/activities" className={styles.back}>
+            <Icon name="arrowLeft" className={styles.backIcon} />
+            Back to My activities
+          </Link>
+        }
+      />
       <section className={styles.panel}>
         {pageError && (
           <p role="alert" className={styles.pageError}>

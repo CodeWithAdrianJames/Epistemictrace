@@ -1,4 +1,5 @@
-/* ui-context.md → Layout Patterns: one column, labels above fields, errors under the field, submit bottom-left. */
+/* ui-context.md → Layout Patterns: one column, labels above fields, errors under the field; inside the
+   narrow breaker card the Continue button spans the card, like the reference's action buttons. */
 .form {
   display: flex;
   flex-direction: column;
@@ -14,13 +15,13 @@
 .label {
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--accent-soft-text);
 }
 
 .textarea {
   padding: var(--space-3) var(--space-4);
-  background: var(--bg-input);
-  border: 1px solid var(--bg-input);
+  background: var(--bg-subtle);
+  border: 1px solid var(--border-reflect);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font: inherit;
@@ -52,16 +53,17 @@
 }
 
 .submit {
-  align-self: flex-start;
+  align-self: stretch;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: var(--button-height);
-  padding: 0 var(--space-4);
-  background: var(--accent);
+  min-height: 48px;
+  padding: 0 var(--space-5);
+  background: var(--accent-fill);
   border: none;
   border-radius: var(--radius-sm);
   color: var(--text-on-accent);
+  font-size: var(--text-base);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -69,7 +71,7 @@
 }
 
 .submit:hover:not(:disabled) {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
 }
 
 .submit:active:not(:disabled) {

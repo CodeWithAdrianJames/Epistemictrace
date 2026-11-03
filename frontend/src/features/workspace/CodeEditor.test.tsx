@@ -63,7 +63,7 @@ describe('CodeEditor', () => {
       expect.objectContaining({
         base: 'vs-dark',
         inherit: true,
-        colors: expect.objectContaining({ 'editor.background': '#191b33' }),
+        colors: expect.objectContaining({ 'editor.background': '#1d1f3d' }),
       }),
     )
   })

@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import type { TestCase } from '../../api/activitiesApi.ts'
+import PythonMark from '../../components/PythonMark.tsx'
 import styles from './ProblemPanel.module.css'
 
 interface ProblemPanelProps {
@@ -18,9 +19,15 @@ function ProblemPanel({ problemStatement, testCases }: ProblemPanelProps) {
 
   return (
     <section className={styles.panel} aria-labelledby={headingId}>
-      <h2 id={headingId} className={styles.heading}>
-        Problem
-      </h2>
+      <div className={styles.panelHeader}>
+        <h2 id={headingId} className={styles.heading}>
+          Problem
+        </h2>
+        <span className={styles.chip}>
+          <PythonMark />
+          Python
+        </span>
+      </div>
       <p className={styles.statement}>{problemStatement}</p>
       {examples.length > 0 && (
         <>
