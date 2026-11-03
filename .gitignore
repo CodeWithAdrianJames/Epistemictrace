@@ -7,3 +7,5 @@ target
 .venv/
 __pycache__/
 .orchestrator/
+.impeccable/config.local.json
+.impeccable/hook.cache.json
